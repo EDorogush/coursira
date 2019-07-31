@@ -1,0 +1,30 @@
+package by.epam.coursira.model;
+
+import by.epam.coursira.entity.Language;
+import by.epam.coursira.entity.Principal;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
+public abstract class JspModelAbstract {
+  private final List<Language> languages = Arrays.asList(Language.values());
+  private Principal principal;
+
+  public JspModelAbstract() {}
+
+  public Principal getPrincipal() {
+    return principal;
+  }
+
+  public void setPrincipal(Principal principal) {
+    this.principal = principal;
+  }
+
+  public List<Language> getLanguages() {
+    return languages;
+  }
+
+  public Locale getCurrentLocale() {
+    return principal.getSession().getLanguage().getLocale();
+  }
+}

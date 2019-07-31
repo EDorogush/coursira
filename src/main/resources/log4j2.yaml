@@ -1,0 +1,61 @@
+Configuration:
+  status: warn
+  name: YAMLConfigTest
+  properties:
+    property:
+      name: log-path
+      value: logs
+  thresholdFilter:
+    level: debug
+
+
+  appenders:
+    Console:
+      name: stdout
+      PatternLayout:
+        Pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %logger{2} - %msg%n"
+      Filters:
+        ThresholdFilter:
+          level: debug
+
+    File:
+      name: File
+      fileName: ${log-path}/logfile.log
+      PatternLayout:
+        pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %logger{2} - %msg%n"
+      Filters:
+        ThresholdFilter:
+          level: debug
+
+    RollingFile:
+      - name: RollingFile_Appender
+        fileName:  ${log-path}/rollingfile.log
+        filePattern: "${log-path}/archive/rollingfile.log.%d{yyyy-MM-dd-hh-mm}.gz"
+        patternLayout:
+          pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+        Policies:
+          SizeBasedTriggeringPolicy:
+            size: 1 KB
+        DefaultRollOverStrategy:
+          max: 15
+
+
+  Loggers:
+    logger:
+
+      - name: by.epam.coursira
+        level: debug
+        additivity: false
+        AppenderRef:
+          - ref: RollingFile_Appender
+          - ref: stdout
+
+      - name: by.epam.coursira.service
+        level: debug
+
+      - name: by.epam.coursira.pool
+        level: error
+    root:
+      level: info
+      AppenderRef:
+        ref: stdout

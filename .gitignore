@@ -1,0 +1,8 @@
+/*.idea
+/build
+*.iml
+*.log
+/logs
+/.gradle
+/postgres
+*.java-version

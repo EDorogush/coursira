@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<taglib version="2.1"
+        xmlns="http://java.sun.com/xml/ns/javaee">
+  <tlib-version>1.0</tlib-version>
+  <short-name>ctg</short-name>
+  <uri>customtags</uri>
+  <tag>
+    <name>principalTag</name>
+    <tag-class>by.epam.coursira.tag.PrincipalTag</tag-class>
+    <body-content>empty</body-content>
+    <attribute>
+      <name>principal</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+      <name>currentLocale</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>localTimeTag</name>
+    <tag-class>by.epam.coursira.tag.LocalTimeTag</tag-class>
+    <body-content>empty</body-content>
+    <attribute>
+      <name>zoneOffset</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+      <name>time</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>localDateTag</name>
+    <tag-class>by.epam.coursira.tag.LocalDateTag</tag-class>
+    <body-content>empty</body-content>
+    <attribute>
+      <name>zoneOffset</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+      <name>time</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+</taglib>

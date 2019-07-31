@@ -1,0 +1,72 @@
+plugins {
+  id 'war'
+  id 'org.gretty' version '2.3.1'
+}
+
+group 'by.epam'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+dependencies {
+  // https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
+  providedCompile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
+
+  // https://mvnrepository.com/artifact/javax.servlet.jsp/javax.servlet.jsp-api
+  providedCompile group: 'javax.servlet.jsp', name: 'javax.servlet.jsp-api', version: '2.3.3'
+
+  // https://mvnrepository.com/artifact/javax.servlet/jstl
+  compile group: 'javax.servlet', name: 'jstl', version: '1.2'
+
+  // https://mvnrepository.com/artifact/javax.mail/javax.mail-api
+  compile group: 'javax.mail', name: 'javax.mail-api', version: '1.6.2'
+  // https://mvnrepository.com/artifact/com.sun.mail/javax.mail
+  compile group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
+
+//// https://mvnrepository.com/artifact/javax.servlet.jsp.jstl/jstl
+//  compile group: 'javax.servlet.jsp.jstl', name: 'jstl', version: '1.2'
+
+  // https://mvnrepository.com/artifact/javax.validation/validation-api
+  compile group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
+
+
+  // https://mvnrepository.com/artifact/org.postgresql/postgresql
+  compile group: 'org.postgresql', name: 'postgresql', version: '42.2.5'
+  // https://mvnrepository.com/artifact/org.mindrot/jbcrypt
+  compile group: 'org.mindrot', name: 'jbcrypt', version: '0.4'
+  // https://mvnrepository.com/artifact/org.testng/testng
+  testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
+  testCompile group: 'org.mockito', name: 'mockito-core', version: '2.27.0'
+
+  compile group: 'org.yaml', name: 'snakeyaml', version: '1.24'
+  compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.1'
+  compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.1'
+  compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
+  compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.8'
+  compile 'com.google.code.findbugs:jsr305:3.0.2'
+
+}
+
+gretty {
+  servletContainer = 'tomcat8'
+  contextPath = '/abc'
+
+//  initParameter("gmailPassword", System.getenv("GMAIL_PASSWORD"))
+  initParameter('gmailAddress', 'lena.panfilenok@gmail.com')
+
+
+}
+
+test {
+  useTestNG()
+}
+
+wrapper {
+  gradleVersion = '5.4.1'
+}
