@@ -39,14 +39,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
-import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -56,28 +56,6 @@ import org.apache.logging.log4j.Logger;
 
 @WebServlet(
     urlPatterns = {"/"},
-//    initParams = {
-//      @WebInitParam(
-//          name = "jdbcDriver",
-//          value = "jdbc:postgresql://localhost:5432/postgres",
-//          description = "database " + "driver's URL"),
-//      @WebInitParam(
-//          name = "dbPoolSize",
-//          value = "5",
-//          description = "maximum size of database connections pool"),
-//      @WebInitParam(
-//          name = "pagingLimit",
-//          value = "3",
-//          description = "maximum amount of records on one page"),
-//      @WebInitParam(
-//          name = "cleanerInitialDelay",
-//          value = "1",
-//          description = "the time (in hours) to delay first cleaner procedure execution"),
-//      @WebInitParam(
-//          name = "cleanerDelay",
-//          value = "1",
-//          description = "the delay (in hours) between cleaner procedure execution"),
-//    },
     loadOnStartup = 1)
 @MultipartConfig
 public class CoursiraServlet extends HttpServlet {
@@ -87,28 +65,27 @@ public class CoursiraServlet extends HttpServlet {
   private ConnectionPoolImpl connectionPool;
   private ScheduledExecutorService cleanerThread = Executors.newSingleThreadScheduledExecutor();
 
-  public CoursiraServlet() throws SQLException {
+  public CoursiraServlet()  {
     logger.info("Servlet constructed");
   }
 
   @Override
   public void init() throws ServletException {
-    logger.info(getServletContext().getInitParameter("gmailAddress"));
-    //logger.info(config.getInitParameterNames().nextElement());
-//    String url = config.getInitParameter("jdbcDriver");
-//    int dbPoolSize = Integer.parseInt(config.getInitParameter("dbPoolSize"));
-//    int cleanerInitialDelay = Integer.parseInt(config.getInitParameter("cleanerInitialDelay"));
-//    int cleanerProcedureDelay = Integer.parseInt(config.getInitParameter("cleanerDelay"));
-    String url = "jdbc:postgresql://localhost:5432/postgres";
-    int dbPoolSize = 5;
-    int cleanerInitialDelay = 1;
-    int cleanerProcedureDelay = 1;
-    String gmailPassword ="";
-    String gmailAddress ="";
-//    String gmailPassword = config.getInitParameter("gmailPassword");
-//    String gmailAddress = config.getInitParameter("gmailAddress");
-//    logger.info("gmail:{}", gmailAddress);
-//    logger.info("pass:{}", gmailPassword);
+    ServletContext context = getServletContext();
+    // initParams
+    final String url = context.getInitParameter("jdbcDriver");
+    final int dbPoolSize = Integer.parseInt(context.getInitParameter("dbPoolSize"));
+    final int cleanerInitialDelay =
+        Integer.parseInt(context.getInitParameter("cleanerInitialDelay"));
+    final int cleanerProcedureDelay = Integer.parseInt(context.getInitParameter("cleanerDelay"));
+    final String gmailPassword = context.getInitParameter("gmailPassword");
+    final String gmailAddress = context.getInitParameter("gmailAddress");
+    final Properties propSmtp = new Properties();
+    propSmtp.put("mail.smtp.host", context.getInitParameter("mail.smtp.host"));
+    propSmtp.put("mail.smtp.port", context.getInitParameter("mail.smtp.port"));
+    propSmtp.put("mail.smtp.auth", context.getInitParameter("mail.smtp.auth"));
+    propSmtp.put(
+        "mail.smtp.starttls.enable", context.getInitParameter("mail.smtp.starttls.enable"));
     try {
       connectionPool = new ConnectionPoolImpl(dbPoolSize, url);
     } catch (PoolConnectionException e) {
@@ -117,7 +94,7 @@ public class CoursiraServlet extends HttpServlet {
     CourseDao courseDao = new CourseDao(connectionPool);
     StudentDao studentDao = new StudentDao(connectionPool);
     UserDao userDao = new UserDao(connectionPool);
-    MailSender mailSender = new MailSender(gmailAddress, gmailPassword);
+    MailSender mailSender = new MailSender(gmailAddress, gmailPassword, propSmtp);
     this.principalService = new PrincipalService(userDao, new BCryptHashMethod(), mailSender);
     CourseService courseService = new CourseService(courseDao, studentDao, userDao);
     UserService userService = new UserService(userDao);
@@ -155,18 +132,18 @@ public class CoursiraServlet extends HttpServlet {
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     processRequest(request, response);
   }
 
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     processRequest(request, response);
   }
 
   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     logServletRequestDetails(request);
     String sessionId = request.getSession().getId();
     try {
@@ -186,22 +163,18 @@ public class CoursiraServlet extends HttpServlet {
         ErrorModel model = new ErrorModel();
         model.setPrincipal(principal);
         request.setAttribute("model", model);
-        getServletContext()
-            .getRequestDispatcher(CoursiraJspPath.PAGE_NOT_FOUND)
-            .forward(request, response);
+        response.sendError(404);
       } catch (ClientCommandException e) {
         ErrorModel model = new ErrorModel();
         logger.error(e);
         model.setPrincipal(principal);
         model.setErrorMessage(e.getMessage());
         request.setAttribute("model", model);
-        getServletContext()
-            .getRequestDispatcher(CoursiraJspPath.CLIENT_ERROR)
-            .forward(request, response);
+        response.sendError(400);
       }
     } catch (Exception e) {
       logger.error(e);
-      getServletContext().getRequestDispatcher(CoursiraJspPath.ERROR).forward(request, response);
+      response.sendError(500);
     }
   }
 

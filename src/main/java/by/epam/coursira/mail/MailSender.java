@@ -15,26 +15,22 @@ public class MailSender {
   private static final Logger logger = LogManager.getLogger();
   private final String APP_USER_NAME;
   private final String APP_PASSWORD;
-  private static final Properties prop = new Properties();
+  private final Properties propSmtp;
 
-  public MailSender(String address, String password) {
+  public MailSender(String address, String password, Properties prop) {
     this.APP_USER_NAME = address;
     this.APP_PASSWORD = password;
+    this.propSmtp = prop;
   }
 
-  static {
-    prop.put("mail.smtp.host", "smtp.gmail.com");
-    prop.put("mail.smtp.port", "587");
-    prop.put("mail.smtp.auth", "true");
-    prop.put("mail.smtp.starttls.enable", "true"); // TLS
-  }
 
   public boolean sendMail(String sendTo, String subject, String messageText)
       throws MessagingException {
 
+
     Session session =
         Session.getInstance(
-            prop,
+            propSmtp,
             new javax.mail.Authenticator() {
               protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(APP_USER_NAME, APP_PASSWORD);

@@ -13,6 +13,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.http.Part;
 
+
 public final class ValidationHelper {
 
   private static final int MAX_AGE = 100;
@@ -22,7 +23,6 @@ public final class ValidationHelper {
   private static final int MIN_COURSE_CAPACITY = 2;
   private static final int MAX_COURSE_CAPACITY = 50;
   private static final int MAX_LECTURE_DURATION_IN_HOURS = 4;
-  private static final int MIN_DURATION_BETWEEN_IN_MINUTES = 30;
   private static Set<String> imageTypes = new HashSet<>();
 
   static {
@@ -31,7 +31,9 @@ public final class ValidationHelper {
     imageTypes.add("image/jpeg");
   }
 
-  private ValidationHelper() {}
+  private ValidationHelper() {
+
+  }
 
   private static String filterTextFromJunk(String str) {
     return str.trim().replaceAll("\\s\\s+", " ");
@@ -39,6 +41,7 @@ public final class ValidationHelper {
 
   static String validateText(String text, Locale messageLocale, String fieldName)
       throws ClientServiceException {
+
     ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", messageLocale);
     if (text.isBlank()) {
       throw new ClientServiceException(bundle.getString("BLANK_TEXT") + fieldName);

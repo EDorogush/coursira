@@ -57,10 +57,18 @@ gretty {
   servletContainer = 'tomcat8'
   contextPath = '/abc'
 
-//  initParameter("gmailPassword", System.getenv("GMAIL_PASSWORD"))
+  initParameter("gmailPassword", System.getenv("GMAIL_PASSWORD"))
   initParameter('gmailAddress', 'lena.panfilenok@gmail.com')
-
-
+  initParameter('jdbcDriver', 'jdbc:postgresql://localhost:5432/postgres')
+  initParameter('dbPoolSize', '5')
+  initParameter('pagingLimit', '3')
+  initParameter('cleanerInitialDelay', '1')
+  initParameter('cleanerDelay', '1')
+//smtp data
+  initParameter('mail.smtp.host', 'smtp.gmail.com');
+  initParameter('mail.smtp.port', '587');
+  initParameter('mail.smtp.auth', 'true');
+  initParameter('mail.smtp.starttls.enable', 'true'); // TL
 }
 
 test {
