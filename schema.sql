@@ -1,51 +1,47 @@
-CREATE SEQUENCE users_id_seq MINVALUE 0;
+CREATE SEQUENCE users_id_seq
+    MINVALUE 0;
+
+ALTER SEQUENCE users_id_seq OWNER TO coursirauser;
 
 CREATE TABLE users
 (
-    id           integer      NOT NULL DEFAULT nextval('users_id_seq'),
-    email        varchar(128) NOT NULL
+    id                       integer DEFAULT nextval('users_id_seq'::regclass) NOT NULL
         CONSTRAINT users_pk
             PRIMARY KEY,
-    password     varchar(128) NOT NULL,
-    firstname    varchar(128) NOT NULL,
-    lastname     varchar(128) NOT NULL,
-    role         varchar(16),
-    organization varchar(128),
-    age          integer,
-    interests    varchar(128),
-    photo        bytea
-
+    email                    varchar(128)                                      NOT NULL,
+    password                 varchar(128)                                      NOT NULL,
+    firstname                varchar(128)                                      NOT NULL,
+    lastname                 varchar(128)                                      NOT NULL,
+    role                     varchar(16),
+    organization             varchar(128),
+    age                      integer,
+    interests                varchar(128),
+    photo                    bytea,
+    registration_code        varchar(36),
+    registration_expire_date timestamp
 );
 
 ALTER TABLE users
-    OWNER TO elena;
+    OWNER TO coursirauser;
 
-CREATE UNIQUE INDEX users_id_uindex
-    ON users (id);
-
-/*create sequence users_id_seq minvalue 0;
-
-alter sequence users_id_seq owner to elena;
-alter sequence users_id_seq minvalue 0;*/
-
+CREATE UNIQUE INDEX users_email_uindex
+    ON users (email);
 
 CREATE TABLE sessions
 (
-    id          varchar(128) NOT NULL
+    id                           varchar(128) NOT NULL
         CONSTRAINT sessions_pk
             PRIMARY KEY,
-    expire_date timestamp    NOT NULL,
-    user_id     integer
+    expire_date                  timestamp    NOT NULL,
+    user_id                      integer
         CONSTRAINT sessions_users_id_fk
-            REFERENCES users (id),
-    language    varchar(8)
+            REFERENCES users,
+    language                     varchar(8),
+    zone_offset_of_total_seconds integer DEFAULT 0
 );
 
 ALTER TABLE sessions
     OWNER TO elena;
-
-
--- courses
 
 CREATE TABLE courses
 (
@@ -59,10 +55,8 @@ CREATE TABLE courses
 );
 
 ALTER TABLE courses
-    OWNER TO elena;
+    OWNER TO coursirauser;
 
-
--- course_students
 CREATE TABLE course_students
 (
     entry_id   serial  NOT NULL
@@ -73,17 +67,11 @@ CREATE TABLE course_students
             REFERENCES courses,
     student_id integer NOT NULL
         CONSTRAINT course_students_users_id_fk
-            REFERENCES users (id)
-
+            REFERENCES users
 );
 
 ALTER TABLE course_students
-    OWNER TO elena;
-
-/*create unique index course_students_course_id_student_id_uindex
-  on course_students (course_id, student_id);
-*/
--- course_lecturers
+    OWNER TO coursirauser;
 
 CREATE TABLE course_lecturers
 (
@@ -92,19 +80,17 @@ CREATE TABLE course_lecturers
             PRIMARY KEY,
     lecturer_id integer NOT NULL
         CONSTRAINT course_lecturers_users_id_fk
-            REFERENCES users (id),
+            REFERENCES users,
     course_id   integer
         CONSTRAINT course_lecturers_courses_course_id_fk
             REFERENCES courses
 );
 
 ALTER TABLE course_lecturers
-    OWNER TO elena;
+    OWNER TO coursirauser;
 
 CREATE UNIQUE INDEX course_lecturers_lecturer_id_course_id_uindex
     ON course_lecturers (lecturer_id, course_id);
-
--- lectures
 
 CREATE TABLE lectures
 (
@@ -120,4 +106,5 @@ CREATE TABLE lectures
 );
 
 ALTER TABLE lectures
-    OWNER TO elena;
+    OWNER TO coursirauser;
+

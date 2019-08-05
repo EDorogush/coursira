@@ -8,6 +8,7 @@ import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraUrlPatterns;
+import java.net.http.HttpHeaders;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
@@ -25,12 +26,15 @@ public class LanguageCommand extends CommandAbstract {
 
   @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException,PageNotFoundException {
+      throws CommandException, ClientCommandException, PageNotFoundException {
     logger.debug("In LanguageCommand");
     switch (request.getMethod()) {
       case "POST":
-        String referer = request.getHeader("referer"); //
+        String referer =
+            request.getHeader("referer")
+                .split(request.getContextPath())[1]; // ServletPath part of referer link
         logger.debug("Language referer {}", referer);
+
         return postLanguage(principal, referer, request.getParameterMap());
       case "GET":
         return getLanguage();

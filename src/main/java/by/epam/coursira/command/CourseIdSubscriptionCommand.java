@@ -31,7 +31,9 @@ public class CourseIdSubscriptionCommand extends CommandAbstract {
       case "GET":
         throw new PageNotFoundException();
       case "POST":
-        String referer = request.getHeader("referer");
+        String referer =
+            request.getHeader("referer")
+                .split(request.getContextPath())[1]; // ServletPath part of referer link;
         logger.debug("referer is {}", referer);
         Matcher matcher = this.getPattern().matcher(request.getServletPath());
         if (!matcher.matches()) {

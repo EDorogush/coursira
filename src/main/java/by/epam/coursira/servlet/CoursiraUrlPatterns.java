@@ -16,7 +16,6 @@ public final class CoursiraUrlPatterns {
   public static final String UPDATE_PERSONAL = "/personal/update";
   public static final String SIGN_IN = "/sign";
   public static final String REGISTRATION_CONFIRM = "/registration";
-  public static final String ERROR = "/error";
 
   private CoursiraUrlPatterns() {}
 }

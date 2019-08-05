@@ -1,31 +1,60 @@
+CoursIra is study project within the Java Web Development training course. The application is intended as study courses manager. 
 
+#Getting Started
+##Prerequisites:
+JDK: [Version 11 or higher](https://openjdk.java.net).\
+[PostgreSQL 11.3](https://www.postgresql.org) \
+SMTP credentials.
 
-## init database file structure in directory
+## How to start PostgreSQL 
+
+Database is installed entirely inside the application folder. 
+Please, follow the instructions:
+
+### Init database file structure in current application directory with the command ([See details](https://www.postgresql.org/docs/11/app-initdb.html)):
 ```
 initdb --locale=C -E UTF-8 postgres
 ```
 
-## start in foreground
+### Start the server in foreground with the command ([See details](https://www.postgresql.org/docs/11/app-postgres.html))
 ```
 postgres -D postgres
 ```
 
-## start in background
+### Create database with name coursiradb: 
 ```
-pg_ctl -D postgres -l postgres.log start
+psql -d postgres -c 'create database coursiradb'
 ```
 
-## find out which program is running on port 5432
+### Create user with name coursirauser: 
+```
+psql -d postgres  -c 'create user coursirauser'
+```
+
+### Grant privileges to coursirauser: 
+```
+psql -d postgres -c 'grant all privileges on database coursiradb to coursirauser'
+```
+
+### Create application schemas on coursiradb  
+```
+psql -d coursiradb -U coursirauser -f schema.sql
+``` 
+
+#### You may also need following commands:
+##### Start db in background:
+```
+ -D postgres -l postgres.log start
+```
+
+##### Find out which program is running on port 5432
 ```
 netstat -vanp tcp | grep 5432
 ```
 
-## find out details of program by it's pid
+##### Find out details of program by it's pid
 ```
 ps aux | grep <pid>
 ```
 
-## database init
-```
-schema.sql 
-```
+

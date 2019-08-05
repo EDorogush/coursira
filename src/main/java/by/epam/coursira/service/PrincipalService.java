@@ -25,8 +25,8 @@ import org.apache.logging.log4j.Logger;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class PrincipalService {
-  public static final int MAX_SESSION_DURATION_IN_SEC = 900; // 15min
   private static final Logger logger = LogManager.getLogger();
+  public static final int MAX_SESSION_DURATION_IN_SEC = 900; // 15min
   private static final int DEFAULT_PRINCIPAL_USER_ID = 0;
   private static final Language DEFAULT_PRINCIPAL_LANGUAGE = Language.EN;
   private static final ZoneOffset DEFAULT_PRINCIPAL_ZONE_OFFSET = ZoneOffset.ofTotalSeconds(0);
@@ -35,19 +35,20 @@ public class PrincipalService {
   private static final String REGISTRATION_MESSAGE_PATTERN =
       "Dear %s, \n"
           + "Thank you for registering to CoursIra.\n"
-          + "Follow link  placed below to confirm your registration.\n"
-          + "Attention: Current link is active for %d hours. If you don't use it, your registration will be canceled:\n"
+          + "Follow link placed below to confirm your registration.\n"
+          + "Attention: Current link is active for %f hours. If you don't use it, your registration will be canceled:\n"
           + " %s";
-  private static final String REGISTRATION_CONFIRM_LINK_PATTERN =
-      "http://localhost:8080/registration?code=%s";
+  public final int sessionTimeOutInSec; // 15min
   private final UserDao userDao;
   private final HashMethod hashMethod;
   private final MailSender mailSender;
 
-  public PrincipalService(UserDao dao, HashMethod hashMethod, MailSender mailSender) {
+  public PrincipalService(
+      UserDao dao, int sessionTimeout, HashMethod hashMethod, MailSender mailSender) {
     this.userDao = dao;
     this.hashMethod = hashMethod;
     this.mailSender = mailSender;
+    this.sessionTimeOutInSec = sessionTimeout;
   }
 
   /**
@@ -211,6 +212,7 @@ public class PrincipalService {
    */
   public void registerUser(
       Principal previous,
+      String urlToGoFromEmail,
       String email,
       String passwordFirst,
       String passwordSecond,
@@ -259,8 +261,7 @@ public class PrincipalService {
       int userId = userDao.insertUser(user);
       logger.info("User record was added to db with userId {}", userId);
       try {
-        String registrationLink =
-            String.format(REGISTRATION_CONFIRM_LINK_PATTERN, registrationCode);
+        String registrationLink = urlToGoFromEmail + "?code=" + registrationCode;
         String registrationMessage =
             String.format(
                 REGISTRATION_MESSAGE_PATTERN,

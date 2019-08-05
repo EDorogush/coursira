@@ -33,7 +33,17 @@ public class RegistrationCommand extends CommandAbstract {
       case "POST":
         Map<String, String[]> queryParams = request.getParameterMap();
         logger.info("queryParams {}", queryParams.keySet().toString());
-        return postRegister(principal, queryParams);
+        // Reconstruct original requesting URL
+        String urlToGoFromEmail =
+            request.getScheme() // http
+                + "://"
+                + request.getServerName() // localhost
+                + ":"
+                + request.getServerPort() // 8080
+                + request.getContextPath()
+                + CoursiraUrlPatterns.REGISTRATION_CONFIRM;
+        logger.info("Full path {}", urlToGoFromEmail);
+        return postRegister(principal, queryParams, urlToGoFromEmail);
       case "GET":
         return getRegister(principal);
       default:
@@ -48,7 +58,8 @@ public class RegistrationCommand extends CommandAbstract {
     return new CommandResult(CoursiraJspPath.SIGN_IN, signUpModel);
   }
 
-  private CommandResult postRegister(Principal principal, Map<String, String[]> queryParams)
+  private CommandResult postRegister(
+      Principal principal, Map<String, String[]> queryParams, String urlToGoFromEmail)
       throws CommandException, ClientCommandException {
     // check if fiels is present
     String email =
@@ -79,7 +90,7 @@ public class RegistrationCommand extends CommandAbstract {
     logger.debug("values were taken from request");
     try {
       principalService.registerUser(
-          principal, email, passwordFirst, passwordSecond, firstName, lastName, role);
+          principal, urlToGoFromEmail, email, passwordFirst, passwordSecond, firstName, lastName, role);
     } catch (ClientServiceException e) {
       SignUpModel signUpModel = new SignUpModel();
       signUpModel.setPrincipal(principal);

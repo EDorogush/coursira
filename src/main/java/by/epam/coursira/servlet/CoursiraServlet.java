@@ -65,13 +65,15 @@ public class CoursiraServlet extends HttpServlet {
   private ConnectionPoolImpl connectionPool;
   private ScheduledExecutorService cleanerThread = Executors.newSingleThreadScheduledExecutor();
 
-  public CoursiraServlet()  {
+  public CoursiraServlet() {
     logger.info("Servlet constructed");
   }
 
   @Override
   public void init() throws ServletException {
+    logger.info("stareServletInit");
     ServletContext context = getServletContext();
+
     // initParams
     final String url = context.getInitParameter("jdbcDriver");
     final int dbPoolSize = Integer.parseInt(context.getInitParameter("dbPoolSize"));
@@ -91,11 +93,14 @@ public class CoursiraServlet extends HttpServlet {
     } catch (PoolConnectionException e) {
       throw new ServletException(e);
     }
+    int sessionTimeOut = 15 * 60;
+    // logger.info("session-timeout is {}", context.getSessionTimeout());
     CourseDao courseDao = new CourseDao(connectionPool);
     StudentDao studentDao = new StudentDao(connectionPool);
     UserDao userDao = new UserDao(connectionPool);
     MailSender mailSender = new MailSender(gmailAddress, gmailPassword, propSmtp);
-    this.principalService = new PrincipalService(userDao, new BCryptHashMethod(), mailSender);
+    this.principalService =
+        new PrincipalService(userDao, sessionTimeOut, new BCryptHashMethod(), mailSender);
     CourseService courseService = new CourseService(courseDao, studentDao, userDao);
     UserService userService = new UserService(userDao);
     CourseModificationService courseModificationService =
@@ -156,7 +161,8 @@ public class CoursiraServlet extends HttpServlet {
           request.setAttribute("model", result.getJspModel());
           getServletContext().getRequestDispatcher(result.getJsp()).forward(request, response);
         } else {
-          response.sendRedirect(result.getPageToRedirect());
+          logger.info("contextPath: {}", request.getContextPath());
+          response.sendRedirect(request.getContextPath() + result.getPageToRedirect());
         }
       } catch (PageNotFoundException e) {
         logger.error(e);
