@@ -23,7 +23,7 @@ public class CommandFactory {
    * {@code commandList}. When first matching found procedure stops and return {@link Command}
    * object with such {@link Pattern}. Throw PageNotFoundException when no matcher found.
    *
-   * @param path {@link String} omgect whicj os going to be matched with patterns.
+   * @param path {@link String} object which is going to be matched with patterns.
    * @return {@link Command}
    * @throws PageNotFoundException when no matcher found.
    */

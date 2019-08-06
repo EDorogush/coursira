@@ -26,37 +26,42 @@ import org.mindrot.jbcrypt.BCrypt;
 
 public class PrincipalService {
   private static final Logger logger = LogManager.getLogger();
-  public static final int MAX_SESSION_DURATION_IN_SEC = 900; // 15min
   private static final int DEFAULT_PRINCIPAL_USER_ID = 0;
   private static final Language DEFAULT_PRINCIPAL_LANGUAGE = Language.EN;
   private static final ZoneOffset DEFAULT_PRINCIPAL_ZONE_OFFSET = ZoneOffset.ofTotalSeconds(0);
-  private static final Duration REGISTRATION_LINK_VALID_DURATION = Duration.ofMinutes(15);
+  private static final Duration REGISTRATION_LINK_VALID_DURATION = Duration.ofHours(1);
   private static final String REGISTRATION_CONFIRM_SUBJECT = "Registration Confirm";
   private static final String REGISTRATION_MESSAGE_PATTERN =
       "Dear %s, \n"
           + "Thank you for registering to CoursIra.\n"
           + "Follow link placed below to confirm your registration.\n"
-          + "Attention: Current link is active for %f hours. If you don't use it, your registration will be canceled:\n"
+          + "Attention: Current link is active for %d hours. If you don't use it, your registration will be canceled:\n"
           + " %s";
-  public final int sessionTimeOutInSec; // 15min
+  private Duration sessionLoginDuration;
+  private Duration sessionAnonymousDuration;
   private final UserDao userDao;
   private final HashMethod hashMethod;
   private final MailSender mailSender;
 
   public PrincipalService(
-      UserDao dao, int sessionTimeout, HashMethod hashMethod, MailSender mailSender) {
+      UserDao dao,
+      Duration sessionLoginDuration,
+      Duration sessionAnonymousDuration,
+      HashMethod hashMethod,
+      MailSender mailSender) {
     this.userDao = dao;
     this.hashMethod = hashMethod;
     this.mailSender = mailSender;
-    this.sessionTimeOutInSec = sessionTimeout;
+    this.sessionAnonymousDuration = sessionAnonymousDuration;
+    this.sessionLoginDuration = sessionLoginDuration;
   }
 
   /**
    * Method invokes user authentification via session by session's id value specified by argument.
    * All active sessions are kept in database with the purpose to provide stateless application.
-   * When {@link User} is defined, his session time updates. If Session record wasn't found in db,
-   * method creates new session record in db and links current session to {@link Role} Anonumous.
-   * Returns current {@link Principal}
+   * When {@link User} is defined, his session time doesn't update. If Session record wasn't found
+   * in db, method creates new session record in db and links current session to {@link Role}
+   * Anonymous with session time duration {@code sessionAnonymousDuration}. Returns current {@link Principal}
    *
    * @param sessionId value of current session's Id.
    * @return {@link Principal} principal
@@ -75,7 +80,7 @@ public class PrincipalService {
         if (session.getExpDate().isBefore(Instant.now())) {
           // session expired so need to update record - link it to default user)
           session.setUserId(DEFAULT_PRINCIPAL_USER_ID);
-          session.setExpDate(countExpireTime());
+          session.setExpDate(Instant.now().plus(sessionAnonymousDuration));
           userDao.updateSession(session);
           logger.debug("Session record was linked to ANONYMOUS user");
           principal =
@@ -83,8 +88,6 @@ public class PrincipalService {
                   .selectPrincipalBySessionId(sessionId)
                   .orElseThrow(() -> new ServiceException("Can't read principal from db"));
         } else {
-          session.setExpDate(countExpireTime());
-          userDao.updateSession(session);
           principal = principalOptional.get();
         }
       } else {
@@ -96,7 +99,7 @@ public class PrincipalService {
         Session session =
             new Session.Builder()
                 .setId(sessionId)
-                .setExpDate(countExpireTime())
+                .setExpDate(Instant.now().plus(sessionAnonymousDuration))
                 .setZoneOffSet(DEFAULT_PRINCIPAL_ZONE_OFFSET)
                 .setLanguage(DEFAULT_PRINCIPAL_LANGUAGE)
                 .setUserId(DEFAULT_PRINCIPAL_USER_ID)
@@ -156,11 +159,13 @@ public class PrincipalService {
         logger.debug("Password didn't fit the db record.");
         throw new ClientServiceException(bundle.getString("WRONG_LOGIN_AND_PASSWORD"));
       }
+      //login and pass checked. increase session time.
       logger.debug("Password checked.");
       Session session = previous.getSession();
       session.setUserId(user.getId());
+      session.setExpDate(Instant.now().plus(sessionLoginDuration));
       userDao.updateSession(session);
-      logger.debug("Session record was linked to {} user.", email);
+      logger.debug("Session record was linked to {} user and increase session time.", email);
       principal = new Principal(session, user);
     } catch (DaoException e) {
       throw new ServiceException(e.getMessage());
@@ -365,10 +370,5 @@ public class PrincipalService {
       logger.info("can't delete waste users");
       throw new ServiceException(e);
     }
-  }
-
-  private Instant countExpireTime() {
-    Duration duration = Duration.ofSeconds(MAX_SESSION_DURATION_IN_SEC);
-    return Instant.now().plus(duration);
   }
 }

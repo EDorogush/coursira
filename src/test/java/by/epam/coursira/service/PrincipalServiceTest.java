@@ -21,6 +21,7 @@ import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.mail.MailSender;
 import by.epam.coursira.security.BCryptHashMethod;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
@@ -56,7 +57,10 @@ public class PrincipalServiceTest {
   @BeforeMethod
   public void setUp() throws DaoException {
     MockitoAnnotations.initMocks(this);
-    service = new PrincipalService(mockUserDao, mockBCryptHashing, mockMailSender);
+    Duration sessionLoginDuration = Duration.ofHours(2);
+    Duration sessionAnonymousDuration = Duration.ofHours(1);
+
+    service = new PrincipalService(mockUserDao, sessionLoginDuration,sessionAnonymousDuration, mockBCryptHashing, mockMailSender);
 
     userStudent =
         new User.Builder()
@@ -89,7 +93,7 @@ public class PrincipalServiceTest {
 
     Principal actual = service.verifyPrincipleBySessionId(expected.getSession().getId());
 
-    verify(mockUserDao, times(1)).updateSession(any(Session.class));
+    verify(mockUserDao, never()).updateSession(any(Session.class));
     verify(mockUserDao, times(1)).selectPrincipalBySessionId(anyString());
     assertSame(actual.getUser().getRole(), Role.STUDENT);
   }
@@ -231,11 +235,12 @@ public class PrincipalServiceTest {
     when(mockBCryptHashing.toHash(anyString())).thenReturn(anyString());
     service.registerUser(
         previous,
+        "",
         userStudent.getEmail(),
         userStudent.getPassword(),
         userStudent.getPassword(),
         userStudent.getFirstName(),
-        userStudent.getFirstName(),
+        userStudent.getLastName(),
         userStudent.getRole());
     // then
     verify(mockUserDao, times(1)).insertUser(any(User.class));
@@ -257,6 +262,7 @@ public class PrincipalServiceTest {
         () ->
             service.registerUser(
                 previous,
+                "",
                 userStudent.getEmail(),
                 userStudent.getPassword(),
                 userStudent.getPassword(),

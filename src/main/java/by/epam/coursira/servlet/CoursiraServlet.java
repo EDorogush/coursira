@@ -34,7 +34,7 @@ import by.epam.coursira.service.CourseService;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.service.UserService;
 import java.io.IOException;
-import java.sql.SQLException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,14 +71,18 @@ public class CoursiraServlet extends HttpServlet {
 
   @Override
   public void init() throws ServletException {
-    logger.info("stareServletInit");
     ServletContext context = getServletContext();
-
     // initParams
     final String url = context.getInitParameter("jdbcDriver");
     final int dbPoolSize = Integer.parseInt(context.getInitParameter("dbPoolSize"));
     final int cleanerInitialDelay =
         Integer.parseInt(context.getInitParameter("cleanerInitialDelay"));
+
+    final Duration sessionLoginDuration =
+        Duration.ofHours(Integer.parseInt(context.getInitParameter("sessionLoginDurationHours")));
+    final Duration sessionAnonymousDuration =
+        Duration.ofHours(
+            Integer.parseInt(context.getInitParameter("sessionAnonymousDurationHours")));
     final int cleanerProcedureDelay = Integer.parseInt(context.getInitParameter("cleanerDelay"));
     final String gmailPassword = context.getInitParameter("gmailPassword");
     final String gmailAddress = context.getInitParameter("gmailAddress");
@@ -90,22 +94,21 @@ public class CoursiraServlet extends HttpServlet {
         "mail.smtp.starttls.enable", context.getInitParameter("mail.smtp.starttls.enable"));
     try {
       connectionPool = new ConnectionPoolImpl(dbPoolSize, url);
+      logger.info("pool constructed");
     } catch (PoolConnectionException e) {
       throw new ServletException(e);
     }
-    int sessionTimeOut = 15 * 60;
-    // logger.info("session-timeout is {}", context.getSessionTimeout());
     CourseDao courseDao = new CourseDao(connectionPool);
     StudentDao studentDao = new StudentDao(connectionPool);
     UserDao userDao = new UserDao(connectionPool);
     MailSender mailSender = new MailSender(gmailAddress, gmailPassword, propSmtp);
     this.principalService =
-        new PrincipalService(userDao, sessionTimeOut, new BCryptHashMethod(), mailSender);
+        new PrincipalService(userDao, sessionLoginDuration, sessionAnonymousDuration, new BCryptHashMethod(), mailSender);
     CourseService courseService = new CourseService(courseDao, studentDao, userDao);
     UserService userService = new UserService(userDao);
     CourseModificationService courseModificationService =
         new CourseModificationService(courseDao, userDao, mailSender);
-    logger.info("pool constructed");
+
     commandList.add(new CourseCommand(courseService, userService));
     commandList.add(new IndexCommand(courseService));
     commandList.add(new LanguageCommand(principalService));
@@ -133,6 +136,7 @@ public class CoursiraServlet extends HttpServlet {
         cleanerInitialDelay,
         cleanerProcedureDelay,
         TimeUnit.HOURS);
+    logger.info("cleaner thread constructed");
   }
 
   @Override
@@ -149,7 +153,7 @@ public class CoursiraServlet extends HttpServlet {
 
   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    logServletRequestDetails(request);
+    logger.info("request {}", httpServletRequestToString(request));
     String sessionId = request.getSession().getId();
     try {
       Principal principal = principalService.verifyPrincipleBySessionId(sessionId);
@@ -161,7 +165,6 @@ public class CoursiraServlet extends HttpServlet {
           request.setAttribute("model", result.getJspModel());
           getServletContext().getRequestDispatcher(result.getJsp()).forward(request, response);
         } else {
-          logger.info("contextPath: {}", request.getContextPath());
           response.sendRedirect(request.getContextPath() + result.getPageToRedirect());
         }
       } catch (PageNotFoundException e) {
@@ -190,38 +193,20 @@ public class CoursiraServlet extends HttpServlet {
     logger.info("cleanerThread destroyed");
     try {
       connectionPool.close();
+      logger.info("Servlet destroyed");
     } catch (PoolConnectionException e) {
       logger.error(e);
-      // todo: //what next?
+      logger.info("Servlet doesn't destroyed");
     }
-    logger.info("Servlet destroyed");
-  }
-
-  private void logServletRequestDetails(HttpServletRequest request) {
-    String method = request.getMethod();
-    String contextPath = request.getContextPath();
-    String pathInfo = request.getPathInfo();
-    String requestURI = request.getRequestURI();
-    String servletPath = request.getServletPath();
-    String sessionId = request.getSession().getId();
-    int maxInactiveInterval = request.getSession().getMaxInactiveInterval();
-
-    logger.debug("request {}", httpServletRequestToString(request));
-    logger.debug("method '{}'", method);
-    logger.debug("contextPath '{}'", contextPath);
-    logger.debug("pathInfo '{}'", pathInfo);
-    logger.debug("requestURI '{}'", requestURI);
-    logger.debug("servletPath '{}'", servletPath);
-    logger.debug("sessionId {}", sessionId);
-    logger.debug("maxInactiveInterval {}", maxInactiveInterval);
   }
 
   private String httpServletRequestToString(HttpServletRequest request) {
-    StringBuilder sb = new StringBuilder();
-
-    sb.append("Request Method = [" + request.getMethod() + "], ");
-    sb.append("Request URL Path = [" + request.getRequestURL() + "], ");
-
+    String requestInfo =
+        "Request Method = ["
+            + request.getMethod()
+            + "], Request URL Path = ["
+            + request.getRequestURL()
+            + "], ";
     String headers =
         Collections.list(request.getHeaderNames()).stream()
             .map(
@@ -229,22 +214,20 @@ public class CoursiraServlet extends HttpServlet {
             .collect(Collectors.joining(", "));
 
     if (headers.isEmpty()) {
-      sb.append("Request headers: NONE,");
+      requestInfo += "Request headers: NONE,";
     } else {
-      sb.append("Request headers: [" + headers + "],");
+      requestInfo += "Request headers: [" + headers + "],";
     }
-
     String parameters =
         Collections.list(request.getParameterNames()).stream()
             .map(p -> p + " : " + Arrays.asList(request.getParameterValues(p)))
             .collect(Collectors.joining(", "));
 
     if (parameters.isEmpty()) {
-      sb.append("Request parameters: NONE.");
+      requestInfo += "Request parameters: NONE.";
     } else {
-      sb.append("Request parameters: [" + parameters + "].");
+      requestInfo += "Request parameters: [" + parameters + "].";
     }
-
-    return sb.toString();
+    return requestInfo;
   }
 }

@@ -56,5 +56,14 @@ netstat -vanp tcp | grep 5432
 ```
 ps aux | grep <pid>
 ```
+## How to get SMTP credential:
+To allow this application to send email via your Gmail box you need to get App password form [Gmail Security Service](https://support.google.com/accounts/answer/185833?p=InvalidSecondFactor).
+After getting the App password, export Email address and password as environment variables named "GMAIL_ADDRESS" and "GMAIL_PASSWORD"  respectively   
 
+## Start Application
+Use the command:
+```
+./gradlew appRun
+```
+ 
 

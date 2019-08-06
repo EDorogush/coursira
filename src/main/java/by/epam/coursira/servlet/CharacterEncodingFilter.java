@@ -16,7 +16,7 @@ public class CharacterEncodingFilter implements Filter {
   private static final Logger logger = LogManager.getLogger();
 
   @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
+  public void init(FilterConfig filterConfig) {
     logger.info("encoding filter init");
   }
 

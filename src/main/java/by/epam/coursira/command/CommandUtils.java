@@ -21,17 +21,25 @@ import org.apache.logging.log4j.Logger;
 public final class CommandUtils {
   private static final Logger logger = LogManager.getLogger();
 
+  private CommandUtils() {}
+
+  /**
+   * Method parse from
+   * @param queryParams
+   * @param paramName
+   * @return
+   */
   // package-private
   static Optional<String> parseOptionalString(Map<String, String[]> queryParams, String paramName) {
-    final Optional<String> psrsedValue;
-    psrsedValue =
+    final Optional<String> parsedValue;
+    parsedValue =
         Optional.ofNullable(queryParams)
             .map(params -> params.get(paramName))
             .filter(r -> r.length > 0)
             .map(r -> r[0]);
     logger.debug(
-        "String {} value parsed successfully {}", paramName, psrsedValue.orElse("not defined"));
-    return psrsedValue;
+        "String {} value parsed successfully {}", paramName, parsedValue.orElse("not defined"));
+    return parsedValue;
   }
 
   // package-private
