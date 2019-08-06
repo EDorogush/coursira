@@ -1,6 +1,7 @@
 package by.epam.coursira.command;
 
 import by.epam.coursira.entity.Principal;
+import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.PageNotFoundException;
@@ -8,26 +9,34 @@ import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.RegistrationCompletedModel;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-public class RegistrationConfirmCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to "/registration"
+ * pattern.
+ */
+public class RegistrationConfirmCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
+  private static final Pattern resourcePattern = Pattern.compile("/registration");
   private final PrincipalService principalService;
 
   public RegistrationConfirmCommand(PrincipalService principalService) {
-    super(CoursiraUrlPatterns.REGISTRATION_CONFIRM);
     this.principalService = principalService;
   }
 
   @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
+
+  @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, PageNotFoundException {
+      throws ClientCommandException, PageNotFoundException, CommandException {
     logger.debug("In RegistrationConfirmCommand");
     switch (request.getMethod()) {
       case "GET":
@@ -35,21 +44,22 @@ public class RegistrationConfirmCommand extends CommandAbstract {
       case "POST":
         throw new PageNotFoundException();
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
   private CommandResult getRegistrationConfirm(
-      Principal principal, Map<String, String[]> queryParams) throws CommandException {
+      Principal principal, Map<String, String[]> queryParams)
+      throws ClientCommandException, CommandException {
     // todo: think and rewrite. why do I need email parameter?
     Optional<String> code = CommandUtils.parseOptionalString(queryParams, "code");
     boolean emailKey = CommandUtils.parseOptionalBoolean(queryParams, "email").orElse(false);
     if (code.isEmpty() && !emailKey) {
       logger.error("code parameter is absent");
-      return new CommandResult(CoursiraUrlPatterns.PAGE_NOT_FOUND);
+      throw new ClientCommandException("code parameter is absent");
     }
     if (code.isPresent() && emailKey) {
-      throw new CommandException("Only one of parameters expected to present");
+      throw new ClientCommandException("Only one of parameters expected to present");
     }
     ResourceBundle bundle =
         ResourceBundle.getBundle("errorMessages", principal.getSession().getLanguage().getLocale());

@@ -7,25 +7,35 @@ import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.service.CourseService;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CourseIdSubscriptionCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to
+ *"/courses/([^/?]+)/subscriptions(\\?.*)?" pattern.
+ */
+
+public class CourseIdSubscriptionCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
+  private static final Pattern resourcePattern = Pattern.compile("/courses/([^/?]+)/subscriptions(\\?.*)?");
   private final CourseService courseService;
 
   public CourseIdSubscriptionCommand(CourseService courseService) {
-    super(CoursiraUrlPatterns.COURSE_SUBSCRIBE);
     this.courseService = courseService;
   }
 
   @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
+
+  @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, PageNotFoundException, ClientCommandException {
+      throws PageNotFoundException, ClientCommandException, CommandException {
     logger.debug("In CourseIdSubscriptionCommand");
     switch (request.getMethod()) {
       case "GET":
@@ -35,7 +45,7 @@ public class CourseIdSubscriptionCommand extends CommandAbstract {
             request.getHeader("referer")
                 .split(request.getContextPath())[1]; // ServletPath part of referer link;
         logger.debug("referer is {}", referer);
-        Matcher matcher = this.getPattern().matcher(request.getServletPath());
+        Matcher matcher = resourcePattern.matcher(request.getServletPath());
         if (!matcher.matches()) {
           throw new PageNotFoundException();
         }
@@ -49,7 +59,7 @@ public class CourseIdSubscriptionCommand extends CommandAbstract {
         return postSubscription(principal, referer, courseId, request.getParameterMap());
 
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 

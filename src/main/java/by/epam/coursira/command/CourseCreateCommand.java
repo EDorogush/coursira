@@ -9,24 +9,33 @@ import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.CourseCreateModel;
 import by.epam.coursira.service.CourseModificationService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CourseCreateCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to "/courses/newCourse"
+ * pattern.
+ */
+public class CourseCreateCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
+  private static final Pattern resourcePattern = Pattern.compile("/courses/newCourse");
   private final CourseModificationService courseModificationService;
 
   public CourseCreateCommand(CourseModificationService courseModificationService) {
-    super(CoursiraUrlPatterns.NEW_COURSE);
     this.courseModificationService = courseModificationService;
   }
 
   @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
+
+  @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException {
+      throws ClientCommandException,CommandException {
     logger.debug("In CourseCreateCommand");
     if (principal.getUser().getRole() != Role.LECTURER) {
       throw new ClientCommandException("Access denied");
@@ -39,7 +48,7 @@ public class CourseCreateCommand extends CommandAbstract {
       case "GET":
         return getCourseCreate(principal);
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -74,7 +83,7 @@ public class CourseCreateCommand extends CommandAbstract {
     }
   }
 
-  private CommandResult getCourseCreate(Principal principal){
+  private CommandResult getCourseCreate(Principal principal) {
 
     CourseCreateModel model = new CourseCreateModel();
     model.setPrincipal(principal);

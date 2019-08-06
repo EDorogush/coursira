@@ -11,29 +11,34 @@ import by.epam.coursira.model.PersonalModel;
 import by.epam.coursira.service.CourseService;
 import by.epam.coursira.service.UserService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-public class PersonalPageCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to "/personal" pattern.
+ */
+public class PersonalPageCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
-
-  private static final int RECORD_ON_PAGE_LIMIT = 3;
+  private static final Pattern resourcePattern = Pattern.compile("/personal");
+  private final int PAGINATION_LIMIT;
   private final CourseService courseService;
-  private final UserService userService;
 
-  public PersonalPageCommand(CourseService courseService, UserService userService) {
-    super(CoursiraUrlPatterns.PERSONAL);
+  public PersonalPageCommand(CourseService courseService, int paginationLimit) {
     this.courseService = courseService;
-    this.userService = userService;
+    this.PAGINATION_LIMIT = paginationLimit;
+  }
+
+  @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
   }
 
   @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException, PageNotFoundException {
+      throws ClientCommandException, PageNotFoundException, CommandException {
     logger.debug("In PersonalPageCommand");
     switch (request.getMethod()) {
       case "GET":
@@ -41,7 +46,7 @@ public class PersonalPageCommand extends CommandAbstract {
       case "POST":
         throw new PageNotFoundException();
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -49,21 +54,20 @@ public class PersonalPageCommand extends CommandAbstract {
       throws CommandException, ClientCommandException {
     PersonalModel personalModel = new PersonalModel();
     int pageIndex = CommandUtils.parseOptionalInt(queryParams, "page").orElse(1);
-    final int offset = (pageIndex - 1) * RECORD_ON_PAGE_LIMIT;
+    final int offset = (pageIndex - 1) * PAGINATION_LIMIT;
     try {
 
       personalModel.setPrincipal(principal);
       personalModel.setCourseAmount(courseService.countCourses(principal));
       // get schedule
-      List<Lecture> schedule =
-          courseService.viewSchedule(principal, RECORD_ON_PAGE_LIMIT + 1, offset);
-      personalModel.setHasNextPage(CommandUtils.trimToLimit(schedule, RECORD_ON_PAGE_LIMIT));
+      List<Lecture> schedule = courseService.viewSchedule(principal, PAGINATION_LIMIT + 1, offset);
+      personalModel.setHasNextPage(CommandUtils.trimToLimit(schedule, PAGINATION_LIMIT));
       personalModel.setSchedule(schedule);
       personalModel.setCurrentPageIndex(pageIndex);
     } catch (ServiceException e) {
       throw new CommandException(e);
     } catch (ClientServiceException e) {
-      return new CommandResult(CoursiraUrlPatterns.PAGE_NOT_FOUND);
+      throw new ClientCommandException(e);
     }
 
     return new CommandResult(CoursiraJspPath.PERSONAL, personalModel);

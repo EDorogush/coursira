@@ -10,35 +10,45 @@ import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.CourseDetailModel;
 import by.epam.coursira.service.CourseService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CourseIdCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to
+ * "/courses/([^/?[A-Z]]+)(\\?.*)?" pattern.
+ */
+public class CourseIdCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
-  private static final int RECORD_ON_PAGE_LIMIT = 10;
+  private static final Pattern resourcePattern = Pattern.compile("/courses/([^/?[A-Z]]+)(\\?.*)?");
+  private final int PAGINATION_LIMIT;
   private final CourseService courseService;
 
-  public CourseIdCommand(CourseService courseService) {
-    super(CoursiraUrlPatterns.COURSE_DETAILS);
+  public CourseIdCommand(CourseService courseService, int paginationLimit) {
     this.courseService = courseService;
+    this.PAGINATION_LIMIT = paginationLimit;
+  }
+
+  @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
   }
 
   @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException, PageNotFoundException {
+      throws ClientCommandException, PageNotFoundException, CommandException {
     logger.debug("In CourseIdCommand");
     switch (request.getMethod()) {
       case "GET":
-        final int courseId = CommandUtils.parseIdFromRequest(this.getPattern(), request);
+        final int courseId = CommandUtils.parseIdFromRequest(resourcePattern, request);
         logger.debug("course id parsed successfully {}", courseId);
         return getCourseDetails(principal, courseId, request.getParameterMap());
       case "POST":
         throw new PageNotFoundException();
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -49,12 +59,11 @@ public class CourseIdCommand extends CommandAbstract {
 
     CourseDetailModel courseDetailModel = new CourseDetailModel();
     courseDetailModel.setPrincipal(principal);
-    final int offset = (pageIndex - 1) * RECORD_ON_PAGE_LIMIT;
+    final int offset = (pageIndex - 1) * PAGINATION_LIMIT;
     final Course course;
     // get course by courseId
     try {
-      course =
-          courseService.viewCourseDetails(principal, courseId, RECORD_ON_PAGE_LIMIT + 1, offset);
+      course = courseService.viewCourseDetails(principal, courseId, PAGINATION_LIMIT + 1, offset);
       courseDetailModel.setAbleToJoin(courseService.isScheduleCross(principal, courseId));
       courseDetailModel.setInUserList(courseService.isInUserListCourse(principal, courseId));
     } catch (ClientServiceException e) {
@@ -63,7 +72,7 @@ public class CourseIdCommand extends CommandAbstract {
       throw new CommandException(e);
     }
     courseDetailModel.setHasNextPage(
-        CommandUtils.trimToLimit(course.getLectures(), RECORD_ON_PAGE_LIMIT));
+        CommandUtils.trimToLimit(course.getLectures(), PAGINATION_LIMIT));
     courseDetailModel.setCourse(course);
     courseDetailModel.setHasFreeSpot(course.getCapacity() > course.getStudentsAmount());
     courseDetailModel.setCurrentPageIndex(pageIndex);

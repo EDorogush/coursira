@@ -9,25 +9,32 @@ import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.SignUpModel;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class RegistrationCommand extends CommandAbstract {
+/** Class is intended to process client's requests to resource corresponding to "/sign" pattern. */
+public class RegistrationCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
+  private static final Pattern resourcePattern = Pattern.compile("/sign");
+  public static final String URL_TO_REDIRECT = "/registration";
   private final PrincipalService principalService;
 
   public RegistrationCommand(PrincipalService principalService) {
-    super(CoursiraUrlPatterns.SIGN_IN);
     this.principalService = principalService;
   }
 
   @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
+
+  @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException {
+      throws ClientCommandException, CommandException {
     logger.debug("Registration command");
     switch (request.getMethod()) {
       case "POST":
@@ -41,13 +48,13 @@ public class RegistrationCommand extends CommandAbstract {
                 + ":"
                 + request.getServerPort() // 8080
                 + request.getContextPath()
-                + CoursiraUrlPatterns.REGISTRATION_CONFIRM;
+                + URL_TO_REDIRECT;
         logger.info("Full path {}", urlToGoFromEmail);
         return postRegister(principal, queryParams, urlToGoFromEmail);
       case "GET":
         return getRegister(principal);
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -90,7 +97,14 @@ public class RegistrationCommand extends CommandAbstract {
     logger.debug("values were taken from request");
     try {
       principalService.registerUser(
-          principal, urlToGoFromEmail, email, passwordFirst, passwordSecond, firstName, lastName, role);
+          principal,
+          urlToGoFromEmail,
+          email,
+          passwordFirst,
+          passwordSecond,
+          firstName,
+          lastName,
+          role);
     } catch (ClientServiceException e) {
       SignUpModel signUpModel = new SignUpModel();
       signUpModel.setPrincipal(principal);
@@ -103,6 +117,6 @@ public class RegistrationCommand extends CommandAbstract {
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
-    return new CommandResult(CoursiraUrlPatterns.REGISTRATION_CONFIRM + "?email=true");
+    return new CommandResult(URL_TO_REDIRECT + "?email=true");
   }
 }

@@ -1,31 +1,38 @@
 package by.epam.coursira.command;
 
 import by.epam.coursira.entity.Principal;
+import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.IndexModel;
 import by.epam.coursira.service.CourseService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IndexCommand extends CommandAbstract {
+/** Class is intended to process client's requests to resource corresponding to "/" pattern. */
+public class IndexCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
+  private static final Pattern resourcePattern = Pattern.compile("/");
 
   private final CourseService courseService;
 
   public IndexCommand(CourseService courseService) {
-    super(CoursiraUrlPatterns.INDEX);
     this.courseService = courseService;
   }
 
   @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
+
+  @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, PageNotFoundException {
+      throws PageNotFoundException, ClientCommandException, CommandException {
     logger.debug("In IndexCommand");
     switch (request.getMethod()) {
       case "GET":
@@ -33,7 +40,7 @@ public class IndexCommand extends CommandAbstract {
       case "POST":
         throw new PageNotFoundException();
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 

@@ -8,24 +8,31 @@ import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.LoginModel;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class LoginCommand extends CommandAbstract {
+/** Class is intended to process client's requests to resource corresponding to "/login" pattern. */
+public class LoginCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
+  private static final Pattern resourcePattern = Pattern.compile("/login");
+  private static final String URL_TO_REDIRECT = "/";
   private final PrincipalService principalService;
 
   public LoginCommand(PrincipalService principalService) {
-    super(CoursiraUrlPatterns.LOGIN);
     this.principalService = principalService;
   }
 
   @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
+
+  @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException {
+      throws ClientCommandException, CommandException {
     logger.debug("In LoginCommand");
     switch (request.getMethod()) {
       case "POST":
@@ -35,7 +42,7 @@ public class LoginCommand extends CommandAbstract {
       case "GET":
         return getLogin(principal);
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -59,7 +66,7 @@ public class LoginCommand extends CommandAbstract {
           principalService.verifyPrincipleByPass(principal, loginValue, passwordValue);
       logger.debug("user login: {}", current.toString());
       // return redirect
-      return new CommandResult(CoursiraUrlPatterns.INDEX);
+      return new CommandResult(URL_TO_REDIRECT);
     } catch (ClientServiceException e) {
       // return jsp with error message
       LoginModel loginModel = new LoginModel();

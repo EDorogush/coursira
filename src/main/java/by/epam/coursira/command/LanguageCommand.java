@@ -7,26 +7,31 @@ import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.service.PrincipalService;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
-import java.net.http.HttpHeaders;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-public class LanguageCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to "/language" pattern.
+ */
+public class LanguageCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
+  private static final Pattern resourcePattern = Pattern.compile("/language");
   private PrincipalService principalService;
 
   public LanguageCommand(PrincipalService principalService) {
-    super(CoursiraUrlPatterns.LANGUAGE);
     this.principalService = principalService;
   }
-  // take language from query, update session, redirect to redirectPage
+
+  @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
 
   @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException, PageNotFoundException {
+      throws ClientCommandException, PageNotFoundException,CommandException {
     logger.debug("In LanguageCommand");
     switch (request.getMethod()) {
       case "POST":
@@ -37,9 +42,9 @@ public class LanguageCommand extends CommandAbstract {
 
         return postLanguage(principal, referer, request.getParameterMap());
       case "GET":
-        return getLanguage();
+        throw new PageNotFoundException();
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -48,7 +53,7 @@ public class LanguageCommand extends CommandAbstract {
       throws CommandException, ClientCommandException {
     Language current =
         CommandUtils.parseOptionalLanguage(queryParams, "language")
-            .orElseThrow(() -> new CommandException("wrong <language> parameter value"));
+            .orElseThrow(() -> new ClientCommandException("wrong <language> parameter value"));
     try {
       principalService.changeLanguage(principal, current);
     } catch (ServiceException e) {
@@ -57,7 +62,4 @@ public class LanguageCommand extends CommandAbstract {
     return new CommandResult(referer);
   }
 
-  private CommandResult getLanguage() throws PageNotFoundException {
-    throw new PageNotFoundException();
-  }
 }

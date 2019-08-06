@@ -13,29 +13,40 @@ import by.epam.coursira.model.CourseModel;
 import by.epam.coursira.service.CourseService;
 import by.epam.coursira.service.UserService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CourseCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to "/courses" pattern.
+ * Private field {@link Pattern} is used via urlPattern() method in {@link CommandFactory} class to distinguish
+ * request's URL and to delegate request to current Command.
+ */
+public class CourseCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
-  private static final int RECORD_ON_PAGE_LIMIT = 3;
+  private static final Pattern RESOURCE_PATTERN = Pattern.compile("/courses");
+  private final int PAGINATION_LIMIT;
   private final CourseService courseService;
   private final UserService userService;
 
-  public CourseCommand(CourseService courseService, UserService userService) {
-    super(CoursiraUrlPatterns.COURSES);
+  public CourseCommand(CourseService courseService, UserService userService, int paginationLimit) {
     this.courseService = courseService;
     this.userService = userService;
+    this.PAGINATION_LIMIT = paginationLimit;
+  }
+
+  @Override
+  public Pattern urlPattern() {
+    return RESOURCE_PATTERN;
   }
 
   @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException, PageNotFoundException {
+      throws ClientCommandException, PageNotFoundException, CommandException {
     logger.debug("In CourseCommand");
     switch (request.getMethod()) {
       case "GET":
@@ -43,7 +54,7 @@ public class CourseCommand extends CommandAbstract {
       case "POST":
         throw new PageNotFoundException();
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -56,7 +67,7 @@ public class CourseCommand extends CommandAbstract {
 
     CourseModel courseModel = new CourseModel();
     courseModel.setPrincipal(principal);
-    final int offset = (pageIndex - 1) * RECORD_ON_PAGE_LIMIT;
+    final int offset = (pageIndex - 1) * PAGINATION_LIMIT;
     final List<Course> courses;
     if (lecturerId.isPresent() && isPersonal) {
       throw new ClientCommandException(
@@ -68,18 +79,18 @@ public class CourseCommand extends CommandAbstract {
         // ready courses only
         courses =
             courseService.viewCoursesByLectureId(
-                principal, lecturerId.get(), RECORD_ON_PAGE_LIMIT + 1, offset);
+                principal, lecturerId.get(), PAGINATION_LIMIT + 1, offset);
         // fetch / read / retrieve
         Lecturer lecturer = userService.defineLecturerNameById(principal, lecturerId.get());
         courseModel.setLecturerCourses(true);
         courseModel.setLecturer(lecturer);
       } else if (isPersonal && principal.getUser().getRole() != Role.ANONYMOUS) {
         // get user only courses;
-        courses = courseService.viewCoursesPersonal(principal, RECORD_ON_PAGE_LIMIT + 1, offset);
+        courses = courseService.viewCoursesPersonal(principal, PAGINATION_LIMIT + 1, offset);
         courseModel.setPersonal(true);
       } else {
         // get all courses;
-        courses = courseService.viewCourses(principal, RECORD_ON_PAGE_LIMIT + 1, offset);
+        courses = courseService.viewCourses(principal, PAGINATION_LIMIT + 1, offset);
       }
     } catch (ClientServiceException e) {
       throw new ClientCommandException(e);
@@ -88,7 +99,7 @@ public class CourseCommand extends CommandAbstract {
     }
     logger.debug(" course's records: {}", courses.size());
     // filling model for JSP
-    courseModel.setHasNextPage(CommandUtils.trimToLimit(courses, RECORD_ON_PAGE_LIMIT));
+    courseModel.setHasNextPage(CommandUtils.trimToLimit(courses, PAGINATION_LIMIT));
     courseModel.setCourses(courses);
     courseModel.setCurrentPageIndex(pageIndex);
     return new CommandResult(CoursiraJspPath.COURSES, courseModel);

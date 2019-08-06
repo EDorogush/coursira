@@ -1,7 +1,6 @@
 package by.epam.coursira.servlet;
 
 import by.epam.coursira.command.Command;
-import by.epam.coursira.command.CommandAbstract;
 import by.epam.coursira.command.CommandFactory;
 import by.epam.coursira.command.CommandResult;
 import by.epam.coursira.command.CourseCommand;
@@ -60,7 +59,7 @@ import org.apache.logging.log4j.Logger;
 @MultipartConfig
 public class CoursiraServlet extends HttpServlet {
   private static final Logger logger = LogManager.getLogger();
-  private List<CommandAbstract> commandList = new ArrayList<>();
+  private List<Command> commandList = new ArrayList<>();
   private PrincipalService principalService;
   private ConnectionPoolImpl connectionPool;
   private ScheduledExecutorService cleanerThread = Executors.newSingleThreadScheduledExecutor();
@@ -92,6 +91,8 @@ public class CoursiraServlet extends HttpServlet {
     propSmtp.put("mail.smtp.auth", context.getInitParameter("mail.smtp.auth"));
     propSmtp.put(
         "mail.smtp.starttls.enable", context.getInitParameter("mail.smtp.starttls.enable"));
+    final int paginationLimit = Integer.parseInt(context.getInitParameter("paginationLimit"));
+
     try {
       connectionPool = new ConnectionPoolImpl(dbPoolSize, url);
       logger.info("pool constructed");
@@ -103,21 +104,26 @@ public class CoursiraServlet extends HttpServlet {
     UserDao userDao = new UserDao(connectionPool);
     MailSender mailSender = new MailSender(gmailAddress, gmailPassword, propSmtp);
     this.principalService =
-        new PrincipalService(userDao, sessionLoginDuration, sessionAnonymousDuration, new BCryptHashMethod(), mailSender);
+        new PrincipalService(
+            userDao,
+            sessionLoginDuration,
+            sessionAnonymousDuration,
+            new BCryptHashMethod(),
+            mailSender);
     CourseService courseService = new CourseService(courseDao, studentDao, userDao);
     UserService userService = new UserService(userDao);
     CourseModificationService courseModificationService =
         new CourseModificationService(courseDao, userDao, mailSender);
 
-    commandList.add(new CourseCommand(courseService, userService));
+    commandList.add(new CourseCommand(courseService, userService, paginationLimit));
     commandList.add(new IndexCommand(courseService));
     commandList.add(new LanguageCommand(principalService));
     commandList.add(new LoginCommand(principalService));
     commandList.add(new LogoutCommand(principalService));
-    commandList.add(new CourseIdCommand(courseService));
+    commandList.add(new CourseIdCommand(courseService, paginationLimit));
     commandList.add(new CourseIdSubscriptionCommand(courseService));
-    commandList.add(new PersonalPageCommand(courseService, userService));
-    commandList.add(new PersonalUpdateCommand(courseService, userService));
+    commandList.add(new PersonalPageCommand(courseService, paginationLimit));
+    commandList.add(new PersonalUpdateCommand(userService));
     commandList.add(new RegistrationCommand(principalService));
     commandList.add(new RegistrationConfirmCommand(principalService));
     commandList.add(new CourseCreateCommand(courseModificationService));

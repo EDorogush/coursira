@@ -24,10 +24,12 @@ public final class CommandUtils {
   private CommandUtils() {}
 
   /**
-   * Method parse from
-   * @param queryParams
-   * @param paramName
-   * @return
+   * Method parse from {@link Map}<{@link String}, {@link String}[]> queryParams {@link
+   * Optional}<{@link String}> value with {@code paramName} key.
+   *
+   * @param queryParams {@link Map}<{@link String}, {@link String}[]> of parameters
+   * @param paramName the key of desired parameter in {@link Map}
+   * @return {@link Optional}<{@link String}> value from the queryParams {@link Map}
    */
   // package-private
   static Optional<String> parseOptionalString(Map<String, String[]> queryParams, String paramName) {
@@ -42,12 +44,32 @@ public final class CommandUtils {
     return parsedValue;
   }
 
+  /**
+   * Method parse from {@link Map}<{@link String}, {@link String}[]> queryParams {@link
+   * Optional}<{@link Boolean}> value with {@code paramName} key.
+   *
+   * @param queryParams {@link Map}<{@link String}, {@link String}[]> of parameters
+   * @param paramName the key of desired parameter in {@link Map}
+   * @return {@link Optional}<{@link Boolean}> value from the queryParams {@link Map}
+   */
   // package-private
   static Optional<Boolean> parseOptionalBoolean(
       Map<String, String[]> queryParams, String paramName) {
     return parseOptionalString(queryParams, paramName).map(Boolean::parseBoolean);
   }
 
+  /**
+   * Method parse from {@link Map}<{@link String}, {@link String}[]> queryParams {@link
+   * Optional}<{@link Integer}> value with {@code paramName} key. Throws {@code
+   * ClientCommandException} when value is exists but is not able to be parsed from {@link String}
+   * to {@link Integer}
+   *
+   * @param queryParams {@link Map}<{@link String}, {@link String}[]> of parameters
+   * @param paramName the key of desired parameter in {@link Map}
+   * @return {@link Optional}<{@link Integer}> value from the queryParams {@link Map}
+   * @throws ClientCommandException when paramName value is not able to be parsed from {@link
+   *     String} to {@link Integer}
+   */
   // package-private
   static Optional<Integer> parseOptionalInt(Map<String, String[]> queryParams, String paramName)
       throws ClientCommandException {
@@ -61,6 +83,18 @@ public final class CommandUtils {
     return parsedValue;
   }
 
+  /**
+   * Method parse from {@link Map}<{@link String}, {@link String}[]> queryParams {@link
+   * Optional}<{@link LocalDate}> value with {@code paramName} key. Throws {@code
+   * ClientCommandException} when value is exists but is not able to be parsed from {@link String}
+   * to {@link LocalDate}
+   *
+   * @param queryParams {@link Map}<{@link String}, {@link String}[]> of parameters
+   * @param paramName the key of desired parameter in {@link Map}
+   * @return {@link Optional}<{@link LocalDate}> value from the queryParams {@link Map}
+   * @throws ClientCommandException when paramName value is not able to be parsed from {@link
+   *     String} to {@link LocalDate}
+   */
   static Optional<LocalDate> parseOptionalLocalDate(
       Map<String, String[]> queryParams, String paramName) throws ClientCommandException {
     final Optional<LocalDate> parsedValue;
@@ -75,6 +109,18 @@ public final class CommandUtils {
     return parsedValue;
   }
 
+  /**
+   * Method parse from {@link Map}<{@link String}, {@link String}[]> queryParams {@link
+   * Optional}<{@link LocalTime}> value with {@code paramName} key. Throws {@code
+   * ClientCommandException} when value is exists but is not able to be parsed from {@link String}
+   * to {@link LocalTime}
+   *
+   * @param queryParams {@link Map}<{@link String}, {@link String}[]> of parameters
+   * @param paramName the key of desired parameter in {@link Map}
+   * @return {@link Optional}<{@link LocalTime}> value from the queryParams {@link Map}
+   * @throws ClientCommandException when paramName value is not able to be parsed from {@link
+   *     String} to {@link LocalTime}
+   */
   static Optional<LocalTime> parseOptionalLocalTime(
       Map<String, String[]> queryParams, String paramName) throws ClientCommandException {
     final Optional<LocalTime> parsedValue;
@@ -89,6 +135,18 @@ public final class CommandUtils {
     return parsedValue;
   }
 
+  /**
+   * Method parse from {@link Map}<{@link String}, {@link String}[]> queryParams {@link
+   * Optional}<{@link Language}> value with {@code paramName} key. Throws {@code
+   * ClientCommandException} when value is exists but is not able to be parsed from {@link String}
+   * to {@link Language}
+   *
+   * @param queryParams {@link Map}<{@link String}, {@link String}[]> of parameters
+   * @param paramName the key of desired parameter in {@link Map}
+   * @return {@link Optional}<{@link Language}> value from the queryParams {@link Map}
+   * @throws ClientCommandException when paramName value is not able to be parsed from {@link
+   *     String} to {@link Language}
+   */
   // package-private
   static Optional<Language> parseOptionalLanguage(
       Map<String, String[]> queryParams, String paramName) throws ClientCommandException {
@@ -126,6 +184,17 @@ public final class CommandUtils {
     }
   }
 
+  /**
+   * Method parse {@code int} Id value from {@link HttpServletRequest} request servlet path
+   * according to {@link Pattern} pattern, specified in arguments.
+   *
+   * @param pattern {@link Pattern} for matching desired value from request
+   * @param request client's {@link HttpServletRequest}
+   * @return id value
+   * @throws ClientCommandException when id value is not able to be parsed from {@link String} to
+   *     int
+   * @throws CommandException when no matchers found in request servlet path.
+   */
   static int parseIdFromRequest(Pattern pattern, HttpServletRequest request)
       throws ClientCommandException, CommandException {
     final int id;

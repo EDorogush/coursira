@@ -5,40 +5,48 @@ import by.epam.coursira.entity.Role;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
+import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.UserUpdateModel;
 import by.epam.coursira.service.CourseService;
 import by.epam.coursira.service.UserService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-public class PersonalUpdateCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to "/personal/update"
+ * pattern.
+ */
+public class PersonalUpdateCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
-  private final CourseService courseService;
+  private static final Pattern resourcePattern = Pattern.compile("/personal/update");
+  private static final String URL_TO_REDIRECT = "/personal";
   private final UserService userService;
 
-  public PersonalUpdateCommand(CourseService courseService, UserService userService) {
-    super(CoursiraUrlPatterns.UPDATE_PERSONAL);
-    this.courseService = courseService;
+  public PersonalUpdateCommand(UserService userService) {
     this.userService = userService;
   }
 
   @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
+
+  @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException {
+      throws ClientCommandException, PageNotFoundException,CommandException {
     logger.debug("In PersonalUpdateCommand");
     switch (request.getMethod()) {
       case "GET":
         if (principal.getUser().getRole() == Role.ANONYMOUS) {
-          return new CommandResult(CoursiraUrlPatterns.PAGE_NOT_FOUND);
+          throw new PageNotFoundException();
         }
         return getPersonalUpdate(principal);
       case "POST":
@@ -56,7 +64,7 @@ public class PersonalUpdateCommand extends CommandAbstract {
           return postPersonalUpdate(principal, request.getParameterMap());
         }
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -86,7 +94,7 @@ public class PersonalUpdateCommand extends CommandAbstract {
     try {
       principal =
           userService.updateUserData(principal, firstName, lastName, age, organization, interests);
-      return new CommandResult(CoursiraUrlPatterns.PERSONAL);
+      return new CommandResult(URL_TO_REDIRECT);
     } catch (ClientServiceException e) {
       UserUpdateModel userUpdateModel = new UserUpdateModel();
       userUpdateModel.setPrincipal(principal);
@@ -98,8 +106,7 @@ public class PersonalUpdateCommand extends CommandAbstract {
     }
   }
 
-  private CommandResult postImageUpdate(Principal principal, Part part)
-      throws CommandException {
+  private CommandResult postImageUpdate(Principal principal, Part part) throws CommandException {
     UserUpdateModel userUpdateModel = new UserUpdateModel();
     try {
       principal = userService.updateUserPhoto(principal, part);

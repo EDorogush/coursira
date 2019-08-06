@@ -12,20 +12,24 @@ import by.epam.coursira.service.CourseModificationService;
 import by.epam.coursira.service.CourseService;
 import by.epam.coursira.service.UserService;
 import by.epam.coursira.servlet.CoursiraJspPath;
-import by.epam.coursira.servlet.CoursiraUrlPatterns;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CourseUpdateCommand extends CommandAbstract {
+/**
+ * Class is intended to process client's requests to resource corresponding to
+ * "/courses/([^/?[A-Z]]+)/update" pattern.
+ */
+public class CourseUpdateCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
-  private static final int RECORD_ON_PAGE_LIMIT = 100;
+  private static final Pattern resourcePattern = Pattern.compile("/courses/([^/?[A-Z]]+)/update");
   private final CourseModificationService courseModificationService;
   private final CourseService courseService;
   private final UserService userService;
@@ -34,17 +38,21 @@ public class CourseUpdateCommand extends CommandAbstract {
       CourseModificationService courseModificationService,
       CourseService courseService,
       UserService userService) {
-    super(CoursiraUrlPatterns.COURSE_UPDATE);
     this.courseModificationService = courseModificationService;
     this.courseService = courseService;
     this.userService = userService;
   }
 
   @Override
+  public Pattern urlPattern() {
+    return resourcePattern;
+  }
+
+  @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws CommandException, ClientCommandException {
+      throws ClientCommandException, CommandException {
     logger.debug("In CourseUpdateCommand");
-    final int courseId = CommandUtils.parseIdFromRequest(this.getPattern(), request);
+    final int courseId = CommandUtils.parseIdFromRequest(resourcePattern, request);
     final boolean haveAccess;
     try {
       haveAccess = courseModificationService.isAllowToUpdateCourse(principal, courseId);
@@ -96,7 +104,7 @@ public class CourseUpdateCommand extends CommandAbstract {
         logger.debug("GET CourseUpdateCommand");
         return getCourseUpdate(principal, courseId);
       default:
-        throw new CommandException("Unknown method invoked.");
+        throw new ClientCommandException("Unknown method invoked.");
     }
   }
 
@@ -280,7 +288,7 @@ public class CourseUpdateCommand extends CommandAbstract {
     model.setPrincipal(principal);
     try {
       List<Lecturer> lecturers = userService.findAllLecturersList(principal);
-      Course course = courseService.viewCourseDetails(principal, courseId, RECORD_ON_PAGE_LIMIT, 0);
+      Course course = courseService.viewCourseDetails(principal, courseId, Integer.MAX_VALUE, 0);
       model.setAlllecturers(lecturers);
       model.setCourse(course);
 

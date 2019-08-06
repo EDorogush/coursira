@@ -4,13 +4,13 @@ import by.epam.coursira.entity.Principal;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.PageNotFoundException;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * This is a Functional Interface which provide execution function for client's request. Should be
- * used in Commands are responsible for processing {@link HttpServletRequest} requests.
+ * This is an Interface which provide execution function for client's request. Should be used in
+ * Commands are responsible for processing {@link HttpServletRequest} requests.
  */
-@FunctionalInterface
 public interface Command {
   /**
    * Process given {@link HttpServletRequest} client request, executes it and returns a result of
@@ -27,4 +27,12 @@ public interface Command {
    */
   CommandResult execute(Principal principal, HttpServletRequest request)
       throws ClientCommandException, PageNotFoundException, CommandException;
+
+  /**
+   * returned value {@link Pattern} must be used in {@link CommandFactory} class to distinguish
+   * request's URL and to delegate request to appropriate Command.
+   *
+   * @return {@link Pattern} of request URL which is able to be processed by current Command.
+   */
+  Pattern urlPattern();
 }
