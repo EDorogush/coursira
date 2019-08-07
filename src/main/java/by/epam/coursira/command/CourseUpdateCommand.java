@@ -289,7 +289,7 @@ public class CourseUpdateCommand implements Command {
     try {
       List<Lecturer> lecturers = userService.findAllLecturersList(principal);
       Course course = courseService.viewCourseDetails(principal, courseId, Integer.MAX_VALUE, 0);
-      model.setAlllecturers(lecturers);
+      model.setAllLecturers(lecturers);
       model.setCourse(course);
 
     } catch (ServiceException e) {

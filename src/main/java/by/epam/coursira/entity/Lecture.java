@@ -1,6 +1,7 @@
 package by.epam.coursira.entity;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 public class Lecture extends AbstractEntity {
@@ -111,5 +112,23 @@ public class Lecture extends AbstractEntity {
         .add("lecturer=" + lecturer)
         .add("courseId=" + courseId)
         .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Lecture lecture = (Lecture) o;
+    return id == lecture.id &&
+      courseId == lecture.courseId &&
+      Objects.equals(description, lecture.description) &&
+      Objects.equals(startTime, lecture.startTime) &&
+      Objects.equals(endTime, lecture.endTime) &&
+      Objects.equals(lecturer, lecture.lecturer);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, description, startTime, endTime, lecturer, courseId);
   }
 }

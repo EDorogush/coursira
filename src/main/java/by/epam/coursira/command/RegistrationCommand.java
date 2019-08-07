@@ -6,6 +6,7 @@ import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.ServiceException;
+import by.epam.coursira.model.LoginModel;
 import by.epam.coursira.model.SignUpModel;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;
@@ -16,11 +17,22 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** Class is intended to process client's requests to resource corresponding to "/sign" pattern. */
+/**
+ * Class is intended to process client's requests to resource corresponding to "/sign" pattern. When
+ * POST request executed, request parameters must contain "email" and "passwordFirst" ,
+ * "passwordSecond", "firstName", "lastName", "role" values. Otherwise {@link
+ * ClientCommandException} will be thrown.
+ */
 public class RegistrationCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
+  /**
+   * Field is used via urlPattern() * method in {@link CommandFactory} class to distinguish
+   * request's URL and to delegate request to * current Command.
+   */
   private static final Pattern resourcePattern = Pattern.compile("/sign");
+  /** The URL of page, client is redirected to after request processing */
   public static final String URL_TO_REDIRECT = "/registration";
+
   private final PrincipalService principalService;
 
   public RegistrationCommand(PrincipalService principalService) {
@@ -39,7 +51,6 @@ public class RegistrationCommand implements Command {
     switch (request.getMethod()) {
       case "POST":
         Map<String, String[]> queryParams = request.getParameterMap();
-        logger.info("queryParams {}", queryParams.keySet().toString());
         // Reconstruct original requesting URL
         String urlToGoFromEmail =
             request.getScheme() // http
@@ -58,17 +69,38 @@ public class RegistrationCommand implements Command {
     }
   }
 
-  private CommandResult getRegister(Principal principal) throws CommandException {
-    logger.info("Register");
+  /**
+   * This method is used to process GET method of request which is being processing by current
+   * Command. It fills {@link SignUpModel} by {@link Principal} specified in arguments. SignUpModel
+   * will be used by JSP as response to client's request.
+   *
+   * @param principal current Principal.
+   * @return {@link CommandResult} object filled by path to desired JSP file and filled model for
+   *     JSP page.
+   */
+  private CommandResult getRegister(Principal principal){
     SignUpModel signUpModel = new SignUpModel();
     signUpModel.setPrincipal(principal);
     return new CommandResult(CoursiraJspPath.SIGN_IN, signUpModel);
   }
 
+  /**
+   * This method is used to process POST method of request which is being processing by current
+   * Command. It parses from request parameters "email", "passwordFirst", "passwordSecond",
+   * "firstName", "lastName" values to {@link String} and "role" value to {@link Role}. After
+   * parsing method tries register new. When it is not possible, explanatory message is sent to
+   * client.
+   *
+   * @param principal current Principal.
+   * @return {@link CommandResult} object filled by {@code URL_TO_REDIRECT} when sign-in procedure
+   *     succeed, or filled by by path to desired JSP file and filled model for JSP page when
+   *     sign-in * procedure fails.
+   * @throws CommandException when server trouble occurs.
+   */
   private CommandResult postRegister(
       Principal principal, Map<String, String[]> queryParams, String urlToGoFromEmail)
       throws CommandException, ClientCommandException {
-    // check if fiels is present
+    // check if fields is present
     String email =
         CommandUtils.parseOptionalString(queryParams, "email")
             .orElseThrow(() -> new ClientCommandException("Value <email> must be defined"));

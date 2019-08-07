@@ -37,8 +37,8 @@ public class PrincipalService {
           + "Follow link placed below to confirm your registration.\n"
           + "Attention: Current link is active for %d hours. If you don't use it, your registration will be canceled:\n"
           + " %s";
-  private Duration sessionLoginDuration;
-  private Duration sessionAnonymousDuration;
+  private final Duration sessionLoginDuration;
+  private final Duration sessionAnonymousDuration;
   private final UserDao userDao;
   private final HashMethod hashMethod;
   private final MailSender mailSender;
@@ -61,7 +61,8 @@ public class PrincipalService {
    * All active sessions are kept in database with the purpose to provide stateless application.
    * When {@link User} is defined, his session time doesn't update. If Session record wasn't found
    * in db, method creates new session record in db and links current session to {@link Role}
-   * Anonymous with session time duration {@code sessionAnonymousDuration}. Returns current {@link Principal}
+   * Anonymous with session time duration {@code sessionAnonymousDuration}. Returns current {@link
+   * Principal}
    *
    * @param sessionId value of current session's Id.
    * @return {@link Principal} principal
@@ -82,7 +83,7 @@ public class PrincipalService {
           session.setUserId(DEFAULT_PRINCIPAL_USER_ID);
           session.setExpDate(Instant.now().plus(sessionAnonymousDuration));
           userDao.updateSession(session);
-          logger.debug("Session record was linked to ANONYMOUS user");
+          logger.debug("Session expired. Session record was linked to ANONYMOUS user");
           principal =
               userDao
                   .selectPrincipalBySessionId(sessionId)
@@ -159,7 +160,7 @@ public class PrincipalService {
         logger.debug("Password didn't fit the db record.");
         throw new ClientServiceException(bundle.getString("WRONG_LOGIN_AND_PASSWORD"));
       }
-      //login and pass checked. increase session time.
+      // login and pass checked. increase session time.
       logger.debug("Password checked.");
       Session session = previous.getSession();
       session.setUserId(user.getId());
@@ -174,16 +175,17 @@ public class PrincipalService {
   }
 
   /**
-   * Method updates currant session record in database by linking it to default Anonuymous user.
-   * Returns {@link Principal} with default anonuymous {@link Role}.
+   * Method updates currant session record in database by linking it to default Anonymous user.
+   * Returns {@link Principal} with default anonymous {@link Role}.
    *
    * @param current {@link Principal} current User's principal.
-   * @return updated {@link Principal} with default anonuymous {@link Role}.
+   * @return updated {@link Principal} with default anonymous {@link Role}.
    * @throws ServiceException when attempt to logout fails.
    */
   public Principal logout(Principal current) throws ServiceException {
     Session session = current.getSession();
     session.setUserId(DEFAULT_PRINCIPAL_USER_ID);
+    session.setExpDate(Instant.now().plus(sessionAnonymousDuration));
 
     try {
       userDao.updateSession(session);
@@ -336,7 +338,7 @@ public class PrincipalService {
       userDao.updateSession(session);
     } catch (DaoException e) {
       logger.info("Dao exception");
-      throw new ServiceException(e.getMessage());
+      throw new ServiceException(e);
     }
     return principal;
   }

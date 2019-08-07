@@ -1,6 +1,8 @@
 package by.epam.coursira.model;
 
 import by.epam.coursira.entity.Role;
+import java.util.Objects;
+import java.util.StringJoiner;
 
 public class SignUpModel extends JspModelAbstract {
   private String errorDataMessage;
@@ -47,5 +49,34 @@ public class SignUpModel extends JspModelAbstract {
 
   public void setEmail(String email) {
     this.email = email;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    SignUpModel that = (SignUpModel) o;
+    return Objects.equals(errorDataMessage, that.errorDataMessage)
+        && Objects.equals(firstName, that.firstName)
+        && Objects.equals(lastName, that.lastName)
+        && role == that.role
+        && Objects.equals(email, that.email);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), errorDataMessage, firstName, lastName, role, email);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", SignUpModel.class.getSimpleName() + "[", "]")
+        .add("errorDataMessage='" + errorDataMessage + "'")
+        .add("firstName='" + firstName + "'")
+        .add("lastName='" + lastName + "'")
+        .add("role=" + role)
+        .add("email='" + email + "'")
+        .toString();
   }
 }

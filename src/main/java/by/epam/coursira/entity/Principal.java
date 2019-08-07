@@ -33,9 +33,10 @@ public class Principal extends AbstractEntity {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Principal)) return false;
+    if (o == null || getClass() != o.getClass()) return false;
     Principal principal = (Principal) o;
-    return Objects.equals(session, principal.session) && Objects.equals(user, principal.user);
+    return Objects.equals(session, principal.session) &&
+      Objects.equals(user, principal.user);
   }
 
   @Override

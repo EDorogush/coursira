@@ -40,7 +40,7 @@ public final class CommandUtils {
             .filter(r -> r.length > 0)
             .map(r -> r[0]);
     logger.debug(
-        "String {} value parsed successfully {}", paramName, parsedValue.orElse("not defined"));
+        "String {} value parsed {}", paramName, parsedValue.orElse("not defined"));
     return parsedValue;
   }
 

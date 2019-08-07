@@ -19,7 +19,7 @@ public class CommandFactory {
   }
 
   /**
-   * This method matches path, specified in argument with patterns from {@link CommandAbstract} in
+   * This method matches path, specified in argument with patterns from {@link Command} in
    * {@code commandList}. When first matching found procedure stops and return {@link Command}
    * object with such {@link Pattern}. Throw PageNotFoundException when no matcher found.
    *

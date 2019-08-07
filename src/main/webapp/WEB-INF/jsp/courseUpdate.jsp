@@ -64,7 +64,7 @@
         <label><fmt:message key="addLecturer"/></label>
         <select name="lecturerId">
           <option value="0"></option>
-          <core:forEach items="${model.alllecturers}" var="lecturer">
+          <core:forEach items="${model.lecturers}" var="lecturer">
             <option value="${lecturer.id}">${lecturer.firstName} ${lecturer.lastName}</option>
           </core:forEach>
         </select>

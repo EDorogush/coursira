@@ -1,5 +1,6 @@
 package by.epam.coursira.model;
 
+import java.util.Objects;
 import java.util.StringJoiner;
 
 public class IndexModel extends JspModelAbstract {
@@ -39,5 +40,21 @@ public class IndexModel extends JspModelAbstract {
         .add("lecturerAmount=" + lecturerAmount)
         .add("studentsAmount=" + studentsAmount)
         .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    IndexModel that = (IndexModel) o;
+    return coursesAmount == that.coursesAmount &&
+      lecturerAmount == that.lecturerAmount &&
+      studentsAmount == that.studentsAmount;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), coursesAmount, lecturerAmount, studentsAmount);
   }
 }

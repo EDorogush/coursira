@@ -13,9 +13,6 @@ public final class CoursiraJspPath {
   public static final String UPDATE_PERSONAL = JSP_ROOT_DIR + "personalUpdate.jsp";
   public static final String SIGN_IN = JSP_ROOT_DIR + "signUp.jsp";
   public static final String REGISTRATION_CONFIRM = JSP_ROOT_DIR + "registrationComplete.jsp";
-  public static final String PAGE_NOT_FOUND = JSP_ROOT_DIR + "error404.jsp";
-  public static final String ERROR = JSP_ROOT_DIR + "error.jsp";
-  public static final String CLIENT_ERROR = JSP_ROOT_DIR + "errorClient.jsp";
 
 
   private CoursiraJspPath() {}

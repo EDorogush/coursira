@@ -1,6 +1,7 @@
 package by.epam.coursira.command;
 
 import by.epam.coursira.model.JspModelAbstract;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
@@ -65,5 +66,21 @@ public class CommandResult {
         .add("jspModel=" + jspModel)
         .add("pageToRedirect='" + pageToRedirect + "'")
         .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CommandResult that = (CommandResult) o;
+    return isForward == that.isForward &&
+      Objects.equals(jsp, that.jsp) &&
+      Objects.equals(jspModel, that.jspModel) &&
+      Objects.equals(pageToRedirect, that.pageToRedirect);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(isForward, jsp, jspModel, pageToRedirect);
   }
 }

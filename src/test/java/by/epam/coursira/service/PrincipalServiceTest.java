@@ -60,7 +60,14 @@ public class PrincipalServiceTest {
     Duration sessionLoginDuration = Duration.ofHours(2);
     Duration sessionAnonymousDuration = Duration.ofHours(1);
 
-    service = new PrincipalService(mockUserDao, sessionLoginDuration,sessionAnonymousDuration, mockBCryptHashing, mockMailSender);
+
+    service =
+        new PrincipalService(
+            mockUserDao,
+            sessionLoginDuration,
+            sessionAnonymousDuration,
+            mockBCryptHashing,
+            mockMailSender);
 
     userStudent =
         new User.Builder()

@@ -189,20 +189,20 @@ public class User extends AbstractEntity {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof User)) return false;
+    if (o == null || getClass() != o.getClass()) return false;
     User user = (User) o;
-    return id == user.id
-        && age == user.age
-        && Objects.equals(email, user.email)
-        && Objects.equals(password, user.password)
-        && Objects.equals(firstName, user.firstName)
-        && Objects.equals(lastName, user.lastName)
-        && role == user.role
-        && Objects.equals(organization, user.organization)
-        && Objects.equals(interests, user.interests)
-        && Objects.equals(base64Image, user.base64Image)
-        && Objects.equals(registrationCode, user.registrationCode)
-        && Objects.equals(registrationExpDate, user.registrationExpDate);
+    return id == user.id &&
+      Objects.equals(email, user.email) &&
+      Objects.equals(password, user.password) &&
+      Objects.equals(firstName, user.firstName) &&
+      Objects.equals(lastName, user.lastName) &&
+      role == user.role &&
+      Objects.equals(organization, user.organization) &&
+      Objects.equals(age, user.age) &&
+      Objects.equals(interests, user.interests) &&
+      Objects.equals(base64Image, user.base64Image) &&
+      Objects.equals(registrationCode, user.registrationCode) &&
+      Objects.equals(registrationExpDate, user.registrationExpDate);
   }
 
   @Override
@@ -234,7 +234,7 @@ public class User extends AbstractEntity {
         .add("organization='" + organization + "'")
         .add("age=" + age)
         .add("interests='" + interests + "'")
-        //      .add("base64Image='" + base64Image+ "'")
+        .add("base64Image='" + !Objects.isNull(base64Image) + "'")
         .add("registrationCode='" + registrationCode + "'")
         .add("registrationExpDate=" + registrationExpDate)
         .toString();

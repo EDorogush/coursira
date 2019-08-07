@@ -1,5 +1,8 @@
 package by.epam.coursira.model;
 
+import java.util.Objects;
+import java.util.StringJoiner;
+
 public class RegistrationCompletedModel extends JspModelAbstract {
   private boolean activate;
   private String textMessage;
@@ -18,5 +21,28 @@ public class RegistrationCompletedModel extends JspModelAbstract {
 
   public void setTextMessage(String textMessage) {
     this.textMessage = textMessage;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    RegistrationCompletedModel that = (RegistrationCompletedModel) o;
+    return activate == that.activate &&
+      Objects.equals(textMessage, that.textMessage);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), activate, textMessage);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", RegistrationCompletedModel.class.getSimpleName() + "[", "]")
+      .add("activate=" + activate)
+      .add("textMessage='" + textMessage + "'")
+      .toString();
   }
 }

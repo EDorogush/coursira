@@ -2,6 +2,7 @@ package by.epam.coursira.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 public class Course extends AbstractEntity {
@@ -96,6 +97,26 @@ public class Course extends AbstractEntity {
         .add("studentsAmount=" + studentsAmount)
         .add("lecturers=" + lecturers)
         .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Course course = (Course) o;
+    return id == course.id &&
+      capacity == course.capacity &&
+      studentsAmount == course.studentsAmount &&
+      ready == course.ready &&
+      Objects.equals(title, course.title) &&
+      Objects.equals(description, course.description) &&
+      Objects.equals(lecturers, course.lecturers) &&
+      Objects.equals(lectures, course.lectures);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, title, description, capacity, studentsAmount, ready, lecturers, lectures);
   }
 
   public static class Builder {
