@@ -256,7 +256,8 @@ public class CourseDao {
           + "       JOIN course_lecturers cl ON l.course_lecturer_id = cl.entry_id\n"
           + "       JOIN courses c ON cl.course_id = c.course_id\n"
           + "WHERE cl.lecturer_id = ? AND c.ready\n"
-          + "ORDER BY time_start ASC;";
+          + "ORDER BY time_start ASC\n"
+          + "LIMIT ? OFFSET ?;\n";
 
   private static final String SQL_SELECT_FUTURE_SCHEDULE_BY_LECTURER_ID =
       "SELECT l.lecture_id,\n"
@@ -492,11 +493,14 @@ public class CourseDao {
     }
   }
 
-  public List<Lecture> selectScheduleByLecturerId(int lecturerId) throws DaoException {
+  public List<Lecture> selectScheduleByLecturerId(int lecturerId, int limit, int offset)
+      throws DaoException {
     List<Lecture> lectureList = new ArrayList<>();
     try (Connection connection = pool.getConnection();
         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_SCHEDULE_BY_LECTURER_ID)) {
       ps.setInt(1, lecturerId);
+      ps.setInt(2, limit);
+      ps.setInt(3, offset);
       ResultSet rs = ps.executeQuery();
       while (rs.next()) {
         Lecture current =
@@ -807,9 +811,6 @@ public class CourseDao {
       throw new DaoException(e);
     }
   }
-
-
-
 
   private List<Course> parseResultSetToCoursesList(ResultSet rs) throws SQLException {
     List<Course> courses = new ArrayList<>();

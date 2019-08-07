@@ -106,12 +106,12 @@ public class UserServiceTest {
   }
 
   @Test
-  public void testUpdateUserPhotoWhenWrongRoleThrowServiceException() {
+  public void testUpdateUserPhotoWhenWrongRoleThrowClientServiceException() {
     // given
     Principal current = new Principal(session, userAnonymous);
     Part mockPhoto = mock(Part.class);
     // when
-    assertThrows(ServiceException.class, () -> userService.updateUserPhoto(current, mockPhoto));
+    assertThrows(ClientServiceException.class, () -> userService.updateUserPhoto(current, mockPhoto));
   }
 
   @Test
@@ -144,7 +144,7 @@ public class UserServiceTest {
   }
 
   @Test
-  public void testUpdateUserDataWhenWrongRoleThrowServiceException() {
+  public void testUpdateUserDataWhenWrongRoleThrowClientServiceException() {
     // given
     Principal current = new Principal(session, userAnonymous);
     User updated =
@@ -158,10 +158,9 @@ public class UserServiceTest {
             .setOrganization("uOrg")
             .setInterests("uInter")
             .build();
-    Principal expected = new Principal(session, updated);
     // when
     assertThrows(
-        ServiceException.class,
+        ClientServiceException.class,
         () ->
             userService.updateUserData(
                 current,

@@ -56,7 +56,7 @@ public class CourseService {
    * @return {@code int} the number of courses.
    * @throws ServiceException then principal's role is Anonymous or attempt to get data fails.
    */
-  public int countCourses(Principal principal) throws ServiceException {
+  public int countCourses(Principal principal) throws ServiceException, ClientServiceException {
     logger.debug("count courses");
     final int count;
     try {
@@ -70,7 +70,7 @@ public class CourseService {
         default:
           Locale.setDefault(principal.getSession().getLanguage().getLocale());
           ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-          throw new ServiceException(bundle.getString("ACCESS_DENIED"));
+          throw new ClientServiceException(bundle.getString("ACCESS_DENIED"));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -238,7 +238,8 @@ public class CourseService {
     try {
       switch (principal.getUser().getRole()) {
         case LECTURER:
-          schedule = courseDao.selectScheduleByLecturerId(principal.getUser().getId());
+          schedule =
+              courseDao.selectScheduleByLecturerId(principal.getUser().getId(), limit, offset);
           break;
         case STUDENT:
           schedule =
@@ -248,7 +249,7 @@ public class CourseService {
           ResourceBundle bundle =
               ResourceBundle.getBundle(
                   "errorMessages", principal.getSession().getLanguage().getLocale());
-          throw new ServiceException(bundle.getString("ACCESS_DENIED"));
+          throw new ClientServiceException(bundle.getString("ACCESS_DENIED"));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);

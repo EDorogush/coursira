@@ -35,15 +35,16 @@ public class UserService {
    * @param principal {@link Principal} current principal
    * @param image {@link Part} image. must be of image type.
    * @return {@link Principal} with updated field;
-   * @throws ClientServiceException when {@link Part} image is incorrect.
-   * @throws ServiceException when user has role = Role.ANONYMOUS or attempt to update fails.
+   * @throws ClientServiceException when {@link Part} image is incorrect, or when user has role =
+   *     Role.ANONYMOUS
+   * @throws ServiceException attempt to update fails.
    */
   public Principal updateUserPhoto(Principal principal, Part image)
       throws ClientServiceException, ServiceException {
     final Principal current;
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
-      throw new ServiceException("Access denied.");
+      throw new ClientServiceException("Access denied.");
     }
     ValidationHelper.checkImage(image, currentLocale);
     try (InputStream imageInputStream = image.getInputStream()) {
@@ -81,7 +82,9 @@ public class UserService {
       @Nullable String interests)
       throws ClientServiceException, ServiceException {
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
-      throw new ServiceException("Access denied.");
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientServiceException(bundle.getString("ACCESS_DENIED"));
     }
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     firstName = ValidationHelper.validateText(firstName, currentLocale, "First Name");

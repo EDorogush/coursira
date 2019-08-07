@@ -69,7 +69,7 @@ gretty {
   initParameter('mail.smtp.starttls.enable', 'true')
 
   initParameter('paginationLimit', '3')
-  initParameter('cleanerInitialDelay', '1')
+  initParameter('cleanerInitialDelay', '0')
   initParameter('cleanerDelay', '1')
 }
 

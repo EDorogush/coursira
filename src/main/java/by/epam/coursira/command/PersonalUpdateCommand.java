@@ -8,12 +8,13 @@ import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.UserUpdateModel;
-import by.epam.coursira.service.CourseService;
 import by.epam.coursira.service.UserService;
 import by.epam.coursira.servlet.CoursiraJspPath;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -41,13 +42,10 @@ public class PersonalUpdateCommand implements Command {
 
   @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws ClientCommandException, PageNotFoundException,CommandException {
+      throws ClientCommandException, CommandException {
     logger.debug("In PersonalUpdateCommand");
     switch (request.getMethod()) {
       case "GET":
-        if (principal.getUser().getRole() == Role.ANONYMOUS) {
-          throw new PageNotFoundException();
-        }
         return getPersonalUpdate(principal);
       case "POST":
         if (request.getContentType().contains("multipart/form-data")) {
@@ -68,7 +66,12 @@ public class PersonalUpdateCommand implements Command {
     }
   }
 
-  private CommandResult getPersonalUpdate(Principal principal) {
+  private CommandResult getPersonalUpdate(Principal principal) throws ClientCommandException {
+    if (principal.getUser().getRole() == Role.ANONYMOUS) {
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+    }
     UserUpdateModel updateModel = new UserUpdateModel();
     updateModel.setPrincipal(principal);
     return new CommandResult(CoursiraJspPath.UPDATE_PERSONAL, updateModel);
@@ -76,8 +79,6 @@ public class PersonalUpdateCommand implements Command {
 
   private CommandResult postPersonalUpdate(Principal principal, Map<String, String[]> queryParams)
       throws CommandException, ClientCommandException {
-    // todo: ask about final init
-    logger.info("checking forms");
     String firstName =
         CommandUtils.parseOptionalString(queryParams, "firstName")
             .orElseThrow(() -> new ClientCommandException("Value <FirstName> must be define"));

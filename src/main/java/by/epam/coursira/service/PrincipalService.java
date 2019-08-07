@@ -53,7 +53,7 @@ public class PrincipalService {
     this.hashMethod = hashMethod;
     this.mailSender = mailSender;
     this.sessionAnonymousDuration = sessionAnonymousDuration;
-    this.sessionLoginDuration = sessionLoginDuration;
+   this.sessionLoginDuration = sessionLoginDuration;
   }
 
   /**

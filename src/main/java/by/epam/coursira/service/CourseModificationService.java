@@ -193,7 +193,7 @@ public class CourseModificationService {
               .build();
 
       List<Lecture> scheduleLecturer =
-          courseDao.selectScheduleByLecturerId(principal.getUser().getId());
+          courseDao.selectScheduleByLecturerId(principal.getUser().getId(), Integer.MAX_VALUE, 0);
       scheduleLecturer.add(createdLecture);
       ValidationHelper.checkScheduleHaveCrossing(scheduleLecturer, currentLocale);
       // check crossing within course schedule
@@ -242,7 +242,7 @@ public class CourseModificationService {
               .withLecturer(new Lecturer(user.getId(), user.getFirstName(), user.getLastName()))
               .build();
       List<Lecture> scheduleLecturer =
-          courseDao.selectScheduleByLecturerId(principal.getUser().getId());
+          courseDao.selectScheduleByLecturerId(principal.getUser().getId(), Integer.MAX_VALUE, 0);
 
       scheduleLecturer =
           scheduleLecturer.stream()

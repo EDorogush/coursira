@@ -21,7 +21,12 @@ import org.apache.logging.log4j.Logger;
  * Class is intended to process client's requests to resource corresponding to "/sign" pattern. When
  * POST request executed, request parameters must contain "email" and "passwordFirst" ,
  * "passwordSecond", "firstName", "lastName", "role" values. Otherwise {@link
- * ClientCommandException} will be thrown.
+ * ClientCommandException} will be thrown. When registration process finish successfully, client is
+ * redirected to "/registration?email=true" page with additional instructions. The registration
+ * confirm message is also sent to users email with special request parameter "code" inside. See
+ * {@link RegistrationConfirmCommand} for details.
+ *
+ * @see RegistrationConfirmCommand
  */
 public class RegistrationCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
@@ -78,7 +83,7 @@ public class RegistrationCommand implements Command {
    * @return {@link CommandResult} object filled by path to desired JSP file and filled model for
    *     JSP page.
    */
-  private CommandResult getRegister(Principal principal){
+  private CommandResult getRegister(Principal principal) {
     SignUpModel signUpModel = new SignUpModel();
     signUpModel.setPrincipal(principal);
     return new CommandResult(CoursiraJspPath.SIGN_IN, signUpModel);
