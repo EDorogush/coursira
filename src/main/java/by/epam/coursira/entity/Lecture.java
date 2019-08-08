@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class Lecture extends AbstractEntity {
+public class Lecture {
   private int id;
   private String description;
   private Instant startTime;
@@ -117,14 +117,14 @@ public class Lecture extends AbstractEntity {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof Lecture)) return false;
     Lecture lecture = (Lecture) o;
-    return id == lecture.id &&
-      courseId == lecture.courseId &&
-      Objects.equals(description, lecture.description) &&
-      Objects.equals(startTime, lecture.startTime) &&
-      Objects.equals(endTime, lecture.endTime) &&
-      Objects.equals(lecturer, lecture.lecturer);
+    return id == lecture.id
+        && courseId == lecture.courseId
+        && Objects.equals(description, lecture.description)
+        && Objects.equals(startTime, lecture.startTime)
+        && Objects.equals(endTime, lecture.endTime)
+        && Objects.equals(lecturer, lecture.lecturer);
   }
 
   @Override

@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class User extends AbstractEntity {
+public class User {
   private int id;
   private String email;
   private String password;
@@ -189,20 +189,20 @@ public class User extends AbstractEntity {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof User)) return false;
     User user = (User) o;
-    return id == user.id &&
-      Objects.equals(email, user.email) &&
-      Objects.equals(password, user.password) &&
-      Objects.equals(firstName, user.firstName) &&
-      Objects.equals(lastName, user.lastName) &&
-      role == user.role &&
-      Objects.equals(organization, user.organization) &&
-      Objects.equals(age, user.age) &&
-      Objects.equals(interests, user.interests) &&
-      Objects.equals(base64Image, user.base64Image) &&
-      Objects.equals(registrationCode, user.registrationCode) &&
-      Objects.equals(registrationExpDate, user.registrationExpDate);
+    return id == user.id
+        && Objects.equals(email, user.email)
+        && Objects.equals(password, user.password)
+        && Objects.equals(firstName, user.firstName)
+        && Objects.equals(lastName, user.lastName)
+        && role == user.role
+        && Objects.equals(organization, user.organization)
+        && Objects.equals(age, user.age)
+        && Objects.equals(interests, user.interests)
+        && Objects.equals(base64Image, user.base64Image)
+        && Objects.equals(registrationCode, user.registrationCode)
+        && Objects.equals(registrationExpDate, user.registrationExpDate);
   }
 
   @Override

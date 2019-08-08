@@ -83,8 +83,8 @@ public class Session {
       return this;
     }
 
-    public Builder setZoneOffSet(ZoneOffset zoneOffSet) {
-      session.zoneOffset = zoneOffSet;
+    public Builder setZoneOffSet(ZoneOffset zoneOffset) {
+      session.zoneOffset = zoneOffset;
       return this;
     }
   }
@@ -92,7 +92,7 @@ public class Session {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof Session)) return false;
     Session session = (Session) o;
     return userId == session.userId &&
       Objects.equals(id, session.id) &&

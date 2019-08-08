@@ -10,7 +10,6 @@ import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.PersonalModel;
 import by.epam.coursira.service.CourseService;
-import by.epam.coursira.service.UserService;
 import by.epam.coursira.servlet.CoursiraJspPath;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +23,12 @@ import org.apache.logging.log4j.Logger;
 public class PersonalPageCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
   private static final Pattern resourcePattern = Pattern.compile("/personal");
-  private final int PAGINATION_LIMIT;
+  private final int paginationLimit;
   private final CourseService courseService;
 
   public PersonalPageCommand(CourseService courseService, int paginationLimit) {
     this.courseService = courseService;
-    this.PAGINATION_LIMIT = paginationLimit;
+    this.paginationLimit = paginationLimit;
   }
 
   @Override
@@ -55,14 +54,14 @@ public class PersonalPageCommand implements Command {
       throws CommandException, ClientCommandException {
     PersonalModel personalModel = new PersonalModel();
     int pageIndex = CommandUtils.parseOptionalInt(queryParams, "page").orElse(1);
-    final int offset = (pageIndex - 1) * PAGINATION_LIMIT;
+    final int offset = (pageIndex - 1) * paginationLimit;
     try {
 
       personalModel.setPrincipal(principal);
       personalModel.setCourseAmount(courseService.countCourses(principal));
       // get schedule
-      List<Lecture> schedule = courseService.viewSchedule(principal, PAGINATION_LIMIT + 1, offset);
-      personalModel.setHasNextPage(CommandUtils.trimToLimit(schedule, PAGINATION_LIMIT));
+      List<Lecture> schedule = courseService.viewSchedule(principal, paginationLimit + 1, offset);
+      personalModel.setHasNextPage(CommandUtils.trimToLimit(schedule, paginationLimit));
       personalModel.setSchedule(schedule);
       personalModel.setCurrentPageIndex(pageIndex);
     } catch (ServiceException e) {

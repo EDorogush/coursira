@@ -8,6 +8,7 @@ import by.epam.coursira.entity.Lecturer;
 import by.epam.coursira.entity.Principal;
 import by.epam.coursira.entity.Role;
 import by.epam.coursira.entity.User;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.ServiceException;
@@ -22,6 +23,7 @@ import javax.mail.MessagingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/** Class is intended for procedures are related to study course modification */
 public class CourseModificationService {
   private static final Logger logger = LogManager.getLogger();
   private final CourseDao courseDao;
@@ -29,6 +31,14 @@ public class CourseModificationService {
   private final MailSender mailSender;
   private static final String INVITATION_MESSAGE = "You've been invited to course";
   private static final String INVITATION_SUBJECT = "Invitation";
+  private static final String DELETING_MESSAGE = "You were deleted from course";
+  private static final String DELETING_SUBJECT = "Information";
+  private static final String RESOURCE_BUNDLE_ERROR_MESSAGE = "errorMessages";
+  private static final String RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED = "ACCESS_DENIED";
+  private static final String RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED = "UPDATE_ACCESS_DENIED";
+  private static final String RESOURCE_BUNDLE_MESSAGE_WRONG_LECTURER_ID = "WRONG_LECTURER_ID";
+
+  private static final String COURSE_FIELD_DESCRIPTION = "description";
 
   public CourseModificationService(CourseDao courseDao, UserDao userDao, MailSender mailSender) {
     this.userDao = userDao;
@@ -37,26 +47,30 @@ public class CourseModificationService {
   }
 
   /**
-   * Creates empty course, without lectures
+   * Method for creating new course
    *
-   * @param principal
-   * @param title
-   * @param description
-   * @param capacity
-   * @return
-   * @throws ClientServiceException
-   * @throws ServiceException
+   * @param principal current principal
+   * @param title new course's title
+   * @param description new course's description
+   * @param capacity new course's capacity
+   * @return new course's id.
+   * @throws ClientServiceException when input parameters incorrect
+   * @throws ServiceException when server errors occurs
+   * @throws AccessDeniedException then principal's role is not LECTURER
    */
   public int createCourse(Principal principal, String title, String description, int capacity)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     User user = principal.getUser();
     if (user.getRole() != Role.LECTURER) {
-      throw new ServiceException("access denied");
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+      throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     }
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
-    //    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", currentLocale);
     title = ValidationHelper.validateText(title, currentLocale, "title");
-    description = ValidationHelper.validateText(description, currentLocale, "description");
+    description =
+        ValidationHelper.validateText(description, currentLocale, COURSE_FIELD_DESCRIPTION);
     ValidationHelper.checkCourseCapacity(capacity, currentLocale);
 
     // note: de do not need lecturer name here
@@ -69,7 +83,7 @@ public class CourseModificationService {
             .withCapacity(capacity)
             .withStudentsAmount(0)
             .withLecturers(lecturers)
-            .withLectures(new ArrayList<Lecture>())
+            .withLectures(new ArrayList<>())
             .build();
     try {
       return courseDao.insertCourse(course);
@@ -82,28 +96,32 @@ public class CourseModificationService {
    * Method updates title, description, capacity of selected course. this method is avaliable for
    * Lecturers, who reads this course.
    *
-   * @param principal
-   * @param courseId
-   * @param title
-   * @param description
-   * @param capacity
-   * @throws ClientServiceException
-   * @throws ServiceException
+   * @param principal current principal
+   * @param courseId current course's id
+   * @param title new title
+   * @param description new description value
+   * @param capacity new capacity
+   * @throws ClientServiceException when input parameters incorrect
+   * @throws ServiceException when server errors occurs
+   * @throws AccessDeniedException then user is not allowed to update current course
    */
   public void updateCourse(
       Principal principal, int courseId, String title, String description, int capacity)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     // check permission! must be in PrincipalList
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
-    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", currentLocale);
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
     try {
       if (!courseDao.isExistsCourseInLecturerUpdateList(courseId, principal.getUser().getId())) {
-        throw new ServiceException(bundle.getString("UPDATE_ACCESS_DENIED"));
+        throw new AccessDeniedException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED));
       }
-      logger.debug("access confirmed");
+      logger.debug(
+          "access to update course {} by {}  confirmed", courseId, principal.getUser().getId());
       // check values
       title = ValidationHelper.validateText(title, currentLocale, "title");
-      description = ValidationHelper.validateText(description, currentLocale, "description");
+      description =
+          ValidationHelper.validateText(description, currentLocale, COURSE_FIELD_DESCRIPTION);
       ValidationHelper.checkCourseCapacity(capacity, currentLocale);
       Course course =
           new Course.Builder()
@@ -119,19 +137,28 @@ public class CourseModificationService {
   }
 
   public void addLecturerToCourse(Principal principal, int courseId, int invitedLecturerId)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
-    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", currentLocale);
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
     try {
       if (!courseDao.isExistsCourseInLecturerUpdateList(courseId, principal.getUser().getId())) {
-        throw new ServiceException(bundle.getString("UPDATE_ACCESS_DENIED"));
+        throw new AccessDeniedException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED));
+      }
+      if (principal.getUser().getId() == invitedLecturerId) {
+        // lecturer can't add himself
+        throw new ClientServiceException(bundle.getString("CANT_ADD_YOURSELF"));
       }
       User invitedUser =
           userDao
               .selectUserById(invitedLecturerId)
-              .orElseThrow(() -> new ClientServiceException(bundle.getString("WRONG_LECTURER_ID")));
+              .orElseThrow(
+                  () ->
+                      new ClientServiceException(
+                          bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LECTURER_ID)));
       if (invitedUser.getRole() != Role.LECTURER) {
-        throw new ClientServiceException(bundle.getString("WRONG_LECTURER_ID"));
+        throw new ClientServiceException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LECTURER_ID));
       }
       courseDao.upsertCourseLecturer(courseId, invitedLecturerId);
       try {
@@ -139,6 +166,49 @@ public class CourseModificationService {
       } catch (MessagingException e) {
         logger.error(e.getMessage());
         courseDao.deleteCourseLecturer(courseId, invitedLecturerId);
+        throw new ClientServiceException(bundle.getString("CANT_SEND_MESSAGE"));
+      }
+
+    } catch (DaoException e) {
+      throw new ServiceException(e);
+    }
+  }
+
+  public void deleteLecturerFromCourse(Principal principal, int courseId, int lecturerId)
+      throws ClientServiceException, ServiceException, AccessDeniedException {
+    Locale currentLocale = principal.getSession().getLanguage().getLocale();
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
+    try {
+      // check principal access
+      if (!courseDao.isExistsCourseInLecturerUpdateList(courseId, principal.getUser().getId())) {
+        throw new AccessDeniedException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED));
+      }
+      if (principal.getUser().getId() == lecturerId) {
+        // lecturer can't delete himself
+        throw new ClientServiceException(bundle.getString("CANT_DELETE_YOURSELF"));
+      }
+      // check if current course is in deleted lecturer list
+      if (!courseDao.isExistsCourseInLecturerUpdateList(courseId, lecturerId)) {
+        throw new ClientServiceException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LECTURER_ID));
+      }
+      // try to delete.
+      if (courseDao.deleteCourseLecturer(courseId, lecturerId) == 0) {
+        throw new ClientServiceException(bundle.getString("CANT_DELETE_LECTURER"));
+      }
+      // send email to lecturer
+      try {
+        User invitedUser =
+            userDao
+                .selectUserById(lecturerId)
+                .orElseThrow(
+                    () ->
+                        new ClientServiceException(
+                            bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LECTURER_ID)));
+        mailSender.sendMail(invitedUser.getEmail(), DELETING_SUBJECT, DELETING_MESSAGE);
+      } catch (MessagingException e) {
+        logger.error(e.getMessage());
         throw new ClientServiceException(bundle.getString("CANT_SEND_MESSAGE"));
       }
 
@@ -155,32 +225,28 @@ public class CourseModificationService {
     }
   }
 
-  public boolean isAllowToUpdateLecture(Principal principal, int lectureId)
-      throws ServiceException {
-    try {
-      return courseDao.isExistsLectureInLecturerUpdateList(lectureId, principal.getUser().getId());
-    } catch (DaoException e) {
-      throw new ServiceException(e);
-    }
-  }
-
   public void createLecture(
       Principal principal,
       int courseId,
       String description,
       Instant lectureBegin,
       Instant lectureFinish)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     User user = principal.getUser();
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
-    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", currentLocale);
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
     try {
       if (!courseDao.isExistsCourseInLecturerUpdateList(courseId, user.getId())) {
-        throw new ServiceException(bundle.getString("UPDATE_ACCESS_DENIED"));
+        throw new AccessDeniedException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED));
       }
-      logger.debug("access confirmed");
+      logger.debug(
+          "access to create lecture in course {} by lecturer {} confirmed",
+          courseId,
+          principal.getUser().getId());
       // check values
-      description = ValidationHelper.validateText(description, currentLocale, "description");
+      description =
+          ValidationHelper.validateText(description, currentLocale, COURSE_FIELD_DESCRIPTION);
       ValidationHelper.checkLectureDatesTimes(lectureBegin, lectureFinish, currentLocale);
       // check crossing within lecturer schedule
       Lecture createdLecture =
@@ -220,17 +286,19 @@ public class CourseModificationService {
       String description,
       Instant lectureBegin,
       Instant lectureFinish)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     User user = principal.getUser();
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
-    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", currentLocale);
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
     try {
       if (!courseDao.isExistsLectureInLecturerUpdateList(lectureId, user.getId())) {
-        throw new ServiceException(bundle.getString("UPDATE_ACCESS_DENIED"));
+        throw new AccessDeniedException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED));
       }
       logger.debug("access confirmed");
       // check values
-      description = ValidationHelper.validateText(description, currentLocale, "description");
+      description =
+          ValidationHelper.validateText(description, currentLocale, COURSE_FIELD_DESCRIPTION);
       ValidationHelper.checkLectureDatesTimes(lectureBegin, lectureFinish, currentLocale);
       // check crossing within lecturer schedule
       Lecture current =
@@ -246,7 +314,7 @@ public class CourseModificationService {
 
       scheduleLecturer =
           scheduleLecturer.stream()
-              .filter((lecture) -> lecture.getId() != lectureId)
+              .filter(lecture -> lecture.getId() != lectureId)
               .collect(Collectors.toList());
       scheduleLecturer.add(current);
       ValidationHelper.checkScheduleHaveCrossing(scheduleLecturer, currentLocale);
@@ -258,7 +326,7 @@ public class CourseModificationService {
               .getLectures();
       courseSchedule =
           courseSchedule.stream()
-              .filter((lecture -> lecture.getId() != lectureId))
+              .filter(lecture -> lecture.getId() != lectureId)
               .collect(Collectors.toList());
 
       courseSchedule.add(current);
@@ -273,12 +341,13 @@ public class CourseModificationService {
   }
 
   public void deleteLecture(Principal principal, int lectureId)
-      throws ClientServiceException, ServiceException {
+      throws ServiceException, AccessDeniedException {
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
-    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", currentLocale);
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
     try {
       if (!courseDao.isExistsLectureInLecturerUpdateList(lectureId, principal.getUser().getId())) {
-        throw new ClientServiceException(bundle.getString("UPDATE_ACCESS_DENIED"));
+        throw new AccessDeniedException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED));
       }
       logger.debug("access confirmed");
       courseDao.deleteLecture(lectureId);
@@ -288,12 +357,13 @@ public class CourseModificationService {
   }
 
   public void activateCourse(Principal principal, int courseId)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
-    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", currentLocale);
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
     try {
       if (!courseDao.isExistsCourseInLecturerUpdateList(courseId, principal.getUser().getId())) {
-        throw new ServiceException(bundle.getString("UPDATE_ACCESS_DENIED"));
+        throw new AccessDeniedException(
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED));
       }
       boolean isActivate = courseDao.updateCourseOnSetReady(courseId);
       if (!isActivate) {

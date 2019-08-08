@@ -18,6 +18,10 @@ import org.apache.logging.log4j.Logger;
 
 public class StudentDao {
   private static final Logger logger = LogManager.getLogger();
+  //column names
+  private static final String LECTURER_ID = "lecturer_id";
+  private static final String FIRST_NAME = "firstname";
+  private static final String LAST_NAME = "lastname";
 
   private static final String SQL_SELECT_COURSES_BY_STUDENT_ID =
       "SELECT c.course_id,\n"
@@ -105,7 +109,7 @@ public class StudentDao {
       ps.setInt(2, limit);
       ps.setInt(3, offset);
       try (ResultSet rs = ps.executeQuery()) {
-        return parseResultSetToCoursesList(rs);
+        courses = parseResultSetToCoursesList(rs);
       }
     } catch (SQLException e) {
       logger.info("SQLException in attempt to close PreparedStatement ps.");
@@ -114,6 +118,7 @@ public class StudentDao {
       logger.info("Exception in attempt to get Connection");
       throw new DaoException(e.getMessage());
     }
+    return courses;
   }
 
   public boolean isExistsCourseInStudentList(int courseId, int studentId) throws DaoException {
@@ -142,7 +147,7 @@ public class StudentDao {
         while (rs.next()) {
           Lecturer lecturer =
               new Lecturer(
-                rs.getInt("lecturer_id"), rs.getString("firstname"), rs.getString("lastname"));
+                rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
           Lecture current =
               new Lecture.Builder()
                 .withLectureId(rs.getInt("lecture_id"))
@@ -224,14 +229,14 @@ public class StudentDao {
         // create lecturer
         Lecturer lecturer =
             new Lecturer(
-                rs.getInt("lecturer_id"), rs.getString("firstname"), rs.getString("lastname"));
+                rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
         logger.debug("size,{}", size);
         courses.get(size - 1).addLecturer(lecturer);
       } else {
         // next course record
         Lecturer lecturer =
             new Lecturer(
-                rs.getInt("lecturer_id"), rs.getString("firstname"), rs.getString("lastname"));
+                rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
         logger.debug("next course record");
         Course course = new Course();
         course.setId(currentCourseId);
@@ -249,31 +254,4 @@ public class StudentDao {
     return courses;
   }
 
-  private boolean isScheduleHasCross(ResultSet rs) throws SQLException {
-    Instant previousTime = Instant.MIN;
-    int previousId = 0;
-    int index = 0;
-    // try to find crosses in schedule
-    boolean isScheduleCrosses = false;
-    while (rs.next()) {
-
-      index++;
-      Instant currentTime = rs.getTimestamp("time").toInstant();
-      if (currentTime.equals(previousTime)) {
-        logger.debug("time equals");
-        isScheduleCrosses = true;
-        break;
-      }
-      int currentId = rs.getInt("lecture_id");
-      if (index % 2 == 0 && currentId != previousId) {
-        logger.debug("id doesn't matches");
-        isScheduleCrosses = true;
-        break;
-      }
-      previousTime = currentTime;
-      previousId = currentId;
-    }
-    logger.debug("isScheduleCrosses = {}", isScheduleCrosses);
-    return isScheduleCrosses;
-  }
 }

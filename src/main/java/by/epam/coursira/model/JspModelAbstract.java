@@ -32,7 +32,7 @@ public abstract class JspModelAbstract {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof JspModelAbstract)) return false;
     JspModelAbstract that = (JspModelAbstract) o;
     return Objects.equals(languages, that.languages) &&
       Objects.equals(principal, that.principal);

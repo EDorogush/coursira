@@ -44,13 +44,13 @@ public class CourseCreateModel extends JspModelAbstract {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof CourseCreateModel)) return false;
     if (!super.equals(o)) return false;
     CourseCreateModel that = (CourseCreateModel) o;
-    return capacity == that.capacity
-        && Objects.equals(title, that.title)
-        && Objects.equals(description, that.description)
-        && Objects.equals(errorDataMessage, that.errorDataMessage);
+    return capacity == that.capacity &&
+      Objects.equals(title, that.title) &&
+      Objects.equals(description, that.description) &&
+      Objects.equals(errorDataMessage, that.errorDataMessage);
   }
 
   @Override

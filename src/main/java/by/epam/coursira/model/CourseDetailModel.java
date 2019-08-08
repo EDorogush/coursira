@@ -10,7 +10,7 @@ public class CourseDetailModel extends JspModelAbstract {
   private boolean hasNextPage;
   private boolean hasFreeSpot;
   private boolean isInUserList;
-  private boolean ableToJoin; // available for student;
+  private boolean ableToJoin;
 
   public Course getCourse() {
     return course;
@@ -63,7 +63,7 @@ public class CourseDetailModel extends JspModelAbstract {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof CourseDetailModel)) return false;
     if (!super.equals(o)) return false;
     CourseDetailModel that = (CourseDetailModel) o;
     return currentPageIndex == that.currentPageIndex &&

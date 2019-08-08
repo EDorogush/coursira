@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class Course extends AbstractEntity {
+public class Course{
   private int id;
   private String title;
   private String description;
@@ -102,7 +102,7 @@ public class Course extends AbstractEntity {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof Course)) return false;
     Course course = (Course) o;
     return id == course.id &&
       capacity == course.capacity &&

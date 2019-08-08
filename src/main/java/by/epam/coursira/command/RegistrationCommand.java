@@ -6,7 +6,6 @@ import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.ServiceException;
-import by.epam.coursira.model.LoginModel;
 import by.epam.coursira.model.SignUpModel;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;
@@ -36,7 +35,7 @@ public class RegistrationCommand implements Command {
    */
   private static final Pattern resourcePattern = Pattern.compile("/sign");
   /** The URL of page, client is redirected to after request processing */
-  public static final String URL_TO_REDIRECT = "/registration";
+  private static final String URL_TO_REDIRECT = "/registration";
 
   private final PrincipalService principalService;
 

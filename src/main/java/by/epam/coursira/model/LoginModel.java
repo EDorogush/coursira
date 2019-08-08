@@ -6,7 +6,10 @@ import java.util.StringJoiner;
 public class LoginModel extends JspModelAbstract {
   private String errorMessage;
 
-  public LoginModel() {}
+  //need for jsp page
+  public LoginModel() {
+
+  }
 
   public String getErrorMessage() {
     return errorMessage;
@@ -19,7 +22,7 @@ public class LoginModel extends JspModelAbstract {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof LoginModel)) return false;
     if (!super.equals(o)) return false;
     LoginModel that = (LoginModel) o;
     return Objects.equals(errorMessage, that.errorMessage);

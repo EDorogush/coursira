@@ -3,7 +3,7 @@ package by.epam.coursira.entity;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class Principal extends AbstractEntity {
+public class Principal {
   private Session session;
   private User user;
 
@@ -33,10 +33,9 @@ public class Principal extends AbstractEntity {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof Principal)) return false;
     Principal principal = (Principal) o;
-    return Objects.equals(session, principal.session) &&
-      Objects.equals(user, principal.user);
+    return Objects.equals(session, principal.session) && Objects.equals(user, principal.user);
   }
 
   @Override

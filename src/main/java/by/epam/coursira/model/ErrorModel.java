@@ -17,7 +17,7 @@ public class ErrorModel  extends  JspModelAbstract{
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof ErrorModel)) return false;
     if (!super.equals(o)) return false;
     ErrorModel that = (ErrorModel) o;
     return Objects.equals(errorMessage, that.errorMessage);

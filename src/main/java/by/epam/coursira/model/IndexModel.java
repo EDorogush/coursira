@@ -45,7 +45,7 @@ public class IndexModel extends JspModelAbstract {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof IndexModel)) return false;
     if (!super.equals(o)) return false;
     IndexModel that = (IndexModel) o;
     return coursesAmount == that.coursesAmount &&

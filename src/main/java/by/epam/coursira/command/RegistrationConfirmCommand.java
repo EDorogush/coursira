@@ -6,7 +6,6 @@ import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
-import by.epam.coursira.model.IndexModel;
 import by.epam.coursira.model.RegistrationCompletedModel;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;

@@ -49,6 +49,10 @@ public class CourseUpdateCommand implements Command {
   private static final String REQUEST_PARAMETER_LECTURE_DAY = "lectureDay";
   private static final String REQUEST_PARAMETER_LECTURE_START_TIME = "lectureStartTime";
   private static final String REQUEST_PARAMETER_LECTURE_END_TIME = "lectureEndTime";
+  private static final String PARSE_PARAMETER_EXCEPTION_MESSAGE = "Value < %s > must be define";
+
+  private static final String RESOURCE_BUNDLE_EXCEPTION_MESSAGE = "errorMessages";
+  private static final String RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED = "ACCESS_DENIED";
 
   private final CourseModificationService courseModificationService;
   private final CourseService courseService;
@@ -75,12 +79,7 @@ public class CourseUpdateCommand implements Command {
     final int courseId = CommandUtils.parseIdFromRequest(resourcePattern, request);
     switch (request.getMethod()) {
       case "POST":
-        String referer =
-            request.getHeader("referer")
-                .split(request.getContextPath())[1]; // ServletPath part of referer link
-        logger.debug("courseUpdate referer {}", referer);
-        logger.debug("POST CourseUpdateCommand");
-        final CommandResult result;
+        String referer = CommandUtils.getReferer(request);
         Map<String, String[]> queryParams = request.getParameterMap();
         if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_UPDATE_COURSE_DATA)
             .orElse(false)) {
@@ -126,7 +125,11 @@ public class CourseUpdateCommand implements Command {
       throws CommandException, ClientCommandException {
     int invitedLecturerId =
         CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURER_ID)
-            .orElseThrow(() -> new ClientCommandException("Value <description> must be define"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_LECTURER_ID)));
     try {
       courseModificationService.addLecturerToCourse(principal, courseId, invitedLecturerId);
       return new CommandResult(referer);
@@ -147,7 +150,11 @@ public class CourseUpdateCommand implements Command {
       throws CommandException, ClientCommandException {
     int lecturerId =
         CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURER_ID)
-            .orElseThrow(() -> new ClientCommandException("Value <description> must be define"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_LECTURER_ID)));
     try {
       courseModificationService.deleteLecturerFromCourse(principal, courseId, lecturerId);
       return new CommandResult(referer);
@@ -166,16 +173,27 @@ public class CourseUpdateCommand implements Command {
   private CommandResult postCourseUpdate(
       Principal principal, int courseId, Map<String, String[]> queryParams, String referer)
       throws CommandException, ClientCommandException {
-    // access already checked
+
     String title =
         CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_TITLE)
-            .orElseThrow(() -> new ClientCommandException("Value <title> must be defined"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_TITLE)));
     String description =
         CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_DESCRIPTION)
-            .orElseThrow(() -> new ClientCommandException("Value <description> must be define"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_DESCRIPTION)));
     int capacity =
         CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_CAPACITY)
-            .orElseThrow(() -> new ClientCommandException("Value <capacity> must be define"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_CAPACITY)));
     logger.debug("values were taken from request");
 
     try {
@@ -198,26 +216,47 @@ public class CourseUpdateCommand implements Command {
       throws CommandException, ClientCommandException {
     int lectureId =
         CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURE_ID)
-            .orElseThrow(() -> new ClientCommandException("Value <lectureId> must be define"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_LECTURE_ID)));
 
     try {
       String description =
           CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_LECTURE_DESCRIPTION)
               .orElseThrow(
-                  () -> new ClientCommandException("Value <lectureDescription> must be define"));
+                  () ->
+                      new ClientCommandException(
+                          String.format(
+                              PARSE_PARAMETER_EXCEPTION_MESSAGE,
+                              REQUEST_PARAMETER_LECTURE_DESCRIPTION)));
 
       LocalDate date =
           CommandUtils.parseOptionalLocalDate(queryParams, REQUEST_PARAMETER_LECTURE_DAY)
-              .orElseThrow(() -> new ClientCommandException("Value <lectureDay> must be define"));
+              .orElseThrow(
+                  () ->
+                      new ClientCommandException(
+                          String.format(
+                              PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_LECTURE_DAY)));
 
       LocalTime begin =
           CommandUtils.parseOptionalLocalTime(queryParams, REQUEST_PARAMETER_LECTURE_START_TIME)
               .orElseThrow(
-                  () -> new ClientCommandException("Value <lectureStartTime> must be define"));
+                  () ->
+                      new ClientCommandException(
+                          String.format(
+                              PARSE_PARAMETER_EXCEPTION_MESSAGE,
+                              REQUEST_PARAMETER_LECTURE_START_TIME)));
 
       LocalTime finish =
           CommandUtils.parseOptionalLocalTime(queryParams, REQUEST_PARAMETER_LECTURE_END_TIME)
-              .orElseThrow(() -> new CommandException("Value <lectureEndTime> must be define"));
+              .orElseThrow(
+                  () ->
+                      new CommandException(
+                          String.format(
+                              PARSE_PARAMETER_EXCEPTION_MESSAGE,
+                              REQUEST_PARAMETER_LECTURE_END_TIME)));
 
       Instant lectureBegins =
           LocalDateTime.of(date, begin)
@@ -238,8 +277,8 @@ public class CourseUpdateCommand implements Command {
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -252,21 +291,37 @@ public class CourseUpdateCommand implements Command {
       String description =
           CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_LECTURE_DESCRIPTION)
               .orElseThrow(
-                  () -> new ClientCommandException("Value <lectureDescription> must be define"));
+                  () ->
+                      new ClientCommandException(
+                          String.format(
+                              PARSE_PARAMETER_EXCEPTION_MESSAGE,
+                              REQUEST_PARAMETER_LECTURE_DESCRIPTION)));
 
       LocalDate date =
           CommandUtils.parseOptionalLocalDate(queryParams, REQUEST_PARAMETER_LECTURE_DAY)
-              .orElseThrow(() -> new ClientCommandException("Value <lectureDay> must be define"));
+              .orElseThrow(
+                  () ->
+                      new ClientCommandException(
+                          String.format(
+                              PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_LECTURE_DAY)));
 
       LocalTime begin =
           CommandUtils.parseOptionalLocalTime(queryParams, REQUEST_PARAMETER_LECTURE_START_TIME)
               .orElseThrow(
-                  () -> new ClientCommandException("Value <lectureStartTime> must be define"));
+                  () ->
+                      new ClientCommandException(
+                          String.format(
+                              PARSE_PARAMETER_EXCEPTION_MESSAGE,
+                              REQUEST_PARAMETER_LECTURE_START_TIME)));
 
       LocalTime finish =
           CommandUtils.parseOptionalLocalTime(queryParams, REQUEST_PARAMETER_LECTURE_END_TIME)
               .orElseThrow(
-                  () -> new ClientCommandException("Value <lectureEndTime> must be define"));
+                  () ->
+                      new ClientCommandException(
+                          String.format(
+                              PARSE_PARAMETER_EXCEPTION_MESSAGE,
+                              REQUEST_PARAMETER_LECTURE_END_TIME)));
 
       Instant lectureBegins =
           LocalDateTime.of(date, begin)
@@ -287,8 +342,8 @@ public class CourseUpdateCommand implements Command {
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -299,7 +354,11 @@ public class CourseUpdateCommand implements Command {
       throws CommandException, ClientCommandException {
     int lectureId =
         CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURE_ID)
-            .orElseThrow(() -> new ClientCommandException("Value <lectureId> must be define"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_LECTURE_ID)));
     try {
       courseModificationService.deleteLecture(principal, lectureId);
       return new CommandResult(referer);
@@ -310,8 +369,8 @@ public class CourseUpdateCommand implements Command {
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -329,8 +388,8 @@ public class CourseUpdateCommand implements Command {
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -346,8 +405,8 @@ public class CourseUpdateCommand implements Command {
     }
     if (!haveAccess) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     }
     CourseUpdateModel model = fillModelForView(principal, courseId);
     return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);

@@ -148,6 +148,7 @@ public class UserDao {
       try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
         if (generatedKeys.next()) {
           userId = generatedKeys.getInt(1);
+          logger.debug("new user with id {} inserted", userId);
         } else {
           throw new SQLException("Creating user failed, no ID obtained.");
         }
@@ -379,7 +380,6 @@ public class UserDao {
     try (Connection connection = pool.getConnection();
         PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_USER_PHOTO)) {
       ps.setInt(2, userId);
-      /*ps.setBinaryStream(2, fis, file.length());*/
       ps.setBinaryStream(1, image);
       ps.executeUpdate();
       return ps.getUpdateCount();

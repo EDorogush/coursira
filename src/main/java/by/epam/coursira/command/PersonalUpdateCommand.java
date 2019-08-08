@@ -29,6 +29,12 @@ public class PersonalUpdateCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
   private static final Pattern resourcePattern = Pattern.compile("/personal/update");
   private static final String URL_TO_REDIRECT = "/personal";
+  private static final String RESOURCE_BUNDLE_ERROR_MESSAGE = "errorMessages";
+  private static final String RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED = "ACCESS_DENIED";
+  private static final String PARSE_PARAMETER_EXCEPTION_MESSAGE = "Value < %s > must be define";
+
+  private static final String REQUEST_PARAMETER_FIRST_NAME = "firstName";
+  private static final String REQUEST_PARAMETER_LAST_NAME = "lastName";
   private final UserService userService;
 
   public PersonalUpdateCommand(UserService userService) {
@@ -48,10 +54,7 @@ public class PersonalUpdateCommand implements Command {
       case "GET":
         return getPersonalUpdate(principal);
       case "POST":
-        String referer =
-            request.getHeader("referer")
-                .split(request.getContextPath())[1]; // ServletPath part of referer link
-        logger.debug("courseUpdate referer {}", referer);
+        String referer = CommandUtils.getReferer(request);
         if (request.getContentType().contains("multipart/form-data")) {
           final Part filePart;
           try {
@@ -63,7 +66,7 @@ public class PersonalUpdateCommand implements Command {
             throw new CommandException(e);
           }
         } else {
-          return postPersonalUpdate(principal, request.getParameterMap(), referer);
+          return postPersonalUpdate(principal, request.getParameterMap());
         }
       default:
         throw new ClientCommandException("Unknown method invoked.");
@@ -73,33 +76,39 @@ public class PersonalUpdateCommand implements Command {
   private CommandResult getPersonalUpdate(Principal principal) throws ClientCommandException {
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+      throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     }
     UserUpdateModel updateModel = new UserUpdateModel();
     updateModel.setPrincipal(principal);
     return new CommandResult(CoursiraJspPath.UPDATE_PERSONAL, updateModel);
   }
 
-  private CommandResult postPersonalUpdate(
-      Principal principal, Map<String, String[]> queryParams, String referer)
+  private CommandResult postPersonalUpdate(Principal principal, Map<String, String[]> queryParams)
       throws CommandException, ClientCommandException {
     String firstName =
-        CommandUtils.parseOptionalString(queryParams, "firstName")
-            .orElseThrow(() -> new ClientCommandException("Value <FirstName> must be define"));
+        CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_FIRST_NAME)
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_FIRST_NAME)));
 
     String lastName =
-        CommandUtils.parseOptionalString(queryParams, "lastName")
-            .orElseThrow(() -> new ClientCommandException("Value <lastName> must be define"));
+        CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_LAST_NAME)
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_LAST_NAME)));
 
     Integer age = CommandUtils.parseOptionalInt(queryParams, "age").orElse(null);
     String interests = CommandUtils.parseOptionalString(queryParams, "interest").orElse(null);
     String organization =
         CommandUtils.parseOptionalString(queryParams, "organization").orElse(null);
-
     try {
-      principal =
-          userService.updateUserData(principal, firstName, lastName, age, organization, interests);
+      userService.updateUserData(principal, firstName, lastName, age, organization, interests);
       return new CommandResult(URL_TO_REDIRECT);
     } catch (ClientServiceException e) {
       UserUpdateModel userUpdateModel = new UserUpdateModel();
@@ -109,8 +118,9 @@ public class PersonalUpdateCommand implements Command {
 
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+      throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -120,7 +130,7 @@ public class PersonalUpdateCommand implements Command {
       throws CommandException, ClientCommandException {
 
     try {
-      principal = userService.updateUserPhoto(principal, part);
+      userService.updateUserPhoto(principal, part);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
       logger.error("ClientServiceException", e);
@@ -130,8 +140,9 @@ public class PersonalUpdateCommand implements Command {
       return new CommandResult(CoursiraJspPath.UPDATE_PERSONAL, userUpdateModel);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+      throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }

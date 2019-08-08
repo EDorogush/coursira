@@ -11,7 +11,7 @@ import java.util.concurrent.BlockingQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ConnectionPoolImpl implements ConnectionPool, AutoCloseable { // not Closeable{
+public class ConnectionPoolImpl implements ConnectionPool, AutoCloseable {
   private static final Logger logger = LogManager.getLogger();
   private final BlockingQueue<Connection> pool;
   private final Set<Connection> fullSet;
@@ -20,15 +20,14 @@ public class ConnectionPoolImpl implements ConnectionPool, AutoCloseable { // no
     pool = new ArrayBlockingQueue<>(size);
     fullSet = new HashSet<>(size);
     for (int i = 0; i < size; i++) {
-      Connection connection = null;
       try {
-        connection = DriverManager.getConnection(url);
+        Connection connection = DriverManager.getConnection(url);
+        pool.offer(connection);
+        fullSet.add(connection);
       } catch (SQLException e) {
         logger.info("SQLException in DriverManager.getConnection(url) ");
         throw new PoolConnectionException(e);
       }
-      pool.offer(connection);
-      fullSet.add(connection);
     }
   }
 
@@ -55,7 +54,6 @@ public class ConnectionPoolImpl implements ConnectionPool, AutoCloseable { // no
 
   @Override
   public void close() throws PoolConnectionException {
-    // todo: implement gracefull shutdown
     for (Connection connection : fullSet) {
       try {
         connection.close();

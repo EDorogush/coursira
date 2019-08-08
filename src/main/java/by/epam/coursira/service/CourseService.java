@@ -20,6 +20,10 @@ import org.apache.logging.log4j.Logger;
 
 public class CourseService {
   private static final Logger logger = LogManager.getLogger();
+  private static final String RESOURCE_BUNDLE_ERROR_MESSAGE = "errorMessages";
+  private static final String RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED = "ACCESS_DENIED";
+  private static final String RESOURCE_BUNDLE_MESSAGE_WRONG_COURSE_ID = "WRONG_COURSE_ID_VALUE";
+
   private final CourseDao courseDao;
   private final StudentDao studentDao;
   private final UserDao userDao;
@@ -70,8 +74,9 @@ public class CourseService {
           break;
         default:
           Locale.setDefault(principal.getSession().getLanguage().getLocale());
-          ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-          throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
+          ResourceBundle bundle =
+              ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+          throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -98,7 +103,7 @@ public class CourseService {
     final List<Course> courses;
     try {
       courses = courseDao.selectCoursesAllReady(limit, offset);
-      logger.debug("select {} records", courses.size());
+      logger.debug("selectCoursesAllReady {} records", courses.size());
     } catch (DaoException e) {
       throw new ServiceException(e);
     }
@@ -126,16 +131,17 @@ public class CourseService {
       switch (principal.getUser().getRole()) {
         case STUDENT:
           courses = studentDao.selectCoursesByStudentId(principal.getUser().getId(), limit, offset);
-          logger.debug("select {} records", courses.size());
+          logger.debug("selectCoursesByStudentId {} records", courses.size());
           break;
         case LECTURER:
           courses =
               courseDao.selectAllCoursesByLecturerId(principal.getUser().getId(), limit, offset);
-          logger.debug("select {} records", courses.size());
+          logger.debug("selectAllCoursesByLecturerId  {} records", courses.size());
           break;
         default:
-          ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-          throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
+          ResourceBundle bundle =
+              ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+          throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -196,7 +202,7 @@ public class CourseService {
       if (!courseDao.isExistsCourse(courseId)) {
         ResourceBundle bundle =
             ResourceBundle.getBundle(
-                "errorMessages", principal.getSession().getLanguage().getLocale());
+                RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
         throw new ClientServiceException(
             String.format(bundle.getString("WRONG_COURSE_ID") + " %d", courseId));
       }
@@ -250,8 +256,8 @@ public class CourseService {
         default:
           ResourceBundle bundle =
               ResourceBundle.getBundle(
-                  "errorMessages", principal.getSession().getLanguage().getLocale());
-          throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
+                  RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+          throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -268,8 +274,8 @@ public class CourseService {
     Locale locale = principal.getSession().getLanguage().getLocale();
     try {
       if (!courseDao.isExistsCourse(courseId)) {
-        ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", locale);
-        throw new ClientServiceException(bundle.getString("WRONG_COURSE_ID_VALUE"));
+        ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, locale);
+        throw new ClientServiceException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_COURSE_ID));
       }
       List<Lecture> scheduleStudent =
           studentDao.selectScheduleByStudentId(principal.getUser().getId(), Integer.MAX_VALUE, 0);
@@ -293,13 +299,13 @@ public class CourseService {
   public void joinToCourse(Principal principal, int courseId)
       throws ClientServiceException, ServiceException, AccessDeniedException {
     Locale locale = principal.getSession().getLanguage().getLocale();
-    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", locale);
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, locale);
     if (principal.getUser().getRole() != Role.STUDENT) {
-      throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
+      throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     }
     try {
       if (!courseDao.isExistsCourse(courseId)) {
-        throw new ClientServiceException(bundle.getString("WRONG_COURSE_ID_VALUE"));
+        throw new ClientServiceException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_COURSE_ID));
       }
       // check if schedule have crossing
       List<Lecture> scheduleStudent =
@@ -327,15 +333,15 @@ public class CourseService {
     if (principal.getUser().getRole() != Role.STUDENT) {
       ResourceBundle bundle =
           ResourceBundle.getBundle(
-              "errorMessages", principal.getSession().getLanguage().getLocale());
-      throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
+              RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+      throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     }
     try {
       if (!courseDao.isExistsCourse(courseId)) {
         ResourceBundle bundle =
             ResourceBundle.getBundle(
-                "errorMessages", principal.getSession().getLanguage().getLocale());
-        throw new ClientServiceException(bundle.getString("WRONG_COURSE_ID_VALUE"));
+                RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+        throw new ClientServiceException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_COURSE_ID));
       }
       int updateRows =
           studentDao.updateOnRemoveCourseFromStudentSchedule(principal.getUser().getId(), courseId);
@@ -343,7 +349,7 @@ public class CourseService {
       if (updateRows > 1) {
         ResourceBundle bundle =
             ResourceBundle.getBundle(
-                "errorMessages", principal.getSession().getLanguage().getLocale());
+                RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
         throw new ServiceException(
             String.format(bundle.getString("UNEXPECTED_RESULT") + " %d ", updateRows));
       }
@@ -361,8 +367,8 @@ public class CourseService {
       if (!courseDao.isExistsCourse(courseId)) {
         ResourceBundle bundle =
             ResourceBundle.getBundle(
-                "errorMessages", principal.getSession().getLanguage().getLocale());
-        throw new ClientServiceException(bundle.getString("WRONG_COURSE_ID_VALUE"));
+                RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+        throw new ClientServiceException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_COURSE_ID));
       }
       switch (principal.getUser().getRole()) {
         case STUDENT:

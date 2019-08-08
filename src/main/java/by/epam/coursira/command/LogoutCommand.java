@@ -1,6 +1,5 @@
 package by.epam.coursira.command;
 
-import by.epam.coursira.entity.Language;
 import by.epam.coursira.entity.Principal;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.CommandException;

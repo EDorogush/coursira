@@ -12,7 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,19 +27,17 @@ import org.apache.logging.log4j.Logger;
 public class CourseDao {
 
   private static final Logger logger = LogManager.getLogger();
+  private static final String COLUMN_NAME_EXISTS = "exists";
+  private static final String COLUMN_NAME_LECTURE_ID = "lecture_id";
+  private static final String COLUMN_NAME_LECTURER_ID = "lecturer_id";
+  private static final String COLUMN_NAME_FIRST_NAME = "firstname";
+  private static final String COLUMN_NAME_LAST_NAME = "lastname";
+  private static final String COLUMN_NAME_COUNT = "count";
+
   private static final String FOREIGN_KEY_VIOLATION_CODE = "23503";
 
   private static final String SQL_EXISTS_COURSE_ID =
       "SELECT EXISTS(SELECT 1 FROM courses WHERE course_id = ?);";
-
-  private static final String SQL_EXISTS_COURSE_IN_LECTURER_READY_LIST =
-      "SELECT exists(\n"
-          + "         SELECT c.course_id\n"
-          + "         FROM courses c\n"
-          + "                JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
-          + "         WHERE lecturer_id = ?\n"
-          + "           AND c.course_id = ?"
-          + "           AND c.ready);";
 
   private static final String SQL_EXISTS_COURSE_IN_LECTURER_UPDATE_LIST =
       "SELECT exists(\n"
@@ -201,9 +198,9 @@ public class CourseDao {
           + "      (\n"
           + "        SELECT course_id\n"
           + "        FROM course_lecturers\n"
-          + "        WHERE lecturer_id = 7 AND  ready\n"
+          + "        WHERE lecturer_id = ? AND  ready\n"
           + "        ORDER BY course_id ASC\n"
-          + "        LIMIT 3 OFFSET 0\n"
+          + "        LIMIT ? OFFSET ?\n"
           + "      )\n"
           + "GROUP BY c.course_id, cl.lecturer_id, u.firstname, u.lastname\n"
           + "ORDER BY course_id ASC;";
@@ -261,7 +258,7 @@ public class CourseDao {
         PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_COURSE_ID)) {
       ps.setInt(1, courseId);
       try (ResultSet rs = ps.executeQuery()) {
-        return rs.next() && rs.getBoolean("exists");
+        return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
     } catch (SQLException | PoolConnectionException e) {
       logger.info(e);
@@ -277,7 +274,7 @@ public class CourseDao {
       ps.setInt(1, lecturerId);
       ps.setInt(2, courseId);
       try (ResultSet rs = ps.executeQuery()) {
-        return rs.next() && rs.getBoolean("exists");
+        return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
     } catch (SQLException | PoolConnectionException e) {
       logger.info(e);
@@ -293,7 +290,7 @@ public class CourseDao {
       ps.setInt(1, lectureId);
       ps.setInt(2, lecturerId);
       try (ResultSet rs = ps.executeQuery()) {
-        return rs.next() && rs.getBoolean("exists");
+        return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
     } catch (SQLException | PoolConnectionException e) {
       logger.info(e);
@@ -392,7 +389,7 @@ public class CourseDao {
         while (rs.next()) {
           Lecture current =
               new Lecture.Builder()
-                  .withLectureId(rs.getInt("lecture_id"))
+                  .withLectureId(rs.getInt(COLUMN_NAME_LECTURE_ID))
                   .withTimeStart(rs.getTimestamp("time_start").toInstant())
                   .withTimeEnd(rs.getTimestamp("time_end").toInstant())
                   .withCourseId(rs.getInt("course_id"))
@@ -461,7 +458,7 @@ public class CourseDao {
       ps.setInt(1, lecturerId);
       try (ResultSet rs = ps.executeQuery()) {
         if (rs.next()) {
-          return rs.getInt("count");
+          return rs.getInt(COLUMN_NAME_COUNT);
         } else throw new DaoException("ResultSet returns null");
       }
 
@@ -481,12 +478,8 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         courses = parseResultSetToCoursesList(rs);
       }
-    } catch (SQLException e) {
-      logger.info("SQLException in attempt to close PreparedStatement ps.");
-      throw new DaoException(e.getMessage());
-    } catch (PoolConnectionException e) {
-      logger.info("Exception in attempt to get Connection");
-      throw new DaoException(e.getMessage());
+    } catch (SQLException | PoolConnectionException e) {
+      throw new DaoException(e);
     }
     return courses;
   }
@@ -503,12 +496,8 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         courses = parseResultSetToCoursesList(rs);
       }
-    } catch (SQLException e) {
-      logger.info("SQLException in attempt to close PreparedStatement ps.");
-      throw new DaoException(e.getMessage());
-    } catch (PoolConnectionException e) {
-      logger.info("Exception in attempt to get Connection");
-      throw new DaoException(e.getMessage());
+    } catch (SQLException | PoolConnectionException e) {
+      throw new DaoException(e);
     }
     return courses;
   }
@@ -552,21 +541,25 @@ public class CourseDao {
         List<Lecturer> lecturers = new ArrayList<>();
         int previousLecturer = 0;
         while (rs.next()) {
-          int currentLecturer = rs.getInt("lecturer_id");
+          int currentLecturer = rs.getInt(COLUMN_NAME_LECTURER_ID);
           if (currentLecturer != previousLecturer) {
             Lecturer lecturer =
                 new Lecturer(
-                    rs.getInt("lecturer_id"), rs.getString("firstname"), rs.getString("lastname"));
+                    rs.getInt(COLUMN_NAME_LECTURER_ID),
+                    rs.getString(COLUMN_NAME_FIRST_NAME),
+                    rs.getString(COLUMN_NAME_LAST_NAME));
             lecturers.add(lecturer);
             previousLecturer = currentLecturer;
           }
           Lecturer lecturer =
               new Lecturer(
-                  rs.getInt("lecturer_id"), rs.getString("firstname"), rs.getString("lastname"));
-          if (rs.getInt("lecture_id") != 0) {
+                  rs.getInt(COLUMN_NAME_LECTURER_ID),
+                  rs.getString(COLUMN_NAME_FIRST_NAME),
+                  rs.getString(COLUMN_NAME_LAST_NAME));
+          if (rs.getInt(COLUMN_NAME_LECTURE_ID) != 0) {
             Lecture current =
                 new Lecture.Builder()
-                    .withLectureId(rs.getInt("lecture_id"))
+                    .withLectureId(rs.getInt(COLUMN_NAME_LECTURE_ID))
                     .withDescription(rs.getString("lecture_description"))
                     .withTimeStart(rs.getTimestamp("time_start").toInstant())
                     .withTimeEnd(rs.getTimestamp("time_end").toInstant())
@@ -640,7 +633,7 @@ public class CourseDao {
         psSelect.setInt(1, courseId);
         try (ResultSet rs = psSelect.executeQuery()) {
           while (rs.next()) {
-            if (rs.getInt("count") == 0) {
+            if (rs.getInt(COLUMN_NAME_COUNT) == 0) {
               logger.info("find empty lecturer");
               connection.rollback();
               connection.setAutoCommit(true);
@@ -661,28 +654,6 @@ public class CourseDao {
     } catch (PoolConnectionException | SQLException e) {
       throw new DaoException(e);
     }
-  }
-
-  public int countCourseLecturesByLecturerId(int courseId, int lecturerId) throws DaoException {
-    final int lectureAmount;
-    try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_SELECT_COUNT_LECTURES_OF_COURSE_BY_LECTURER)) {
-      ps.setInt(1, courseId);
-      ps.setInt(2, lecturerId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          lectureAmount = rs.getInt("count");
-          logger.debug(
-              "lecturer {} on course {} has {} lectures", lecturerId, courseId, lectureAmount);
-        } else {
-          throw new DaoException("rs.next returns false");
-        }
-      }
-    } catch (PoolConnectionException | SQLException e) {
-      throw new DaoException(e);
-    }
-    return lectureAmount;
   }
 
   public Map<String, Integer> countCoursesAndLecturesAndLecturersAndStudents() throws DaoException {
@@ -732,7 +703,7 @@ public class CourseDao {
         } else {
           throw new DaoException(
               String.format(
-                  "Can't Add lecture: no enty_id with course_id [%d] and lecturer_id [%d] found",
+                  "Can't Add lecture: no entry_id with course_id [%d] and lecturer_id [%d] found",
                   lecture.getCourseId(), lecture.getLecturer().getId()));
         }
       }
@@ -766,7 +737,9 @@ public class CourseDao {
         // create lecturer
         Lecturer lecturer =
             new Lecturer(
-                rs.getInt("lecturer_id"), rs.getString("firstname"), rs.getString("lastname"));
+                rs.getInt(COLUMN_NAME_LECTURER_ID),
+                rs.getString(COLUMN_NAME_FIRST_NAME),
+                rs.getString(COLUMN_NAME_LAST_NAME));
         logger.debug("size,{}", size);
         courses.get(size - 1).addLecturer(lecturer);
       } else {
@@ -779,7 +752,9 @@ public class CourseDao {
         course.setCapacity(rs.getInt("capacity"));
         Lecturer lecturer =
             new Lecturer(
-                rs.getInt("lecturer_id"), rs.getString("firstname"), rs.getString("lastname"));
+                rs.getInt(COLUMN_NAME_LECTURER_ID),
+                rs.getString(COLUMN_NAME_FIRST_NAME),
+                rs.getString(COLUMN_NAME_LAST_NAME));
         course.addLecturer(lecturer);
         course.setStudentsAmount(rs.getInt("student_amount"));
         course.setReady(rs.getBoolean("ready"));

@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 
 public class UserService {
   private static final Logger logger = LogManager.getLogger();
+  private static final String RESOURCE_BUNDLE_ERROR_MESSAGE = "errorMessages";
   private final UserDao userDao;
 
   public UserService(UserDao userDao) {
@@ -46,7 +47,7 @@ public class UserService {
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
       throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     ValidationHelper.checkImage(image, currentLocale);
@@ -87,7 +88,7 @@ public class UserService {
       throws ClientServiceException, ServiceException,AccessDeniedException {
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
       throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
@@ -152,7 +153,7 @@ public class UserService {
   public Lecturer defineLecturerNameById(Principal principal, int id)
       throws ClientServiceException, ServiceException {
     Locale locale = principal.getSession().getLanguage().getLocale();
-    ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", locale);
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, locale);
     final Lecturer lecturer;
     try {
       User user =

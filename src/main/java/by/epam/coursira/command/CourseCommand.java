@@ -33,14 +33,14 @@ public class CourseCommand implements Command {
   private static final String REQUEST_PARAMETER_PAGE = "page";
   private static final String REQUEST_PARAMETER_PERSONAL = "personal";
   private static final String REQUEST_PARAMETER_LECTURER_ID = "lecturerId";
-  private final int PAGINATION_LIMIT;
+  private final int paginationLimit;
   private final CourseService courseService;
   private final UserService userService;
 
   public CourseCommand(CourseService courseService, UserService userService, int paginationLimit) {
     this.courseService = courseService;
     this.userService = userService;
-    this.PAGINATION_LIMIT = paginationLimit;
+    this.paginationLimit = paginationLimit;
   }
 
   @Override
@@ -73,7 +73,7 @@ public class CourseCommand implements Command {
 
     CourseModel courseModel = new CourseModel();
     courseModel.setPrincipal(principal);
-    final int offset = (pageIndex - 1) * PAGINATION_LIMIT;
+    final int offset = (pageIndex - 1) * paginationLimit;
     final List<Course> courses;
     if (lecturerId.isPresent() && isPersonal) {
       throw new ClientCommandException(
@@ -85,18 +85,18 @@ public class CourseCommand implements Command {
         // ready courses only
         courses =
             courseService.viewCoursesByLectureId(
-                principal, lecturerId.get(), PAGINATION_LIMIT + 1, offset);
+                principal, lecturerId.get(), paginationLimit + 1, offset);
         // fetch / read / retrieve
         Lecturer lecturer = userService.defineLecturerNameById(principal, lecturerId.get());
         courseModel.setLecturerCourses(true);
         courseModel.setLecturer(lecturer);
       } else if (isPersonal && principal.getUser().getRole() != Role.ANONYMOUS) {
-        // get user only courses;
-        courses = courseService.viewCoursesPersonal(principal, PAGINATION_LIMIT + 1, offset);
+        /* get user only courses; */
+        courses = courseService.viewCoursesPersonal(principal, paginationLimit + 1, offset);
         courseModel.setPersonal(true);
       } else {
-        // get all courses;
-        courses = courseService.viewCourses(principal, PAGINATION_LIMIT + 1, offset);
+        /* get all courses; */
+        courses = courseService.viewCourses(principal, paginationLimit + 1, offset);
       }
     } catch (ClientServiceException | AccessDeniedException e) {
       throw new ClientCommandException(e.getMessage());
@@ -105,7 +105,7 @@ public class CourseCommand implements Command {
     }
     logger.debug(" course's records: {}", courses.size());
     // filling model for JSP
-    courseModel.setHasNextPage(CommandUtils.trimToLimit(courses, PAGINATION_LIMIT));
+    courseModel.setHasNextPage(CommandUtils.trimToLimit(courses, paginationLimit));
     courseModel.setCourses(courses);
     courseModel.setCurrentPageIndex(pageIndex);
     return new CommandResult(CoursiraJspPath.COURSES, courseModel);

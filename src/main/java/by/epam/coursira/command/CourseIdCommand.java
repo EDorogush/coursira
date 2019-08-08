@@ -24,12 +24,13 @@ public class CourseIdCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
   private static final Pattern resourcePattern = Pattern.compile("/courses/([^/?[A-Z]]+)(\\?.*)?");
   private static final String REQUEST_PARAMETER_PAGE = "page";
-  private final int PAGINATION_LIMIT;
+
+  private final int paginationLimit;
   private final CourseService courseService;
 
   public CourseIdCommand(CourseService courseService, int paginationLimit) {
     this.courseService = courseService;
-    this.PAGINATION_LIMIT = paginationLimit;
+    this.paginationLimit = paginationLimit;
   }
 
   @Override
@@ -60,11 +61,11 @@ public class CourseIdCommand implements Command {
 
     CourseDetailModel courseDetailModel = new CourseDetailModel();
     courseDetailModel.setPrincipal(principal);
-    final int offset = (pageIndex - 1) * PAGINATION_LIMIT;
+    final int offset = (pageIndex - 1) * paginationLimit;
     final Course course;
     // get course by courseId
     try {
-      course = courseService.viewCourseDetails(principal, courseId, PAGINATION_LIMIT + 1, offset);
+      course = courseService.viewCourseDetails(principal, courseId, paginationLimit + 1, offset);
       courseDetailModel.setAbleToJoin(!courseService.isScheduleCross(principal, courseId));
       courseDetailModel.setInUserList(courseService.isInUserListCourse(principal, courseId));
     } catch (ClientServiceException e) {
@@ -73,7 +74,7 @@ public class CourseIdCommand implements Command {
       throw new CommandException(e);
     }
     courseDetailModel.setHasNextPage(
-        CommandUtils.trimToLimit(course.getLectures(), PAGINATION_LIMIT));
+        CommandUtils.trimToLimit(course.getLectures(), paginationLimit));
     courseDetailModel.setCourse(course);
     courseDetailModel.setHasFreeSpot(course.getCapacity() > course.getStudentsAmount());
     courseDetailModel.setCurrentPageIndex(pageIndex);

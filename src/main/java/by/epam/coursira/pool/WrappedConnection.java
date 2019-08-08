@@ -21,6 +21,7 @@ import java.util.concurrent.Executor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/** This is Wrapper for {@link Connection} which exclude {@code close} method for usage. */
 public class WrappedConnection implements Connection {
   private static final Logger logger = LogManager.getLogger();
   private final ConnectionPoolImpl pool;
@@ -82,11 +83,6 @@ public class WrappedConnection implements Connection {
   public void rollback() throws SQLException {
     connection.rollback();
   }
-
-  //    @Override
-  //    public void close() throws SQLException {
-  //        connection.close();
-  //    }
 
   @Override
   public boolean isClosed() throws SQLException {

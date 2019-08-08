@@ -8,7 +8,6 @@ import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.CourseCreateModel;
-import by.epam.coursira.model.LoginModel;
 import by.epam.coursira.service.CourseModificationService;
 import by.epam.coursira.servlet.CoursiraJspPath;
 import java.util.Locale;
@@ -30,9 +29,11 @@ public class CourseCreateCommand implements Command {
    * request's URL and to delegate request to * current Command.
    */
   private static final Pattern resourcePattern = Pattern.compile("/courses/newCourse");
+
   private static final String REQUEST_PARAMETER_TITLE = "title";
   private static final String REQUEST_PARAMETER_DESCRIPTION = "description";
   private static final String REQUEST_PARAMETER_CAPACITY = "capacity";
+  private static final String PARSE_PARAMETER_EXCEPTION_MESSAGE = "Value < %s > must be define";
 
   private final CourseModificationService courseModificationService;
 
@@ -51,8 +52,6 @@ public class CourseCreateCommand implements Command {
     logger.debug("In CourseCreateCommand");
     switch (request.getMethod()) {
       case "POST":
-        Map<String, String[]> queryParams = request.getParameterMap();
-        logger.info("queryParams {}", queryParams.keySet().toString());
         return postCourseCreate(principal, request.getParameterMap());
       case "GET":
         return getCourseCreate(principal);
@@ -79,13 +78,24 @@ public class CourseCreateCommand implements Command {
 
     String title =
         CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_TITLE)
-            .orElseThrow(() -> new ClientCommandException("Value <title> must be defined"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_TITLE)));
     String description =
         CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_DESCRIPTION)
-            .orElseThrow(() -> new ClientCommandException("Value <description> must be define"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_DESCRIPTION)));
     int capacity =
         CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_CAPACITY)
-            .orElseThrow(() -> new ClientCommandException("Value <capacity> must be define"));
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_CAPACITY)));
     try {
       int courseId =
           courseModificationService.createCourse(principal, title, description, capacity);

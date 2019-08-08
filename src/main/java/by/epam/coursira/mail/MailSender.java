@@ -13,13 +13,13 @@ import org.apache.logging.log4j.Logger;
 
 public class MailSender {
   private static final Logger logger = LogManager.getLogger();
-  private final String APP_USER_NAME;
-  private final String APP_PASSWORD;
+  private final String appUserName;
+  private final String appPassword;
   private final Properties propSmtp;
 
   public MailSender(String address, String password, Properties prop) {
-    this.APP_USER_NAME = address;
-    this.APP_PASSWORD = password;
+    this.appUserName = address;
+    this.appPassword = password;
     this.propSmtp = prop;
   }
 
@@ -32,8 +32,9 @@ public class MailSender {
         Session.getInstance(
             propSmtp,
             new javax.mail.Authenticator() {
+              @Override
               protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(APP_USER_NAME, APP_PASSWORD);
+                return new PasswordAuthentication(appUserName, appPassword);
               }
             });
 

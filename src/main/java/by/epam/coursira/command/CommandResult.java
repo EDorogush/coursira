@@ -71,7 +71,7 @@ public class CommandResult {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof CommandResult)) return false;
     CommandResult that = (CommandResult) o;
     return isForward == that.isForward &&
       Objects.equals(jsp, that.jsp) &&

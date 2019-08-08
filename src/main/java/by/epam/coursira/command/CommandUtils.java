@@ -1,6 +1,5 @@
 package by.epam.coursira.command;
 
-import by.epam.coursira.entity.AbstractEntity;
 import by.epam.coursira.entity.Language;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.CommandException;
@@ -20,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 /** This Class is used by Commands to parse data from request parameters. */
 public final class CommandUtils {
   private static final Logger logger = LogManager.getLogger();
+  private static final String VALIDATION_MESSAGE_PATTERN = "Wrong parameters %s value.";
 
   private CommandUtils() {}
 
@@ -39,8 +39,7 @@ public final class CommandUtils {
             .map(params -> params.get(paramName))
             .filter(r -> r.length > 0)
             .map(r -> r[0]);
-    logger.debug(
-        "String {} value parsed {}", paramName, parsedValue.orElse("not defined"));
+    logger.debug("String {} value parsed {}", paramName, parsedValue.orElse("not defined"));
     return parsedValue;
   }
 
@@ -78,7 +77,7 @@ public final class CommandUtils {
       parsedValue = parseOptionalString(queryParams, paramName).map(Integer::valueOf);
     } catch (NumberFormatException e) {
       logger.info("can't parse value to int");
-      throw new ClientCommandException(String.format("Wrong parameters %s value.", paramName));
+      throw new ClientCommandException(String.format(VALIDATION_MESSAGE_PATTERN, paramName));
     }
     return parsedValue;
   }
@@ -104,7 +103,7 @@ public final class CommandUtils {
               .map(text -> LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE));
     } catch (DateTimeParseException e) {
       logger.info("can't parse value to Instant");
-      throw new ClientCommandException(String.format("Wrong parameters %s value.", paramName));
+      throw new ClientCommandException(String.format(VALIDATION_MESSAGE_PATTERN, paramName));
     }
     return parsedValue;
   }
@@ -130,7 +129,7 @@ public final class CommandUtils {
               .map(text -> LocalTime.parse(text, DateTimeFormatter.ISO_LOCAL_TIME));
     } catch (DateTimeParseException e) {
       logger.info("can't parse value to Instant");
-      throw new ClientCommandException(String.format("Wrong parameters %s value.", paramName));
+      throw new ClientCommandException(String.format(VALIDATION_MESSAGE_PATTERN, paramName));
     }
     return parsedValue;
   }
@@ -169,7 +168,7 @@ public final class CommandUtils {
    * @return {@code true} if record was removed and {@code false} otherwise.
    * @throws CommandException when size of current list exceeds limit more than 1
    */
-  static boolean trimToLimit(List<? extends AbstractEntity> schedule, int size)
+  static boolean trimToLimit(List schedule, int size)
       throws CommandException {
     if (schedule.size() > size + 1) {
       throw new CommandException(
@@ -209,5 +208,13 @@ public final class CommandUtils {
           String.format("Can't parse id from request %s", request.getServletPath()));
     }
     return id;
+  }
+
+  static String getReferer(HttpServletRequest request) {
+    String referer =
+        request.getHeader("referer")
+            .split(request.getContextPath())[1]; // ServletPath part of referer link
+    logger.debug("referer is {}", referer);
+    return referer;
   }
 }

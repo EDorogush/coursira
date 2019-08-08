@@ -47,7 +47,7 @@ public class CourseUpdateModel extends JspModelAbstract {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof CourseUpdateModel)) return false;
     if (!super.equals(o)) return false;
     CourseUpdateModel that = (CourseUpdateModel) o;
     return Objects.equals(course, that.course) &&

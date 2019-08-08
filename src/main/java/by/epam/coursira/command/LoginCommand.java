@@ -9,7 +9,6 @@ import by.epam.coursira.model.LoginModel;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
@@ -31,6 +30,9 @@ public class LoginCommand implements Command {
   /** The URL of page, client is redirected to after request processing */
   private static final String URL_TO_REDIRECT = "/";
 
+  private static final String REQUEST_PARAMETER_LOGIN = "login";
+  private static final String REQUEST_PARAMETER_PASSWORD = "password";
+  private static final String PARSE_PARAMETER_EXCEPTION_MESSAGE = "Value < %s > must be define";
   private final PrincipalService principalService;
 
   public LoginCommand(PrincipalService principalService) {
@@ -87,11 +89,18 @@ public class LoginCommand implements Command {
   private CommandResult postLogin(Principal principal, Map<String, String[]> queryParams)
       throws CommandException, ClientCommandException {
     String loginValue =
-        CommandUtils.parseOptionalString(queryParams, "login")
-            .orElseThrow(() -> new ClientCommandException("Value <login> must be defined"));
+        CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_LOGIN)
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_LOGIN)));
     String passwordValue =
-        CommandUtils.parseOptionalString(queryParams, "password")
-            .orElseThrow(() -> new ClientCommandException("Value <password> must be defined"));
+        CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_PASSWORD)
+            .orElseThrow(
+                () ->
+                    new ClientCommandException(
+                        String.format(
+                            PARSE_PARAMETER_EXCEPTION_MESSAGE, REQUEST_PARAMETER_PASSWORD)));
     logger.debug("login {}, password {}", loginValue, passwordValue);
     try {
       Principal current =
