@@ -3,6 +3,7 @@ package by.epam.coursira.command;
 import by.epam.coursira.entity.Course;
 import by.epam.coursira.entity.Lecturer;
 import by.epam.coursira.entity.Principal;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
@@ -17,7 +18,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
@@ -30,6 +33,23 @@ import org.apache.logging.log4j.Logger;
 public class CourseUpdateCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
   private static final Pattern resourcePattern = Pattern.compile("/courses/([^/?[A-Z]]+)/update");
+  private static final String REQUEST_PARAMETER_UPDATE_COURSE_DATA = "updateCourseData";
+  private static final String REQUEST_PARAMETER_UPDATE_LECTURE = "updateLecture";
+  private static final String REQUEST_PARAMETER_DELETE_LECTURE = "deleteLecture";
+  private static final String REQUEST_PARAMETER_NEW_LECTURE = "newLecture";
+  private static final String REQUEST_PARAMETER_INVITE_LECTURER = "inviteLecturer";
+  private static final String REQUEST_PARAMETER_DELETE_LECTURER = "deleteLecturer";
+  private static final String REQUEST_PARAMETER_ACTIVATE_COURSE = "activateCourse";
+  private static final String REQUEST_PARAMETER_TITLE = "title";
+  private static final String REQUEST_PARAMETER_DESCRIPTION = "description";
+  private static final String REQUEST_PARAMETER_CAPACITY = "capacity";
+  private static final String REQUEST_PARAMETER_LECTURER_ID = "lecturerId";
+  private static final String REQUEST_PARAMETER_LECTURE_ID = "lectureId";
+  private static final String REQUEST_PARAMETER_LECTURE_DESCRIPTION = "lectureDescription";
+  private static final String REQUEST_PARAMETER_LECTURE_DAY = "lectureDay";
+  private static final String REQUEST_PARAMETER_LECTURE_START_TIME = "lectureStartTime";
+  private static final String REQUEST_PARAMETER_LECTURE_END_TIME = "lectureEndTime";
+
   private final CourseModificationService courseModificationService;
   private final CourseService courseService;
   private final UserService userService;
@@ -53,52 +73,45 @@ public class CourseUpdateCommand implements Command {
       throws ClientCommandException, CommandException {
     logger.debug("In CourseUpdateCommand");
     final int courseId = CommandUtils.parseIdFromRequest(resourcePattern, request);
-    final boolean haveAccess;
-    try {
-      haveAccess = courseModificationService.isAllowToUpdateCourse(principal, courseId);
-    } catch (ServiceException e) {
-      throw new CommandException(e);
-    }
-    if (!haveAccess) {
-      throw new ClientCommandException("Access denied");
-    }
     switch (request.getMethod()) {
       case "POST":
+        String referer =
+            request.getHeader("referer")
+                .split(request.getContextPath())[1]; // ServletPath part of referer link
+        logger.debug("courseUpdate referer {}", referer);
         logger.debug("POST CourseUpdateCommand");
         final CommandResult result;
         Map<String, String[]> queryParams = request.getParameterMap();
-        boolean updateCourseData =
-            CommandUtils.parseOptionalBoolean(queryParams, "updateCourseData").orElse(false);
-        if (updateCourseData) {
-          result = postCourseUpdate(principal, courseId, queryParams);
-        } else {
-          boolean updateLecture =
-              CommandUtils.parseOptionalBoolean(queryParams, "updateLecture").orElse(false);
-          if (updateLecture) {
-            result = postLectureUpdate(principal, courseId, queryParams);
-          } else {
-            boolean deleteLecture =
-                CommandUtils.parseOptionalBoolean(queryParams, "deleteLecture").orElse(false);
-            if (deleteLecture) {
-              result = postLectureDelete(principal, courseId, queryParams);
-            } else {
-              boolean newLecture =
-                  CommandUtils.parseOptionalBoolean(queryParams, "newLecture").orElse(false);
-              if (newLecture) {
-                result = postLectureCreate(principal, courseId, queryParams);
-              } else {
-                boolean activateCourse =
-                    CommandUtils.parseOptionalBoolean(queryParams, "activateCourse").orElse(false);
-                if (activateCourse) {
-                  result = postCourseSubmit(principal, courseId);
-                } else
-                  throw new ClientCommandException(
-                      "one of updateCourseData,updateLecture, deleteLecture, activateCourse must be define");
-              }
-            }
-          }
+        if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_UPDATE_COURSE_DATA)
+            .orElse(false)) {
+          return postCourseUpdate(principal, courseId, queryParams, referer);
         }
-        return result;
+        if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_UPDATE_LECTURE)
+            .orElse(false)) {
+          return postLectureUpdate(principal, courseId, queryParams, referer);
+        }
+        if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_DELETE_LECTURE)
+            .orElse(false)) {
+          return postLectureDelete(principal, courseId, queryParams, referer);
+        }
+        if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_NEW_LECTURE)
+            .orElse(false)) {
+          return postLectureCreate(principal, courseId, queryParams, referer);
+        }
+        if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_INVITE_LECTURER)
+            .orElse(false)) {
+          return postInviteLecturer(principal, courseId, queryParams, referer);
+        }
+        if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_DELETE_LECTURER)
+            .orElse(false)) {
+          return postDeleteLecturer(principal, courseId, queryParams, referer);
+        }
+        if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_ACTIVATE_COURSE)
+            .orElse(false)) {
+          return postCourseSubmit(principal, courseId, referer);
+        }
+        throw new ClientCommandException(
+            "One of updateCourseData,updateLecture, deleteLecture, activateCourse, inviteLecturer, deleteLecturer must be define");
 
       case "GET":
         logger.debug("GET CourseUpdateCommand");
@@ -108,70 +121,102 @@ public class CourseUpdateCommand implements Command {
     }
   }
 
-  private CommandResult postCourseUpdate(
-      Principal principal, int courseId, Map<String, String[]> queryParams)
+  private CommandResult postInviteLecturer(
+      Principal principal, int courseId, Map<String, String[]> queryParams, String referer)
       throws CommandException, ClientCommandException {
-    // access already checked
-    String title =
-        CommandUtils.parseOptionalString(queryParams, "title")
-            .orElseThrow(() -> new ClientCommandException("Value <title> must be defined"));
-    String description =
-        CommandUtils.parseOptionalString(queryParams, "description")
+    int invitedLecturerId =
+        CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURER_ID)
             .orElseThrow(() -> new ClientCommandException("Value <description> must be define"));
-    int capacity =
-        CommandUtils.parseOptionalInt(queryParams, "capacity")
-            .orElseThrow(() -> new ClientCommandException("Value <capacity> must be define"));
-    int invitedLecturerId = CommandUtils.parseOptionalInt(queryParams, "lecturerId").orElse(0);
-
-    logger.debug("values were taken from request");
-
-    CourseUpdateModel model = new CourseUpdateModel();
-    // updateCourseData
     try {
-      courseModificationService.updateCourse(principal, courseId, title, description, capacity);
-      if (invitedLecturerId != 0) {
-        courseModificationService.addLecturerToCourse(principal, courseId, invitedLecturerId);
-      }
-      // when finish update we need to view current page
-      model = fillModelForView(principal, courseId);
+      courseModificationService.addLecturerToCourse(principal, courseId, invitedLecturerId);
+      return new CommandResult(referer);
     } catch (ClientServiceException e) {
       logger.error(e);
+      CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
+      return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
+    } catch (AccessDeniedException e) {
+      throw new ClientCommandException(e.getMessage());
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
+  }
 
-    return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
+  private CommandResult postDeleteLecturer(
+      Principal principal, int courseId, Map<String, String[]> queryParams, String referer)
+      throws CommandException, ClientCommandException {
+    int lecturerId =
+        CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURER_ID)
+            .orElseThrow(() -> new ClientCommandException("Value <description> must be define"));
+    try {
+      courseModificationService.deleteLecturerFromCourse(principal, courseId, lecturerId);
+      return new CommandResult(referer);
+    } catch (ClientServiceException e) {
+      logger.error(e);
+      CourseUpdateModel model = fillModelForView(principal, courseId);
+      model.setErrorCourseDataMessage(e.getMessage());
+      return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
+    } catch (AccessDeniedException e) {
+      throw new ClientCommandException(e.getMessage());
+    } catch (ServiceException e) {
+      throw new CommandException(e);
+    }
+  }
+
+  private CommandResult postCourseUpdate(
+      Principal principal, int courseId, Map<String, String[]> queryParams, String referer)
+      throws CommandException, ClientCommandException {
+    // access already checked
+    String title =
+        CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_TITLE)
+            .orElseThrow(() -> new ClientCommandException("Value <title> must be defined"));
+    String description =
+        CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_DESCRIPTION)
+            .orElseThrow(() -> new ClientCommandException("Value <description> must be define"));
+    int capacity =
+        CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_CAPACITY)
+            .orElseThrow(() -> new ClientCommandException("Value <capacity> must be define"));
+    logger.debug("values were taken from request");
+
+    try {
+      courseModificationService.updateCourse(principal, courseId, title, description, capacity);
+      return new CommandResult(referer);
+    } catch (ClientServiceException e) {
+      logger.error(e);
+      CourseUpdateModel model = fillModelForView(principal, courseId);
+      model.setErrorCourseDataMessage(e.getMessage());
+      return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
+    } catch (AccessDeniedException e) {
+      throw new ClientCommandException(e.getMessage());
+    } catch (ServiceException e) {
+      throw new CommandException(e);
+    }
   }
 
   private CommandResult postLectureUpdate(
-      Principal principal, int courseId, Map<String, String[]> queryParams)
+      Principal principal, int courseId, Map<String, String[]> queryParams, String referer)
       throws CommandException, ClientCommandException {
     int lectureId =
-        CommandUtils.parseOptionalInt(queryParams, "lectureId")
+        CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURE_ID)
             .orElseThrow(() -> new ClientCommandException("Value <lectureId> must be define"));
 
-    CourseUpdateModel model = new CourseUpdateModel();
     try {
-      if (!courseModificationService.isAllowToUpdateLecture(principal, lectureId)) {
-        throw new ClientCommandException("Access denied");
-      }
       String description =
-          CommandUtils.parseOptionalString(queryParams, "lectureDescription")
+          CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_LECTURE_DESCRIPTION)
               .orElseThrow(
                   () -> new ClientCommandException("Value <lectureDescription> must be define"));
 
       LocalDate date =
-          CommandUtils.parseOptionalLocalDate(queryParams, "lectureDay")
+          CommandUtils.parseOptionalLocalDate(queryParams, REQUEST_PARAMETER_LECTURE_DAY)
               .orElseThrow(() -> new ClientCommandException("Value <lectureDay> must be define"));
 
       LocalTime begin =
-          CommandUtils.parseOptionalLocalTime(queryParams, "lectureStartTime")
+          CommandUtils.parseOptionalLocalTime(queryParams, REQUEST_PARAMETER_LECTURE_START_TIME)
               .orElseThrow(
                   () -> new ClientCommandException("Value <lectureStartTime> must be define"));
 
       LocalTime finish =
-          CommandUtils.parseOptionalLocalTime(queryParams, "lectureEndTime")
+          CommandUtils.parseOptionalLocalTime(queryParams, REQUEST_PARAMETER_LECTURE_END_TIME)
               .orElseThrow(() -> new CommandException("Value <lectureEndTime> must be define"));
 
       Instant lectureBegins =
@@ -185,38 +230,41 @@ public class CourseUpdateCommand implements Command {
 
       courseModificationService.updateLecture(
           principal, lectureId, courseId, description, lectureBegins, lectureFinish);
-      // when finish update we need to view current page
-      model = fillModelForView(principal, courseId);
+      return new CommandResult(referer);
     } catch (ClientServiceException e) {
       logger.error(e);
+      CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
+      return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
+    } catch (AccessDeniedException e) {
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
-    return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
   }
 
   private CommandResult postLectureCreate(
-      Principal principal, int courseId, Map<String, String[]> queryParams)
+      Principal principal, int courseId, Map<String, String[]> queryParams, String referer)
       throws CommandException, ClientCommandException {
-    CourseUpdateModel model = new CourseUpdateModel();
     try {
       String description =
-          CommandUtils.parseOptionalString(queryParams, "lectureDescription")
+          CommandUtils.parseOptionalString(queryParams, REQUEST_PARAMETER_LECTURE_DESCRIPTION)
               .orElseThrow(
                   () -> new ClientCommandException("Value <lectureDescription> must be define"));
 
       LocalDate date =
-          CommandUtils.parseOptionalLocalDate(queryParams, "lectureDay")
+          CommandUtils.parseOptionalLocalDate(queryParams, REQUEST_PARAMETER_LECTURE_DAY)
               .orElseThrow(() -> new ClientCommandException("Value <lectureDay> must be define"));
 
       LocalTime begin =
-          CommandUtils.parseOptionalLocalTime(queryParams, "lectureStartTime")
+          CommandUtils.parseOptionalLocalTime(queryParams, REQUEST_PARAMETER_LECTURE_START_TIME)
               .orElseThrow(
                   () -> new ClientCommandException("Value <lectureStartTime> must be define"));
 
       LocalTime finish =
-          CommandUtils.parseOptionalLocalTime(queryParams, "lectureEndTime")
+          CommandUtils.parseOptionalLocalTime(queryParams, REQUEST_PARAMETER_LECTURE_END_TIME)
               .orElseThrow(
                   () -> new ClientCommandException("Value <lectureEndTime> must be define"));
 
@@ -228,56 +276,79 @@ public class CourseUpdateCommand implements Command {
           LocalDateTime.of(date, finish)
               .atOffset(principal.getSession().getZoneOffset())
               .toInstant();
+
       courseModificationService.createLecture(
           principal, courseId, description, lectureBegins, lectureFinish);
-
-      model = fillModelForView(principal, courseId);
+      return new CommandResult(referer);
     } catch (ClientServiceException e) {
       logger.error(e);
+      CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
+      return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
+    } catch (AccessDeniedException e) {
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
-    return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
   }
 
   private CommandResult postLectureDelete(
-      Principal principal, int courseId, Map<String, String[]> queryParams)
+      Principal principal, int courseId, Map<String, String[]> queryParams, String referer)
       throws CommandException, ClientCommandException {
     int lectureId =
-        CommandUtils.parseOptionalInt(queryParams, "lectureId")
+        CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURE_ID)
             .orElseThrow(() -> new ClientCommandException("Value <lectureId> must be define"));
-
-    CourseUpdateModel model = new CourseUpdateModel();
     try {
       courseModificationService.deleteLecture(principal, lectureId);
-      model = fillModelForView(principal, courseId);
+      return new CommandResult(referer);
     } catch (ClientServiceException e) {
       logger.error(e);
+      CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
+      return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
+    } catch (AccessDeniedException e) {
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
-    return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
   }
 
-  private CommandResult postCourseSubmit(Principal principal, int courseId)
+  private CommandResult postCourseSubmit(Principal principal, int courseId, String referer)
       throws CommandException, ClientCommandException {
-    CourseUpdateModel model = new CourseUpdateModel();
     try {
       courseModificationService.activateCourse(principal, courseId);
-      model = fillModelForView(principal, courseId);
+      return new CommandResult(referer);
     } catch (ClientServiceException e) {
       logger.error(e);
+      CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
+      return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
+    } catch (AccessDeniedException e) {
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
-    return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
   }
 
   private CommandResult getCourseUpdate(Principal principal, int courseId)
       throws CommandException, ClientCommandException {
+    final boolean haveAccess;
+    try {
+      haveAccess = courseModificationService.isAllowToUpdateCourse(principal, courseId);
+    } catch (ServiceException e) {
+      throw new CommandException(e);
+    }
+    if (!haveAccess) {
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+    }
     CourseUpdateModel model = fillModelForView(principal, courseId);
     return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
   }

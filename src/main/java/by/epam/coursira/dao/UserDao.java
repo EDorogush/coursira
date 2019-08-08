@@ -171,11 +171,12 @@ public class UserDao {
     try (Connection connection = pool.getConnection();
         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_CODE)) {
       ps.setString(1, code);
-      ResultSet rs = ps.executeQuery();
-      if (!rs.next()) {
-        return Optional.empty();
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next()) {
+          return Optional.empty();
+        }
+        user = parseUserFromResultSet(rs);
       }
-      user = parseUserFromResultSet(rs);
     } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
     }
@@ -188,7 +189,7 @@ public class UserDao {
    * @param sessionId value of session Id according to which {@link Principal} object is going to be
    *     found in db
    * @return {@link Optional}<{@link Principal}> object
-   * @throws DaoException
+   * @throws DaoException when getting data fails
    */
   public Optional<Principal> selectPrincipalBySessionId(String sessionId) throws DaoException {
     final Principal principal;
@@ -196,19 +197,21 @@ public class UserDao {
         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_PRINCIPAL_BY_SESSION_ID)) {
       ps.setString(1, sessionId);
       // get one line or none
-      ResultSet rs = ps.executeQuery();
-      if (!rs.next()) {
-        return Optional.empty();
+      User user;
+      Session session;
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next()) {
+          return Optional.empty();
+        }
+        user = parseUserFromResultSet(rs);
+        session = new Session.Builder()
+          .setId(rs.getString("session_id"))
+          .setUserId(rs.getInt("id"))
+          .setExpDate(rs.getTimestamp("expire_date").toInstant())
+          .setLanguage(Language.valueOf(rs.getString("language")))
+          .setZoneOffSet(ZoneOffset.ofTotalSeconds(rs.getInt("zone_offset_of_total_seconds")))
+          .build();
       }
-      User user = parseUserFromResultSet(rs);
-      Session session =
-          new Session.Builder()
-              .setId(rs.getString("session_id"))
-              .setUserId(rs.getInt("id"))
-              .setExpDate(rs.getTimestamp("expire_date").toInstant())
-              .setLanguage(Language.valueOf(rs.getString("language")))
-              .setZoneOffSet(ZoneOffset.ofTotalSeconds(rs.getInt("zone_offset_of_total_seconds")))
-              .build();
       principal = new Principal(session, user);
     } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
@@ -230,11 +233,12 @@ public class UserDao {
         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_EMAIL)) {
       ps.setString(1, email);
       // get one line or none
-      ResultSet rs = ps.executeQuery();
-      if (!rs.next()) {
-        return Optional.empty();
-      } else {
-        user = parseUserFromResultSet(rs);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next()) {
+          return Optional.empty();
+        } else {
+          user = parseUserFromResultSet(rs);
+        }
       }
     } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
@@ -255,11 +259,12 @@ public class UserDao {
     try (Connection connection = pool.getConnection();
         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_ID)) {
       ps.setInt(1, id);
-      ResultSet rs = ps.executeQuery();
-      if (!rs.next()) {
-        return Optional.empty();
-      } else {
-        user = parseUserFromResultSet(rs);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next()) {
+          return Optional.empty();
+        } else {
+          user = parseUserFromResultSet(rs);
+        }
       }
     } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
@@ -282,10 +287,11 @@ public class UserDao {
         PreparedStatement ps =
             connection.prepareStatement(SQL_SELECT_USER_BY_ROLE_WITH_NO_REGISTRATION_CODE)) {
       ps.setString(1, role.toString());
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        User user = parseUserFromResultSet(rs);
-        users.add(user);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          User user = parseUserFromResultSet(rs);
+          users.add(user);
+        }
       }
 
     } catch (SQLException | PoolConnectionException e) {
@@ -453,8 +459,9 @@ public class UserDao {
     try (Connection connection = pool.getConnection();
         PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_USER_EMAIL)) {
       ps.setString(1, email);
-      ResultSet rs = ps.executeQuery();
-      return rs.next() && rs.getBoolean("exists");
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next() && rs.getBoolean("exists");
+      }
     } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
     }
@@ -471,8 +478,9 @@ public class UserDao {
     try (Connection connection = pool.getConnection();
         PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_LECTURER_WITH_ID)) {
       ps.setInt(1, id);
-      ResultSet rs = ps.executeQuery();
-      return rs.next() && rs.getBoolean("exists");
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next() && rs.getBoolean("exists");
+      }
     } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
     }
@@ -487,8 +495,7 @@ public class UserDao {
         Optional.ofNullable(rs.getTimestamp("registration_expire_date"))
             .map(Timestamp::toInstant)
             .orElse(null);
-    User user =
-        new User.Builder()
+       return new User.Builder()
             .setId(rs.getInt("id"))
             .setEmail(rs.getString("email"))
             .setPassword(rs.getString("password"))
@@ -502,6 +509,6 @@ public class UserDao {
             .setRegistrationExpDate(registrationExpDate)
             .setBase64Image(base64Image)
             .build();
-    return user;
+
   }
 }

@@ -74,7 +74,7 @@ public class LoginCommand implements Command {
   /**
    * This method is used to process POST method of request which is being processing by current
    * Command. It parses from request parameters "login" and "password" values to {@link String},
-   * tries to update current {@link Principal}. When it is not possible, explenatory message is sent
+   * tries to update current {@link Principal}. When it is not possible, explanatory message is sent
    * to client.
    *
    * @param principal current Principal.

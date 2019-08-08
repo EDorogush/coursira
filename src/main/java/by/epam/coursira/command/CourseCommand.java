@@ -4,6 +4,7 @@ import by.epam.coursira.entity.Course;
 import by.epam.coursira.entity.Lecturer;
 import by.epam.coursira.entity.Principal;
 import by.epam.coursira.entity.Role;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
@@ -23,12 +24,15 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Class is intended to process client's requests to resource corresponding to "/courses" pattern.
- * Private field {@link Pattern} is used via urlPattern() method in {@link CommandFactory} class to distinguish
- * request's URL and to delegate request to current Command.
+ * Private field {@link Pattern} is used via urlPattern() method in {@link CommandFactory} class to
+ * distinguish request's URL and to delegate request to current Command.
  */
 public class CourseCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
   private static final Pattern RESOURCE_PATTERN = Pattern.compile("/courses");
+  private static final String REQUEST_PARAMETER_PAGE = "page";
+  private static final String REQUEST_PARAMETER_PERSONAL = "personal";
+  private static final String REQUEST_PARAMETER_LECTURER_ID = "lecturerId";
   private final int PAGINATION_LIMIT;
   private final CourseService courseService;
   private final UserService userService;
@@ -61,9 +65,11 @@ public class CourseCommand implements Command {
   private CommandResult getCourse(Principal principal, Map<String, String[]> queryParams)
       throws CommandException, ClientCommandException {
 
-    int pageIndex = CommandUtils.parseOptionalInt(queryParams, "page").orElse(1);
-    boolean isPersonal = CommandUtils.parseOptionalBoolean(queryParams, "personal").orElse(false);
-    Optional<Integer> lecturerId = CommandUtils.parseOptionalInt(queryParams, "lecturerId");
+    int pageIndex = CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_PAGE).orElse(1);
+    boolean isPersonal =
+        CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_PERSONAL).orElse(false);
+    Optional<Integer> lecturerId =
+        CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURER_ID);
 
     CourseModel courseModel = new CourseModel();
     courseModel.setPrincipal(principal);
@@ -92,8 +98,8 @@ public class CourseCommand implements Command {
         // get all courses;
         courses = courseService.viewCourses(principal, PAGINATION_LIMIT + 1, offset);
       }
-    } catch (ClientServiceException e) {
-      throw new ClientCommandException(e);
+    } catch (ClientServiceException | AccessDeniedException e) {
+      throw new ClientCommandException(e.getMessage());
     } catch (ServiceException e) {
       throw new CommandException(e);
     }

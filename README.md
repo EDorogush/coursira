@@ -1,7 +1,9 @@
 CoursIra is study project within the Java Web Development training course. The application is intended as study courses manager. 
 
 #Getting Started
+
 ##Prerequisites:
+
 JDK: [Version 11 or higher](https://openjdk.java.net).\
 [PostgreSQL 11.3](https://www.postgresql.org) \
 SMTP credentials.

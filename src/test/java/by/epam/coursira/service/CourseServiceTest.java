@@ -17,6 +17,7 @@ import by.epam.coursira.entity.Principal;
 import by.epam.coursira.entity.Role;
 import by.epam.coursira.entity.Session;
 import by.epam.coursira.entity.User;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.ServiceException;
@@ -71,7 +72,7 @@ public class CourseServiceTest {
 
   @Test
   public void testViewCoursesPersonalSucceed()
-      throws ServiceException, ClientServiceException, DaoException {
+      throws ServiceException, ClientServiceException, AccessDeniedException, DaoException {
     // given
     principal = new Principal(session, userStudent);
     List<Course> expected = new ArrayList<>();
@@ -99,13 +100,13 @@ public class CourseServiceTest {
   }
 
   @Test
-  public void testViewCoursesPersonalWhenWrongRoleThrowsServiceException() {
+  public void testViewCoursesPersonalWhenWrongRoleThrowsAccessDeniedException() {
     // given
     principal = new Principal(session, userAnonymous);
     int offset = 10;
     int limit = 10;
     assertThrows(
-        ServiceException.class, () -> courseService.viewCoursesPersonal(principal, limit, offset));
+       AccessDeniedException.class, () -> courseService.viewCoursesPersonal(principal, limit, offset));
   }
 
   @Test

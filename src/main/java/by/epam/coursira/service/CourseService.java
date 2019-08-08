@@ -7,6 +7,7 @@ import by.epam.coursira.entity.Course;
 import by.epam.coursira.entity.Lecture;
 import by.epam.coursira.entity.Principal;
 import by.epam.coursira.entity.Role;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.ServiceException;
@@ -54,10 +55,10 @@ public class CourseService {
    *
    * @param principal current {@link Principal}. must be not principal with {@link Role} Anonymous
    * @return {@code int} the number of courses.
-   * @throws ServiceException then principal's role is Anonymous or attempt to get data fails.
+   * @throws ServiceException when attempt to get data fails.
+   * @throws AccessDeniedException when principal's role is Anonymous.
    */
-  public int countCourses(Principal principal) throws ServiceException, ClientServiceException {
-    logger.debug("count courses");
+  public int countCourses(Principal principal) throws ServiceException, AccessDeniedException {
     final int count;
     try {
       switch (principal.getUser().getRole()) {
@@ -70,7 +71,7 @@ public class CourseService {
         default:
           Locale.setDefault(principal.getSession().getLanguage().getLocale());
           ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-          throw new ClientServiceException(bundle.getString("ACCESS_DENIED"));
+          throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -111,12 +112,12 @@ public class CourseService {
    * @param limit the number of courses in returned list
    * @param offset the number of offset in full course list in database
    * @return {@link List}<{@link Course}>
-   * @throws ServiceException if principal's role = anonymous or if attempt to get information
-   *     fails.
+   * @throws ServiceException if attempt to get information fails.
    * @throws ClientServiceException if values of offset or limit incorrect.
+   * @throws AccessDeniedException when principal's role is Anonymous.
    */
   public List<Course> viewCoursesPersonal(Principal principal, int limit, int offset)
-      throws ServiceException, ClientServiceException {
+      throws ServiceException, ClientServiceException, AccessDeniedException {
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     ValidationHelper.checkLimit(limit, currentLocale);
     ValidationHelper.checkOffSet(offset, currentLocale);
@@ -134,7 +135,7 @@ public class CourseService {
           break;
         default:
           ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-          throw new ServiceException(bundle.getString("ACCESS_DENIED"));
+          throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -227,9 +228,10 @@ public class CourseService {
    * @return {@link List}<{@link Lecture}>
    * @throws ServiceException if attempt to get data fails principal's role == anonymous
    * @throws ClientServiceException if values of offset or limit incorrect
+   * @throws AccessDeniedException when principal's role is Anonymous.
    */
   public List<Lecture> viewSchedule(Principal principal, int limit, int offset)
-      throws ServiceException, ClientServiceException {
+      throws ServiceException, ClientServiceException, AccessDeniedException {
     logger.debug("view schedule");
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     ValidationHelper.checkLimit(limit, currentLocale);
@@ -249,7 +251,7 @@ public class CourseService {
           ResourceBundle bundle =
               ResourceBundle.getBundle(
                   "errorMessages", principal.getSession().getLanguage().getLocale());
-          throw new ClientServiceException(bundle.getString("ACCESS_DENIED"));
+          throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -288,12 +290,12 @@ public class CourseService {
     }
   }
 
-  public boolean joinToCourse(Principal principal, int courseId)
-      throws ClientServiceException, ServiceException {
+  public void joinToCourse(Principal principal, int courseId)
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     Locale locale = principal.getSession().getLanguage().getLocale();
     ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", locale);
     if (principal.getUser().getRole() != Role.STUDENT) {
-      throw new ServiceException(bundle.getString("ACCESS_DENIED"));
+      throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     try {
       if (!courseDao.isExistsCourse(courseId)) {
@@ -315,20 +317,18 @@ public class CourseService {
       if (!isUpdated) {
         throw new ClientServiceException("can't add student {} to course {} : course has filled.");
       }
-      return studentDao.updateCourseStudent(principal.getUser().getId(), courseId);
-
     } catch (DaoException e) {
       throw new ServiceException(e);
     }
   }
 
   public boolean leaveCourse(Principal principal, int courseId)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     if (principal.getUser().getRole() != Role.STUDENT) {
       ResourceBundle bundle =
           ResourceBundle.getBundle(
               "errorMessages", principal.getSession().getLanguage().getLocale());
-      throw new ServiceException(bundle.getString("ACCESS_DENIED"));
+      throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     try {
       if (!courseDao.isExistsCourse(courseId)) {

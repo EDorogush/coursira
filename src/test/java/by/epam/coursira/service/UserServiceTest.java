@@ -14,6 +14,7 @@ import by.epam.coursira.entity.Principal;
 import by.epam.coursira.entity.Role;
 import by.epam.coursira.entity.Session;
 import by.epam.coursira.entity.User;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.ServiceException;
@@ -75,7 +76,7 @@ public class UserServiceTest {
 
   @Test
   public void testUpdateUserPhotoSucceed()
-      throws ClientServiceException, ServiceException, DaoException, IOException {
+      throws ClientServiceException, ServiceException, DaoException, IOException, AccessDeniedException {
     // given
     Principal current = new Principal(session, userStudent);
     Part mockPhoto = mock(Part.class);
@@ -106,16 +107,16 @@ public class UserServiceTest {
   }
 
   @Test
-  public void testUpdateUserPhotoWhenWrongRoleThrowClientServiceException() {
+  public void testUpdateUserPhotoWhenWrongRoleThrowAccessDeniedException() {
     // given
     Principal current = new Principal(session, userAnonymous);
     Part mockPhoto = mock(Part.class);
     // when
-    assertThrows(ClientServiceException.class, () -> userService.updateUserPhoto(current, mockPhoto));
+    assertThrows(AccessDeniedException.class, () -> userService.updateUserPhoto(current, mockPhoto));
   }
 
   @Test
-  public void testUpdateUserDataSucceed() throws ClientServiceException, ServiceException {
+  public void testUpdateUserDataSucceed() throws ClientServiceException, ServiceException, AccessDeniedException {
     // given
     Principal current = new Principal(session, userStudent);
     User updated =
@@ -144,7 +145,7 @@ public class UserServiceTest {
   }
 
   @Test
-  public void testUpdateUserDataWhenWrongRoleThrowClientServiceException() {
+  public void testUpdateUserDataWhenWrongRoleThrowAccessDeniedException() {
     // given
     Principal current = new Principal(session, userAnonymous);
     User updated =
@@ -160,7 +161,7 @@ public class UserServiceTest {
             .build();
     // when
     assertThrows(
-        ClientServiceException.class,
+        AccessDeniedException.class,
         () ->
             userService.updateUserData(
                 current,

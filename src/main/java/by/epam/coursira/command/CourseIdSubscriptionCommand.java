@@ -1,6 +1,7 @@
 package by.epam.coursira.command;
 
 import by.epam.coursira.entity.Principal;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
@@ -16,12 +17,13 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Class is intended to process client's requests to resource corresponding to
- *"/courses/([^/?]+)/subscriptions(\\?.*)?" pattern.
+ * "/courses/([^/?]+)/subscriptions(\\?.*)?" pattern.
  */
-
 public class CourseIdSubscriptionCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
-  private static final Pattern resourcePattern = Pattern.compile("/courses/([^/?]+)/subscriptions(\\?.*)?");
+  private static final Pattern resourcePattern =
+      Pattern.compile("/courses/([^/?]+)/subscriptions(\\?.*)?");
+  private static final String REQUEST_PARAMETER_SUBSCRIBE = "subscribe";
   private final CourseService courseService;
 
   public CourseIdSubscriptionCommand(CourseService courseService) {
@@ -57,7 +59,6 @@ public class CourseIdSubscriptionCommand implements Command {
         }
         logger.debug("course id parsed successfully {}", courseId);
         return postSubscription(principal, referer, courseId, request.getParameterMap());
-
       default:
         throw new ClientCommandException("Unknown method invoked.");
     }
@@ -65,8 +66,9 @@ public class CourseIdSubscriptionCommand implements Command {
 
   private CommandResult postSubscription(
       Principal principal, String referer, int courseId, Map<String, String[]> queryParams)
-      throws CommandException {
-    boolean subscribe = CommandUtils.parseOptionalBoolean(queryParams, "subscribe").orElse(false);
+      throws CommandException, ClientCommandException {
+    boolean subscribe =
+        CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_SUBSCRIBE).orElse(false);
     logger.debug("subscribe = {}", subscribe);
     try {
       if (subscribe) {
@@ -74,7 +76,9 @@ public class CourseIdSubscriptionCommand implements Command {
       } else {
         courseService.leaveCourse(principal, courseId);
       }
-    } catch (ClientServiceException | ServiceException e) {
+    } catch (ClientServiceException | AccessDeniedException e) {
+      throw new ClientCommandException(e.getMessage());
+    } catch (ServiceException e) {
       throw new CommandException(e);
     }
     return new CommandResult(referer);

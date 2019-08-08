@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 public class CourseIdCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
   private static final Pattern resourcePattern = Pattern.compile("/courses/([^/?[A-Z]]+)(\\?.*)?");
+  private static final String REQUEST_PARAMETER_PAGE = "page";
   private final int PAGINATION_LIMIT;
   private final CourseService courseService;
 
@@ -55,7 +56,7 @@ public class CourseIdCommand implements Command {
   private CommandResult getCourseDetails(
       Principal principal, int courseId, Map<String, String[]> queryParams)
       throws CommandException, ClientCommandException {
-    int pageIndex = CommandUtils.parseOptionalInt(queryParams, "page").orElse(1);
+    int pageIndex = CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_PAGE).orElse(1);
 
     CourseDetailModel courseDetailModel = new CourseDetailModel();
     courseDetailModel.setPrincipal(principal);
@@ -64,7 +65,7 @@ public class CourseIdCommand implements Command {
     // get course by courseId
     try {
       course = courseService.viewCourseDetails(principal, courseId, PAGINATION_LIMIT + 1, offset);
-      courseDetailModel.setAbleToJoin(courseService.isScheduleCross(principal, courseId));
+      courseDetailModel.setAbleToJoin(!courseService.isScheduleCross(principal, courseId));
       courseDetailModel.setInUserList(courseService.isInUserListCourse(principal, courseId));
     } catch (ClientServiceException e) {
       throw new ClientCommandException(e);

@@ -15,7 +15,8 @@
     <div class="row">
 
       <div class="col-md-6">
-        <form name="CreateCourseForm" accept-charset="UTF-8" method="post" action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
+        <form name="CreateCourseForm" accept-charset="UTF-8" method="post"
+              action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
           <input hidden name="updateCourseData" value="true">
           <fmt:bundle basename="pagecontent" prefix="course.">
             <div class="form-group">
@@ -50,7 +51,8 @@
           <div class="row">
             <div class="col-md-3"><p>${lecturer.firstName} ${lecturer.lastName}</p></div>
             <div class="col-md-3">
-              <form name="DeleteLectureForm" method="post" action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
+              <form name="DeleteLectureForm" method="post"
+                    action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
                 <input hidden name="deleteLecturer" value="true">
                 <input hidden name="lecturerId" value="${lecturer.id}">
                 <input type="submit" class="btn btn-warning" value="<fmt:message key="DeleteLecturer"/>"/>
@@ -62,12 +64,17 @@
 
       <div class="form-group">
         <label><fmt:message key="addLecturer"/></label>
+        <form name="InviteLectureForm" method="post"
+              action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
+          <input hidden name="inviteLecturer" value="true">
         <select name="lecturerId">
           <option value="0"></option>
           <core:forEach items="${model.lecturers}" var="lecturer">
             <option value="${lecturer.id}">${lecturer.firstName} ${lecturer.lastName}</option>
           </core:forEach>
         </select>
+          <input type="submit" class="btn btn-success" value="<fmt:message key="submit"/>"/>
+        </form>
       </div>
     </div>
 
@@ -96,7 +103,8 @@
       <core:forEach items="${model.course.lectures}" var="lecture">
         <core:choose>
           <core:when test="${lecture.lecturer.id == model.principal.user.id}">
-            <form name="UpdateLectureForm" method="post" action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
+            <form name="UpdateLectureForm" method="post"
+                  action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
               <input hidden name="updateLecture" value="true">
               <input hidden name="lectureId" value="${lecture.id}">
               <tr>
@@ -140,7 +148,8 @@
                 </td>
             </form>
             <td>
-              <form name="DeleteLectureForm" method="post" action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
+              <form name="DeleteLectureForm" method="post"
+                    action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
                 <input hidden name="deleteLecture" value="true">
                 <input hidden name="lectureId" value="${lecture.id}">
                 <input type="submit" class="btn btn-warning" value="<fmt:message key="DeleteLecture"/>"/>
@@ -167,7 +176,8 @@
         </core:choose>
       </core:forEach>
         <%--              new lecture--%>
-      <form name="NewLectureForm" method="post" action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
+      <form name="NewLectureForm" method="post"
+            action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
         <input hidden name="newLecture" value="true">
         <tr>
           <td>
@@ -199,7 +209,8 @@
       </form>
     </table>
 
-    <form name="ActivateForm" method="post" action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
+    <form name="ActivateForm" method="post"
+          action="${pageContext.request.contextPath}/courses/${model.course.id}/update">
       <input hidden name="activateCourse" value="true">
       <input type="submit" class="btn btn-success" value="<fmt:message key="activateCourse"/>"/>
     </form>

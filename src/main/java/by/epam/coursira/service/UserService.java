@@ -5,6 +5,7 @@ import by.epam.coursira.entity.Lecturer;
 import by.epam.coursira.entity.Principal;
 import by.epam.coursira.entity.Role;
 import by.epam.coursira.entity.User;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.ServiceException;
@@ -35,16 +36,18 @@ public class UserService {
    * @param principal {@link Principal} current principal
    * @param image {@link Part} image. must be of image type.
    * @return {@link Principal} with updated field;
-   * @throws ClientServiceException when {@link Part} image is incorrect, or when user has role =
-   *     Role.ANONYMOUS
+   * @throws ClientServiceException when {@link Part} image is incorrect.
    * @throws ServiceException attempt to update fails.
+   * @throws AccessDeniedException when user has role = Role.ANONYMOUS
    */
   public Principal updateUserPhoto(Principal principal, Part image)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     final Principal current;
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
-      throw new ClientServiceException("Access denied.");
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     ValidationHelper.checkImage(image, currentLocale);
     try (InputStream imageInputStream = image.getInputStream()) {
@@ -71,7 +74,8 @@ public class UserService {
    * @param interests {@link String} user's new interests.
    * @return updated {@link Principal} object.
    * @throws ClientServiceException when input user data is incorrect.
-   * @throws ServiceException when user isn't authorised or attempt to update record fails.
+   * @throws ServiceException when attempt to update record fails.
+   * @throws AccessDeniedException when user has role = Role.ANONYMOUS
    */
   public Principal updateUserData(
       Principal principal,
@@ -80,11 +84,11 @@ public class UserService {
       @Nullable Integer age,
       @Nullable String organization,
       @Nullable String interests)
-      throws ClientServiceException, ServiceException {
+      throws ClientServiceException, ServiceException,AccessDeniedException {
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
       ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
-      throw new ClientServiceException(bundle.getString("ACCESS_DENIED"));
+      throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     firstName = ValidationHelper.validateText(firstName, currentLocale, "First Name");

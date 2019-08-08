@@ -2,10 +2,10 @@ package by.epam.coursira.command;
 
 import by.epam.coursira.entity.Principal;
 import by.epam.coursira.entity.Role;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
-import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.UserUpdateModel;
 import by.epam.coursira.service.UserService;
@@ -48,18 +48,22 @@ public class PersonalUpdateCommand implements Command {
       case "GET":
         return getPersonalUpdate(principal);
       case "POST":
+        String referer =
+            request.getHeader("referer")
+                .split(request.getContextPath())[1]; // ServletPath part of referer link
+        logger.debug("courseUpdate referer {}", referer);
         if (request.getContentType().contains("multipart/form-data")) {
           final Part filePart;
           try {
             filePart =
                 Optional.ofNullable(request.getPart("file"))
                     .orElseThrow(() -> new ClientCommandException("File can't be null "));
-            return postImageUpdate(principal, filePart);
+            return postImageUpdate(principal, filePart, referer);
           } catch (IOException | ServletException e) {
             throw new CommandException(e);
           }
         } else {
-          return postPersonalUpdate(principal, request.getParameterMap());
+          return postPersonalUpdate(principal, request.getParameterMap(), referer);
         }
       default:
         throw new ClientCommandException("Unknown method invoked.");
@@ -77,7 +81,8 @@ public class PersonalUpdateCommand implements Command {
     return new CommandResult(CoursiraJspPath.UPDATE_PERSONAL, updateModel);
   }
 
-  private CommandResult postPersonalUpdate(Principal principal, Map<String, String[]> queryParams)
+  private CommandResult postPersonalUpdate(
+      Principal principal, Map<String, String[]> queryParams, String referer)
       throws CommandException, ClientCommandException {
     String firstName =
         CommandUtils.parseOptionalString(queryParams, "firstName")
@@ -102,22 +107,33 @@ public class PersonalUpdateCommand implements Command {
       userUpdateModel.setErrorDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.UPDATE_PERSONAL, userUpdateModel);
 
+    } catch (AccessDeniedException e) {
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
   }
 
-  private CommandResult postImageUpdate(Principal principal, Part part) throws CommandException {
-    UserUpdateModel userUpdateModel = new UserUpdateModel();
+  private CommandResult postImageUpdate(Principal principal, Part part, String referer)
+      throws CommandException, ClientCommandException {
+
     try {
       principal = userService.updateUserPhoto(principal, part);
+      return new CommandResult(referer);
     } catch (ClientServiceException e) {
       logger.error("ClientServiceException", e);
+      UserUpdateModel userUpdateModel = new UserUpdateModel();
       userUpdateModel.setErrorImageMessage(e.getMessage());
-    } catch (ServiceException ex) {
-      throw new CommandException(ex);
+      userUpdateModel.setPrincipal(principal);
+      return new CommandResult(CoursiraJspPath.UPDATE_PERSONAL, userUpdateModel);
+    } catch (AccessDeniedException e) {
+      Locale.setDefault(principal.getSession().getLanguage().getLocale());
+      ResourceBundle bundle = ResourceBundle.getBundle("errorMessages", Locale.getDefault());
+      throw new ClientCommandException(bundle.getString("ACCESS_DENIED"));
+    } catch (ServiceException e) {
+      throw new CommandException(e);
     }
-    userUpdateModel.setPrincipal(principal);
-    return new CommandResult(CoursiraJspPath.UPDATE_PERSONAL, userUpdateModel);
   }
 }

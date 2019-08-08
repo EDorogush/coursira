@@ -2,6 +2,7 @@ package by.epam.coursira.command;
 
 import by.epam.coursira.entity.Lecture;
 import by.epam.coursira.entity.Principal;
+import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientCommandException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.CommandException;
@@ -66,7 +67,7 @@ public class PersonalPageCommand implements Command {
       personalModel.setCurrentPageIndex(pageIndex);
     } catch (ServiceException e) {
       throw new CommandException(e);
-    } catch (ClientServiceException e) {
+    } catch (ClientServiceException | AccessDeniedException e) {
       throw new ClientCommandException(e.getMessage());
     }
 

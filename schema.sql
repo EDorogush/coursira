@@ -41,7 +41,7 @@ CREATE TABLE sessions
 );
 
 ALTER TABLE sessions
-    OWNER TO elena;
+    OWNER TO coursirauser;
 
 CREATE TABLE courses
 (

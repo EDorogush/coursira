@@ -104,8 +104,9 @@ public class StudentDao {
       ps.setInt(1, studentId);
       ps.setInt(2, limit);
       ps.setInt(3, offset);
-      ResultSet rs = ps.executeQuery();
-      return parseResultSetToCoursesList(rs);
+      try (ResultSet rs = ps.executeQuery()) {
+        return parseResultSetToCoursesList(rs);
+      }
     } catch (SQLException e) {
       logger.info("SQLException in attempt to close PreparedStatement ps.");
       throw new DaoException(e.getMessage());
@@ -120,8 +121,9 @@ public class StudentDao {
         PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_COURSE_IN_STUDENT_LIST)) {
       ps.setInt(1, studentId);
       ps.setInt(2, courseId);
-      ResultSet rs = ps.executeQuery();
-      return rs.next() && rs.getBoolean("exists");
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next() && rs.getBoolean("exists");
+      }
     } catch (SQLException | PoolConnectionException e) {
       logger.info(e);
       throw new DaoException(e);
@@ -136,13 +138,13 @@ public class StudentDao {
       ps.setInt(1, studentId);
       ps.setInt(2, limit);
       ps.setInt(3, offset);
-      ResultSet rs = ps.executeQuery();
-      while (rs.next()) {
-        Lecturer lecturer =
-            new Lecturer(
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          Lecturer lecturer =
+              new Lecturer(
                 rs.getInt("lecturer_id"), rs.getString("firstname"), rs.getString("lastname"));
-        Lecture current =
-            new Lecture.Builder()
+          Lecture current =
+              new Lecture.Builder()
                 .withLectureId(rs.getInt("lecture_id"))
                 .withTimeStart(rs.getTimestamp("time_start").toInstant())
                 .withTimeEnd(rs.getTimestamp("time_end").toInstant())
@@ -150,7 +152,8 @@ public class StudentDao {
                 .withDescription(rs.getString("description"))
                 .withLecturer(lecturer)
                 .build();
-        lectureList.add(current);
+          lectureList.add(current);
+        }
       }
       logger.debug("list contains {}", lectureList.size());
     } catch (SQLException | PoolConnectionException e) {
@@ -199,10 +202,11 @@ public class StudentDao {
       try (Connection connection = pool.getConnection();
           PreparedStatement ps = connection.prepareStatement(SQL_COUNT_COURSES_BY_STUDENT_ID)) {
         ps.setInt(1, studentId);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-          return rs.getInt("count");
-        } else throw new DaoException("ResultSet returns null");
+        try (ResultSet rs = ps.executeQuery()) {
+          if (rs.next()) {
+            return rs.getInt("count");
+          } else throw new DaoException("ResultSet returns null");
+        }
       }
     } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
