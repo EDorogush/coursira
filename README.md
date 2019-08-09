@@ -1,5 +1,5 @@
 
-#Introduction
+# Introduction
 
 CoursIra is study project within the Java Web Development training course. The application is intended as study courses manager
 
@@ -35,7 +35,7 @@ CoursIra is study project within the Java Web Development training course. The a
 - update personal data (photo, name, age, interests, organisation);
 - log out.
 
-##Features
+## Features
 - Stateless application;
 - Static content support;
 - Xss attack defense;
