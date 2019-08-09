@@ -57,11 +57,11 @@ public class SignUpModel extends JspModelAbstract {
     if (!(o instanceof SignUpModel)) return false;
     if (!super.equals(o)) return false;
     SignUpModel that = (SignUpModel) o;
-    return Objects.equals(errorDataMessage, that.errorDataMessage) &&
-      Objects.equals(firstName, that.firstName) &&
-      Objects.equals(lastName, that.lastName) &&
-      role == that.role &&
-      Objects.equals(email, that.email);
+    return Objects.equals(errorDataMessage, that.errorDataMessage)
+        && Objects.equals(firstName, that.firstName)
+        && Objects.equals(lastName, that.lastName)
+        && role == that.role
+        && Objects.equals(email, that.email);
   }
 
   @Override

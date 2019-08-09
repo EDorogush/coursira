@@ -33,6 +33,7 @@ import by.epam.coursira.service.CourseService;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.service.UserService;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.servlet.ServletContext;
@@ -59,10 +61,12 @@ import org.apache.logging.log4j.Logger;
 @MultipartConfig
 public class CoursiraServlet extends HttpServlet {
   private static final Logger logger = LogManager.getLogger();
-  private List<Command> commandList = new ArrayList<>();
-  private PrincipalService principalService;
-  private ConnectionPoolImpl connectionPool;
-  private ScheduledExecutorService cleanerThread = Executors.newSingleThreadScheduledExecutor();
+  private static List<Command> commandList = new ArrayList<>();
+  private static PrincipalService principalService;
+  private static ConnectionPoolImpl connectionPool;
+  private ScheduledFuture<?> scheduledFuture;
+  private static ScheduledExecutorService cleanerThread =
+      Executors.newSingleThreadScheduledExecutor();
 
   public CoursiraServlet() {
     logger.info("Servlet constructed");
@@ -103,7 +107,7 @@ public class CoursiraServlet extends HttpServlet {
     StudentDao studentDao = new StudentDao(connectionPool);
     UserDao userDao = new UserDao(connectionPool);
     MailSender mailSender = new MailSender(gmailAddress, gmailPassword, propSmtp);
-    this.principalService =
+    principalService =
         new PrincipalService(
             userDao,
             sessionLoginDuration,
@@ -130,61 +134,70 @@ public class CoursiraServlet extends HttpServlet {
     commandList.add(new CourseUpdateCommand(courseModificationService, courseService, userService));
     logger.info("commandList constructed ");
 
-    cleanerThread.scheduleWithFixedDelay(
-        () -> {
-          try {
-            principalService.cleanFromExpiredSessions();
-            principalService.cleanFromExpiredRegistrationCode();
-          } catch (ServiceException e) {
-            logger.error("cleaner procedure fails: {}", e.getMessage());
-          }
-        },
-        cleanerInitialDelay,
-        cleanerProcedureDelay,
-        TimeUnit.HOURS);
+    scheduledFuture =
+        cleanerThread.scheduleWithFixedDelay(
+            () -> {
+              try {
+                principalService.cleanFromExpiredSessions();
+                principalService.cleanFromExpiredRegistrationCode();
+              } catch (ServiceException e) {
+                logger.error("cleaner procedure init fails: {}", e.getMessage());
+              }
+            },
+            cleanerInitialDelay,
+            cleanerProcedureDelay,
+            TimeUnit.HOURS);
     logger.info("cleaner thread constructed");
   }
 
   @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    processRequest(request, response);
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      processRequest(request, response);
+    } catch (IOException e) {
+      logger.error(e);
+    }
   }
 
   @Override
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    processRequest(request, response);
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      processRequest(request, response);
+    } catch (IOException e) {
+      logger.error(e);
+    }
   }
 
-  protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+  private void processRequest(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    logger.info("request {}", httpServletRequestToString(request));
+    logger.debug("request {}", () -> httpServletRequestToString(request));
     String sessionId = request.getSession().getId();
+    String modelName = "model";
     try {
       Principal principal = principalService.verifyPrincipleBySessionId(sessionId);
-      logger.info("principal verified: {}", principal.toString());
+      logger.debug("principal verified: {}", principal::toString);
       try {
+
         Command command = new CommandFactory(commandList).getCommand(request.getServletPath());
         CommandResult result = command.execute(principal, request);
         if (result.isForward()) {
-          request.setAttribute("model", result.getJspModel());
+          request.setAttribute(modelName, result.getJspModel());
           getServletContext().getRequestDispatcher(result.getJsp()).forward(request, response);
         } else {
           response.sendRedirect(request.getContextPath() + result.getPageToRedirect());
         }
       } catch (PageNotFoundException e) {
-        logger.error(e);
+        logger.debug(e);
         ErrorModel model = new ErrorModel();
         model.setPrincipal(principal);
-        request.setAttribute("model", model);
+        request.setAttribute(modelName, model);
         response.sendError(404);
       } catch (ClientCommandException e) {
         ErrorModel model = new ErrorModel();
-        logger.error(e);
+        logger.warn(e);
         model.setPrincipal(principal);
         model.setErrorMessage(e.getMessage());
-        request.setAttribute("model", model);
+        request.setAttribute(modelName, model);
         response.sendError(400);
       }
     } catch (Exception e) {
@@ -195,14 +208,14 @@ public class CoursiraServlet extends HttpServlet {
 
   @Override
   public void destroy() {
+    scheduledFuture.cancel(true);
     cleanerThread.shutdownNow();
     logger.info("cleanerThread destroyed");
     try {
       connectionPool.close();
       logger.info("Servlet destroyed");
     } catch (PoolConnectionException e) {
-      logger.error(e);
-      logger.info("Servlet doesn't destroyed");
+      logger.error("Servlet can't be destroyed correctly  {}", e.getMessage());
     }
   }
 

@@ -43,7 +43,7 @@ public class CourseIdSubscriptionCommand implements Command {
       case "GET":
         throw new PageNotFoundException();
       case "POST":
-        String referer = CommandUtils.getReferer(request);
+        String referer = request.getServletPath();
         logger.debug("referer is {}", referer);
         Matcher matcher = resourcePattern.matcher(request.getServletPath());
         if (!matcher.matches()) {

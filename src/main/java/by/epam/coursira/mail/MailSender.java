@@ -23,10 +23,8 @@ public class MailSender {
     this.propSmtp = prop;
   }
 
-
   public boolean sendMail(String sendTo, String subject, String messageText)
       throws MessagingException {
-
 
     Session session =
         Session.getInstance(
@@ -45,7 +43,7 @@ public class MailSender {
     message.setText(messageText);
     Transport.send(message);
 
-    logger.info("message to {} was sent ", sendTo);
+    logger.debug("message to {} was sent ", sendTo);
     return true;
   }
 }

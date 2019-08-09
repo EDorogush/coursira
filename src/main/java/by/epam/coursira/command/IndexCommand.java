@@ -71,7 +71,7 @@ public class IndexCommand implements Command {
       indexModel.setLecturerAmount(pairs.get("lecturers"));
       indexModel.setStudentsAmount(pairs.get("students"));
     } catch (ServiceException e) {
-      logger.info("Service exception was thrown", e);
+      logger.debug("Service exception was thrown", e);
       throw new CommandException(e);
     }
 

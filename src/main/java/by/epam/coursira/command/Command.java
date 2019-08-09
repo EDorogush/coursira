@@ -35,7 +35,4 @@ public interface Command {
    * @return {@link Pattern} of request URL which is able to be processed by current Command.
    */
   Pattern urlPattern();
-
-
 }
-

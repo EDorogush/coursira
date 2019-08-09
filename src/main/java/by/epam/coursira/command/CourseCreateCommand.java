@@ -101,7 +101,7 @@ public class CourseCreateCommand implements Command {
           courseModificationService.createCourse(principal, title, description, capacity);
       return new CommandResult(String.format("/courses/%d/update", courseId));
     } catch (ClientServiceException e) {
-      logger.error(e.getMessage());
+      logger.debug(e.getMessage());
       // return with message
       CourseCreateModel model = new CourseCreateModel();
       model.setPrincipal(principal);

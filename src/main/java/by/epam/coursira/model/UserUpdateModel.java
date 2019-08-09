@@ -29,8 +29,8 @@ public class UserUpdateModel extends JspModelAbstract {
     if (!(o instanceof UserUpdateModel)) return false;
     if (!super.equals(o)) return false;
     UserUpdateModel that = (UserUpdateModel) o;
-    return Objects.equals(errorImageMessage, that.errorImageMessage) &&
-      Objects.equals(errorDataMessage, that.errorDataMessage);
+    return Objects.equals(errorImageMessage, that.errorImageMessage)
+        && Objects.equals(errorDataMessage, that.errorDataMessage);
   }
 
   @Override
@@ -41,8 +41,8 @@ public class UserUpdateModel extends JspModelAbstract {
   @Override
   public String toString() {
     return new StringJoiner(", ", UserUpdateModel.class.getSimpleName() + "[", "]")
-      .add("errorImageMessage='" + errorImageMessage + "'")
-      .add("errorDataMessage='" + errorDataMessage + "'")
-      .toString();
+        .add("errorImageMessage='" + errorImageMessage + "'")
+        .add("errorDataMessage='" + errorDataMessage + "'")
+        .toString();
   }
 }

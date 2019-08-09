@@ -54,7 +54,7 @@ dependencies {
 
 gretty {
   servletContainer = 'tomcat9'
-  contextPath = '/abc'
+  contextPath = '/'
 //database data
   initParameter('jdbcDriver', 'jdbc:postgresql://localhost:5432/coursiradb?user=coursirauser')
   initParameter('dbPoolSize', '5')

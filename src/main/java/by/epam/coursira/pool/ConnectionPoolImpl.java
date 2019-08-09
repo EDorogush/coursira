@@ -22,10 +22,13 @@ public class ConnectionPoolImpl implements ConnectionPool, AutoCloseable {
     for (int i = 0; i < size; i++) {
       try {
         Connection connection = DriverManager.getConnection(url);
-        pool.offer(connection);
+        if (!pool.offer(connection)) {
+          // should not happen. Pool is expected to have free space
+          throw new PoolConnectionException(
+              "Can't init Connection pool. Can't add Connection to Pool");
+        }
         fullSet.add(connection);
       } catch (SQLException e) {
-        logger.info("SQLException in DriverManager.getConnection(url) ");
         throw new PoolConnectionException(e);
       }
     }
@@ -44,10 +47,13 @@ public class ConnectionPoolImpl implements ConnectionPool, AutoCloseable {
     logger.debug("Connection acquired. Pool size is {}", pool.size());
     return new WrappedConnection(connection, this);
   }
+  // package-private
+  boolean releaseConnection(WrappedConnection connection) throws PoolConnectionException {
 
-  public boolean releaseConnection(WrappedConnection connection) {
-    // pool is guarantied have free space
-    pool.offer(connection.getRealConnection());
+    if (!pool.offer(connection.getRealConnection())) {
+      // pool is guarantied have free space
+      throw new PoolConnectionException("Can't return connection to pool");
+    }
     logger.debug("Connection released. Pool size is {}", pool.size());
     return true;
   }
@@ -62,6 +68,6 @@ public class ConnectionPoolImpl implements ConnectionPool, AutoCloseable {
         throw new PoolConnectionException(e);
       }
     }
-    logger.debug("successfully closed all connections");
+    logger.info("successfully closed all connections");
   }
 }

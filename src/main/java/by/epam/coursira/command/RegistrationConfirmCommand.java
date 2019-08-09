@@ -73,7 +73,7 @@ public class RegistrationConfirmCommand implements Command {
     Optional<String> code = CommandUtils.parseOptionalString(queryParams, "code");
     boolean emailKey = CommandUtils.parseOptionalBoolean(queryParams, "email").orElse(false);
     if (code.isEmpty() && !emailKey) {
-      logger.error("code parameter is absent");
+      logger.debug("code parameter is absent");
       throw new ClientCommandException("code parameter is absent");
     }
     if (code.isPresent() && emailKey) {
@@ -90,13 +90,13 @@ public class RegistrationConfirmCommand implements Command {
     } else {
       try {
         principalService.activateRegistration(principal, code.get());
-        logger.info("user's registration completed");
+        logger.debug("user's registration completed");
         model.setActivate(true);
         model.setTextMessage(bundle.getString("USER_ACTIVATION_CONFIRM"));
       } catch (ServiceException e) {
         throw new CommandException(e);
       } catch (ClientServiceException e) {
-        logger.error(e);
+        logger.debug(e);
         model.setActivate(false);
         model.setTextMessage(e.getMessage());
       }

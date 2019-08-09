@@ -47,10 +47,10 @@ public class CourseCreateModel extends JspModelAbstract {
     if (!(o instanceof CourseCreateModel)) return false;
     if (!super.equals(o)) return false;
     CourseCreateModel that = (CourseCreateModel) o;
-    return capacity == that.capacity &&
-      Objects.equals(title, that.title) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(errorDataMessage, that.errorDataMessage);
+    return capacity == that.capacity
+        && Objects.equals(title, that.title)
+        && Objects.equals(description, that.description)
+        && Objects.equals(errorDataMessage, that.errorDataMessage);
   }
 
   @Override

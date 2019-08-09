@@ -47,7 +47,8 @@ public class UserService {
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
       throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     ValidationHelper.checkImage(image, currentLocale);
@@ -85,10 +86,11 @@ public class UserService {
       @Nullable Integer age,
       @Nullable String organization,
       @Nullable String interests)
-      throws ClientServiceException, ServiceException,AccessDeniedException {
+      throws ClientServiceException, ServiceException, AccessDeniedException {
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
       throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
@@ -110,7 +112,7 @@ public class UserService {
     user.setAge(age);
     user.setOrganization(organization);
     user.setInterests(interests);
-    logger.info(user.toString());
+    logger.debug("update user data: {} ", user::toString);
     try {
       userDao.updateUser(user);
     } catch (DaoException e) {
@@ -122,11 +124,10 @@ public class UserService {
   /**
    * Method provide information about all lecturers are registered in the system.
    *
-   * @param principal current user's {@link Principal}.
    * @return {@link List}<{@link Lecturer} > the list of registered lecturers.
    * @throws ServiceException if attempt to get data fails.
    */
-  public List<Lecturer> findAllLecturersList(Principal principal) throws ServiceException {
+  public List<Lecturer> findAllLecturersList() throws ServiceException {
     try {
       List<User> users = userDao.selectUsersByRole(Role.LECTURER);
       List<Lecturer> lecturers = new ArrayList<>(users.size());

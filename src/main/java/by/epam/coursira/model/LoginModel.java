@@ -6,10 +6,8 @@ import java.util.StringJoiner;
 public class LoginModel extends JspModelAbstract {
   private String errorMessage;
 
-  //need for jsp page
-  public LoginModel() {
-
-  }
+  // need for jsp page
+  public LoginModel() {}
 
   public String getErrorMessage() {
     return errorMessage;

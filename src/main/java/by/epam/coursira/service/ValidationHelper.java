@@ -64,10 +64,10 @@ final class ValidationHelper {
     }
     if (text.length() > MAX_TEXT_SIZE) {
       String message =
-        bundle.getString("TOO_LARGE_TEXT")
-          + fieldName
-          + bundle.getString("MUST_BE_LESS")
-          + MAX_TEXT_SIZE;
+          bundle.getString("TOO_LARGE_TEXT")
+              + fieldName
+              + bundle.getString("MUST_BE_LESS")
+              + MAX_TEXT_SIZE;
       throw new ClientServiceException(message);
     }
     return filterTextFromJunk(text);

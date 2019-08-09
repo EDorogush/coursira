@@ -68,29 +68,35 @@ public class CourseModel extends JspModelAbstract {
     if (!(o instanceof CourseModel)) return false;
     if (!super.equals(o)) return false;
     CourseModel that = (CourseModel) o;
-    return currentPageIndex == that.currentPageIndex &&
-      hasNextPage == that.hasNextPage &&
-      isLecturerCourses == that.isLecturerCourses &&
-      isPersonal == that.isPersonal &&
-      Objects.equals(courses, that.courses) &&
-      Objects.equals(lecturer, that.lecturer);
+    return currentPageIndex == that.currentPageIndex
+        && hasNextPage == that.hasNextPage
+        && isLecturerCourses == that.isLecturerCourses
+        && isPersonal == that.isPersonal
+        && Objects.equals(courses, that.courses)
+        && Objects.equals(lecturer, that.lecturer);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), courses, currentPageIndex, hasNextPage, isLecturerCourses, isPersonal,
-      lecturer);
+    return Objects.hash(
+        super.hashCode(),
+        courses,
+        currentPageIndex,
+        hasNextPage,
+        isLecturerCourses,
+        isPersonal,
+        lecturer);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", CourseModel.class.getSimpleName() + "[", "]")
-      .add("courses=" + courses)
-      .add("currentPageIndex=" + currentPageIndex)
-      .add("hasNextPage=" + hasNextPage)
-      .add("isLecturerCourses=" + isLecturerCourses)
-      .add("isPersonal=" + isPersonal)
-      .add("lecturer=" + lecturer)
-      .toString();
+        .add("courses=" + courses)
+        .add("currentPageIndex=" + currentPageIndex)
+        .add("hasNextPage=" + hasNextPage)
+        .add("isLecturerCourses=" + isLecturerCourses)
+        .add("isPersonal=" + isPersonal)
+        .add("lecturer=" + lecturer)
+        .toString();
   }
 }

@@ -34,8 +34,7 @@ public abstract class JspModelAbstract {
     if (this == o) return true;
     if (!(o instanceof JspModelAbstract)) return false;
     JspModelAbstract that = (JspModelAbstract) o;
-    return Objects.equals(languages, that.languages) &&
-      Objects.equals(principal, that.principal);
+    return Objects.equals(languages, that.languages) && Objects.equals(principal, that.principal);
   }
 
   @Override

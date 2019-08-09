@@ -1,6 +1,6 @@
 Configuration:
   status: warn
-  name: YAMLConfigTest
+  name: CoursiraLogConf
   properties:
     property:
       name: log-path

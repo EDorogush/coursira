@@ -55,7 +55,7 @@ public class PrincipalServiceTest {
   private PrincipalService service;
 
   @BeforeMethod
-  public void setUp() throws DaoException {
+  public void setUp() {
     MockitoAnnotations.initMocks(this);
     Duration sessionLoginDuration = Duration.ofHours(2);
     Duration sessionAnonymousDuration = Duration.ofHours(1);

@@ -1,5 +1,7 @@
 package by.epam.coursira.pool;
 
+import by.epam.coursira.exception.PageNotFoundException;
+import by.epam.coursira.exception.PoolConnectionException;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -41,7 +43,11 @@ public class WrappedConnection implements Connection {
   public void close() throws SQLException {
     logger.debug("WrappedConnection close method invoked");
     this.setAutoCommit(true);
-    pool.releaseConnection(this);
+    try {
+      pool.releaseConnection(this);
+    } catch (PoolConnectionException e) {
+      throw new SQLException(e);
+    }
   }
 
   @Override

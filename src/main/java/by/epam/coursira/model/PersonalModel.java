@@ -49,10 +49,10 @@ public class PersonalModel extends JspModelAbstract {
     if (!(o instanceof PersonalModel)) return false;
     if (!super.equals(o)) return false;
     PersonalModel that = (PersonalModel) o;
-    return courseAmount == that.courseAmount &&
-      hasNextPage == that.hasNextPage &&
-      currentPageIndex == that.currentPageIndex &&
-      Objects.equals(schedule, that.schedule);
+    return courseAmount == that.courseAmount
+        && hasNextPage == that.hasNextPage
+        && currentPageIndex == that.currentPageIndex
+        && Objects.equals(schedule, that.schedule);
   }
 
   @Override

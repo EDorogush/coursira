@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertThrows;
 
 import by.epam.coursira.exception.ClientCommandException;
-import by.epam.coursira.exception.CommandException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -15,7 +14,7 @@ import org.testng.annotations.Test;
 public class CommandUtilsTest {
 
   @Test
-  public void testParseOptionalStringWhenQueryParamsIsNullThenEmpty() throws CommandException {
+  public void testParseOptionalStringWhenQueryParamsIsNullThenEmpty() {
     // when
     HashMap<String, String[]> queryParams = null;
     Optional<String> expected = Optional.empty();
@@ -24,7 +23,7 @@ public class CommandUtilsTest {
   }
 
   @Test
-  public void testParseOptionalStringWhenQueryParamsIsEmptyThenEmpty() throws CommandException {
+  public void testParseOptionalStringWhenQueryParamsIsEmptyThenEmpty() {
     // when
     HashMap<String, String[]> queryParams = new HashMap<>();
     Optional<String> expected = Optional.empty();
@@ -33,7 +32,7 @@ public class CommandUtilsTest {
   }
 
   @Test
-  public void testParseOptionalStringWhenValueIsNullThenEmpty() throws CommandException {
+  public void testParseOptionalStringWhenValueIsNullThenEmpty() {
     // given
     HashMap<String, String[]> queryParams = new HashMap<>();
     queryParams.put("hello", null);
@@ -45,7 +44,7 @@ public class CommandUtilsTest {
   }
 
   @Test
-  public void testParseOptionalStringWhenValueZerosArrayThenEmpty() throws CommandException {
+  public void testParseOptionalStringWhenValueZerosArrayThenEmpty()  {
     // when
     HashMap<String, String[]> queryParams = new HashMap<>();
     queryParams.put("hello", new String[0]);
@@ -55,7 +54,7 @@ public class CommandUtilsTest {
   }
 
   @Test
-  public void testParseOptionalStringWhenValueEmptyArrayThenEmpty() throws CommandException {
+  public void testParseOptionalStringWhenValueEmptyArrayThenEmpty() {
     // when
     HashMap<String, String[]> queryParams = new HashMap<>();
     queryParams.put("hello", new String[10]);
@@ -65,7 +64,7 @@ public class CommandUtilsTest {
   }
 
   @Test
-  public void testParseOptionalIntWhenValueIsNotIntThenThrowException() throws CommandException {
+  public void testParseOptionalIntWhenValueIsNotIntThenThrowException()  {
     // when
     HashMap<String, String[]> queryParams = new HashMap<>();
     queryParams.put("hello", new String[] {"Winter", "Spring", "Summer", "Autumn"});

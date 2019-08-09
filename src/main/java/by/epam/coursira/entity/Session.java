@@ -94,11 +94,11 @@ public class Session {
     if (this == o) return true;
     if (!(o instanceof Session)) return false;
     Session session = (Session) o;
-    return userId == session.userId &&
-      Objects.equals(id, session.id) &&
-      Objects.equals(expDate, session.expDate) &&
-      language == session.language &&
-      Objects.equals(zoneOffset, session.zoneOffset);
+    return userId == session.userId
+        && Objects.equals(id, session.id)
+        && Objects.equals(expDate, session.expDate)
+        && language == session.language
+        && Objects.equals(zoneOffset, session.zoneOffset);
   }
 
   @Override

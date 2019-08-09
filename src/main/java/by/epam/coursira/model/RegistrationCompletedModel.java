@@ -29,8 +29,7 @@ public class RegistrationCompletedModel extends JspModelAbstract {
     if (!(o instanceof RegistrationCompletedModel)) return false;
     if (!super.equals(o)) return false;
     RegistrationCompletedModel that = (RegistrationCompletedModel) o;
-    return activate == that.activate &&
-      Objects.equals(textMessage, that.textMessage);
+    return activate == that.activate && Objects.equals(textMessage, that.textMessage);
   }
 
   @Override
@@ -41,8 +40,8 @@ public class RegistrationCompletedModel extends JspModelAbstract {
   @Override
   public String toString() {
     return new StringJoiner(", ", RegistrationCompletedModel.class.getSimpleName() + "[", "]")
-      .add("activate=" + activate)
-      .add("textMessage='" + textMessage + "'")
-      .toString();
+        .add("activate=" + activate)
+        .add("textMessage='" + textMessage + "'")
+        .toString();
   }
 }

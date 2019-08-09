@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class Course{
+public class Course {
   private int id;
   private String title;
   private String description;
@@ -104,19 +104,20 @@ public class Course{
     if (this == o) return true;
     if (!(o instanceof Course)) return false;
     Course course = (Course) o;
-    return id == course.id &&
-      capacity == course.capacity &&
-      studentsAmount == course.studentsAmount &&
-      ready == course.ready &&
-      Objects.equals(title, course.title) &&
-      Objects.equals(description, course.description) &&
-      Objects.equals(lecturers, course.lecturers) &&
-      Objects.equals(lectures, course.lectures);
+    return id == course.id
+        && capacity == course.capacity
+        && studentsAmount == course.studentsAmount
+        && ready == course.ready
+        && Objects.equals(title, course.title)
+        && Objects.equals(description, course.description)
+        && Objects.equals(lecturers, course.lecturers)
+        && Objects.equals(lectures, course.lectures);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, title, description, capacity, studentsAmount, ready, lecturers, lectures);
+    return Objects.hash(
+        id, title, description, capacity, studentsAmount, ready, lecturers, lectures);
   }
 
   public static class Builder {

@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 public class StudentDao {
   private static final Logger logger = LogManager.getLogger();
-  //column names
+  // column names
   private static final String LECTURER_ID = "lecturer_id";
   private static final String FIRST_NAME = "firstname";
   private static final String LAST_NAME = "lastname";
@@ -56,9 +56,6 @@ public class StudentDao {
           + "                JOIN course_students cs ON c.course_id = cs.course_id\n"
           + "         WHERE student_id = ?\n"
           + "           AND c.course_id = ?);\n";
-
-  private static final String SQL_SELECT_EXISTS_USER_ID =
-      "SELECT EXISTS(SELECT 1 FROM users WHERE id = ?);";
 
   private static final String SQL_SELECT_SCHEDULE_BY_STUDENT_ID =
       "SELECT l.lecture_id,\n"
@@ -111,11 +108,7 @@ public class StudentDao {
       try (ResultSet rs = ps.executeQuery()) {
         courses = parseResultSetToCoursesList(rs);
       }
-    } catch (SQLException e) {
-      logger.info("SQLException in attempt to close PreparedStatement ps.");
-      throw new DaoException(e.getMessage());
-    } catch (PoolConnectionException e) {
-      logger.info("Exception in attempt to get Connection");
+    } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e.getMessage());
     }
     return courses;
@@ -130,7 +123,6 @@ public class StudentDao {
         return rs.next() && rs.getBoolean("exists");
       }
     } catch (SQLException | PoolConnectionException e) {
-      logger.info(e);
       throw new DaoException(e);
     }
   }
@@ -147,16 +139,16 @@ public class StudentDao {
         while (rs.next()) {
           Lecturer lecturer =
               new Lecturer(
-                rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
+                  rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
           Lecture current =
               new Lecture.Builder()
-                .withLectureId(rs.getInt("lecture_id"))
-                .withTimeStart(rs.getTimestamp("time_start").toInstant())
-                .withTimeEnd(rs.getTimestamp("time_end").toInstant())
-                .withCourseId(rs.getInt("course_id"))
-                .withDescription(rs.getString("description"))
-                .withLecturer(lecturer)
-                .build();
+                  .withLectureId(rs.getInt("lecture_id"))
+                  .withTimeStart(rs.getTimestamp("time_start").toInstant())
+                  .withTimeEnd(rs.getTimestamp("time_end").toInstant())
+                  .withCourseId(rs.getInt("course_id"))
+                  .withDescription(rs.getString("description"))
+                  .withLecturer(lecturer)
+                  .build();
           lectureList.add(current);
         }
       }
@@ -175,12 +167,9 @@ public class StudentDao {
       psUpdate.setInt(2, courseId);
       psUpdate.executeUpdate();
       int updatedRows = psUpdate.getUpdateCount();
-      logger.info("{} rows had been updated", updatedRows);
+      logger.debug("{} rows had been updated", updatedRows);
       if (updatedRows == 0) {
-        logger.info(
-            "can't add student {} to course {} : course has filled.",
-            studentId,
-            courseId);
+        logger.debug("can't add student {} to course {} : course has filled.", studentId, courseId);
         return false;
       }
       return true;
@@ -228,15 +217,13 @@ public class StudentDao {
         logger.debug("next lector");
         // create lecturer
         Lecturer lecturer =
-            new Lecturer(
-                rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
+            new Lecturer(rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
         logger.debug("size,{}", size);
         courses.get(size - 1).addLecturer(lecturer);
       } else {
         // next course record
         Lecturer lecturer =
-            new Lecturer(
-                rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
+            new Lecturer(rs.getInt(LECTURER_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME));
         logger.debug("next course record");
         Course course = new Course();
         course.setId(currentCourseId);
@@ -253,5 +240,4 @@ public class StudentDao {
     }
     return courses;
   }
-
 }

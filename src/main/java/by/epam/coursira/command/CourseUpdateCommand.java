@@ -33,6 +33,7 @@ import org.apache.logging.log4j.Logger;
 public class CourseUpdateCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
   private static final Pattern resourcePattern = Pattern.compile("/courses/([^/?[A-Z]]+)/update");
+  private static final String PAGE_TO_REDIRECT_PATTERN = "/courses/";
   private static final String REQUEST_PARAMETER_UPDATE_COURSE_DATA = "updateCourseData";
   private static final String REQUEST_PARAMETER_UPDATE_LECTURE = "updateLecture";
   private static final String REQUEST_PARAMETER_DELETE_LECTURE = "deleteLecture";
@@ -79,7 +80,8 @@ public class CourseUpdateCommand implements Command {
     final int courseId = CommandUtils.parseIdFromRequest(resourcePattern, request);
     switch (request.getMethod()) {
       case "POST":
-        String referer = CommandUtils.getReferer(request);
+        String referer = request.getServletPath();
+        logger.debug("referer is {}", referer);
         Map<String, String[]> queryParams = request.getParameterMap();
         if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_UPDATE_COURSE_DATA)
             .orElse(false)) {
@@ -91,7 +93,7 @@ public class CourseUpdateCommand implements Command {
         }
         if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_DELETE_LECTURE)
             .orElse(false)) {
-          return postLectureDelete(principal, courseId, queryParams, referer);
+          return postLectureDelete(principal, queryParams, referer);
         }
         if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_NEW_LECTURE)
             .orElse(false)) {
@@ -107,7 +109,7 @@ public class CourseUpdateCommand implements Command {
         }
         if (CommandUtils.parseOptionalBoolean(queryParams, REQUEST_PARAMETER_ACTIVATE_COURSE)
             .orElse(false)) {
-          return postCourseSubmit(principal, courseId, referer);
+          return postCourseSubmit(principal, courseId);
         }
         throw new ClientCommandException(
             "One of updateCourseData,updateLecture, deleteLecture, activateCourse, inviteLecturer, deleteLecturer must be define");
@@ -134,7 +136,7 @@ public class CourseUpdateCommand implements Command {
       courseModificationService.addLecturerToCourse(principal, courseId, invitedLecturerId);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.error(e);
+      logger.debug(e.getMessage());
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
@@ -159,7 +161,7 @@ public class CourseUpdateCommand implements Command {
       courseModificationService.deleteLecturerFromCourse(principal, courseId, lecturerId);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.error(e);
+      logger.debug(e);
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
@@ -200,7 +202,7 @@ public class CourseUpdateCommand implements Command {
       courseModificationService.updateCourse(principal, courseId, title, description, capacity);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.error(e);
+      logger.debug(e);
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
@@ -271,13 +273,14 @@ public class CourseUpdateCommand implements Command {
           principal, lectureId, courseId, description, lectureBegins, lectureFinish);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.error(e);
+      logger.debug(e.getMessage());
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
       throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
@@ -336,13 +339,14 @@ public class CourseUpdateCommand implements Command {
           principal, courseId, description, lectureBegins, lectureFinish);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.error(e);
+      logger.debug(e.getMessage());
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
       throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
@@ -350,7 +354,7 @@ public class CourseUpdateCommand implements Command {
   }
 
   private CommandResult postLectureDelete(
-      Principal principal, int courseId, Map<String, String[]> queryParams, String referer)
+      Principal principal, Map<String, String[]> queryParams, String referer)
       throws CommandException, ClientCommandException {
     int lectureId =
         CommandUtils.parseOptionalInt(queryParams, REQUEST_PARAMETER_LECTURE_ID)
@@ -362,33 +366,30 @@ public class CourseUpdateCommand implements Command {
     try {
       courseModificationService.deleteLecture(principal, lectureId);
       return new CommandResult(referer);
-    } catch (ClientServiceException e) {
-      logger.error(e);
-      CourseUpdateModel model = fillModelForView(principal, courseId);
-      model.setErrorCourseDataMessage(e.getMessage());
-      return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
       throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
   }
 
-  private CommandResult postCourseSubmit(Principal principal, int courseId, String referer)
+  private CommandResult postCourseSubmit(Principal principal, int courseId)
       throws CommandException, ClientCommandException {
     try {
       courseModificationService.activateCourse(principal, courseId);
-      return new CommandResult(referer);
+      return new CommandResult(PAGE_TO_REDIRECT_PATTERN + courseId);
     } catch (ClientServiceException e) {
-      logger.error(e);
+      logger.debug(e);
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
       throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     } catch (ServiceException e) {
       throw new CommandException(e);
@@ -405,7 +406,8 @@ public class CourseUpdateCommand implements Command {
     }
     if (!haveAccess) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
-      ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
+      ResourceBundle bundle =
+          ResourceBundle.getBundle(RESOURCE_BUNDLE_EXCEPTION_MESSAGE, Locale.getDefault());
       throw new ClientCommandException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     }
     CourseUpdateModel model = fillModelForView(principal, courseId);
@@ -417,7 +419,7 @@ public class CourseUpdateCommand implements Command {
     CourseUpdateModel model = new CourseUpdateModel();
     model.setPrincipal(principal);
     try {
-      List<Lecturer> lecturers = userService.findAllLecturersList(principal);
+      List<Lecturer> lecturers = userService.findAllLecturersList();
       Course course = courseService.viewCourseDetails(principal, courseId, Integer.MAX_VALUE, 0);
       model.setAllLecturers(lecturers);
       model.setCourse(course);

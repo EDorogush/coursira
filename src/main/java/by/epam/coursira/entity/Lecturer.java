@@ -43,9 +43,9 @@ public class Lecturer {
     if (this == o) return true;
     if (!(o instanceof Lecturer)) return false;
     Lecturer lecturer = (Lecturer) o;
-    return id == lecturer.id &&
-      Objects.equals(firstName, lecturer.firstName) &&
-      Objects.equals(lastName, lecturer.lastName);
+    return id == lecturer.id
+        && Objects.equals(firstName, lecturer.firstName)
+        && Objects.equals(lastName, lecturer.lastName);
   }
 
   @Override
@@ -53,13 +53,12 @@ public class Lecturer {
     return Objects.hash(id, firstName, lastName);
   }
 
-
   @Override
   public String toString() {
     return new StringJoiner(", ", Lecturer.class.getSimpleName() + "[", "]")
-      .add("id=" + id)
-      .add("firstName='" + firstName + "'")
-      .add("lastName='" + lastName + "'")
-      .toString();
+        .add("id=" + id)
+        .add("firstName='" + firstName + "'")
+        .add("lastName='" + lastName + "'")
+        .toString();
   }
 }

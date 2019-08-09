@@ -91,11 +91,11 @@ public class CourseCommand implements Command {
         courseModel.setLecturerCourses(true);
         courseModel.setLecturer(lecturer);
       } else if (isPersonal && principal.getUser().getRole() != Role.ANONYMOUS) {
-        /* get user only courses; */
+        /* get user only courses */
         courses = courseService.viewCoursesPersonal(principal, paginationLimit + 1, offset);
         courseModel.setPersonal(true);
       } else {
-        /* get all courses; */
+        /* get all courses */
         courses = courseService.viewCourses(principal, paginationLimit + 1, offset);
       }
     } catch (ClientServiceException | AccessDeniedException e) {

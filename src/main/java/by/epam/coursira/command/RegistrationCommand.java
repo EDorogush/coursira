@@ -64,7 +64,7 @@ public class RegistrationCommand implements Command {
                 + request.getServerPort() // 8080
                 + request.getContextPath()
                 + URL_TO_REDIRECT;
-        logger.info("Full path {}", urlToGoFromEmail);
+        logger.debug("Full path {}", urlToGoFromEmail);
         return postRegister(principal, queryParams, urlToGoFromEmail);
       case "GET":
         return getRegister(principal);

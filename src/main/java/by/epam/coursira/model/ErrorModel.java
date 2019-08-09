@@ -3,7 +3,7 @@ package by.epam.coursira.model;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class ErrorModel  extends  JspModelAbstract{
+public class ErrorModel extends JspModelAbstract {
   private String errorMessage;
 
   public String getErrorMessage() {
@@ -31,7 +31,7 @@ public class ErrorModel  extends  JspModelAbstract{
   @Override
   public String toString() {
     return new StringJoiner(", ", ErrorModel.class.getSimpleName() + "[", "]")
-      .add("errorMessage='" + errorMessage + "'")
-      .toString();
+        .add("errorMessage='" + errorMessage + "'")
+        .toString();
   }
 }

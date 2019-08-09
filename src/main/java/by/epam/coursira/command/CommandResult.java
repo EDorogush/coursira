@@ -73,10 +73,10 @@ public class CommandResult {
     if (this == o) return true;
     if (!(o instanceof CommandResult)) return false;
     CommandResult that = (CommandResult) o;
-    return isForward == that.isForward &&
-      Objects.equals(jsp, that.jsp) &&
-      Objects.equals(jspModel, that.jspModel) &&
-      Objects.equals(pageToRedirect, that.pageToRedirect);
+    return isForward == that.isForward
+        && Objects.equals(jsp, that.jsp)
+        && Objects.equals(jspModel, that.jspModel)
+        && Objects.equals(pageToRedirect, that.pageToRedirect);
   }
 
   @Override

@@ -81,7 +81,7 @@ public class CourseService {
     } catch (DaoException e) {
       throw new ServiceException(e);
     }
-    logger.info("courses Amount {}", count);
+    logger.debug("courses Amount {}", count);
     return count;
   }
 
@@ -288,7 +288,7 @@ public class CourseService {
       try {
         return ValidationHelper.checkScheduleHaveCrossing(scheduleStudent, locale);
       } catch (ClientServiceException e) {
-        logger.info(e.getMessage()); // found crossing
+        logger.debug(e.getMessage()); // found crossing
         return true;
       }
     } catch (DaoException e) {
@@ -345,7 +345,7 @@ public class CourseService {
       }
       int updateRows =
           studentDao.updateOnRemoveCourseFromStudentSchedule(principal.getUser().getId(), courseId);
-      logger.info("updateRows = {}", updateRows);
+      logger.debug("updateRows = {}", updateRows);
       if (updateRows > 1) {
         ResourceBundle bundle =
             ResourceBundle.getBundle(

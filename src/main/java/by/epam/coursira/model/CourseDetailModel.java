@@ -66,28 +66,35 @@ public class CourseDetailModel extends JspModelAbstract {
     if (!(o instanceof CourseDetailModel)) return false;
     if (!super.equals(o)) return false;
     CourseDetailModel that = (CourseDetailModel) o;
-    return currentPageIndex == that.currentPageIndex &&
-      hasNextPage == that.hasNextPage &&
-      hasFreeSpot == that.hasFreeSpot &&
-      isInUserList == that.isInUserList &&
-      ableToJoin == that.ableToJoin &&
-      Objects.equals(course, that.course);
+    return currentPageIndex == that.currentPageIndex
+        && hasNextPage == that.hasNextPage
+        && hasFreeSpot == that.hasFreeSpot
+        && isInUserList == that.isInUserList
+        && ableToJoin == that.ableToJoin
+        && Objects.equals(course, that.course);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), course, currentPageIndex, hasNextPage, hasFreeSpot, isInUserList, ableToJoin);
+    return Objects.hash(
+        super.hashCode(),
+        course,
+        currentPageIndex,
+        hasNextPage,
+        hasFreeSpot,
+        isInUserList,
+        ableToJoin);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", CourseDetailModel.class.getSimpleName() + "[", "]")
-      .add("course=" + course)
-      .add("currentPageIndex=" + currentPageIndex)
-      .add("hasNextPage=" + hasNextPage)
-      .add("hasFreeSpot=" + hasFreeSpot)
-      .add("isInUserList=" + isInUserList)
-      .add("ableToJoin=" + ableToJoin)
-      .toString();
+        .add("course=" + course)
+        .add("currentPageIndex=" + currentPageIndex)
+        .add("hasNextPage=" + hasNextPage)
+        .add("hasFreeSpot=" + hasFreeSpot)
+        .add("isInUserList=" + isInUserList)
+        .add("ableToJoin=" + ableToJoin)
+        .toString();
   }
 }

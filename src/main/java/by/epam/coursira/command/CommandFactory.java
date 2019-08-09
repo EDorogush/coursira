@@ -19,9 +19,9 @@ public class CommandFactory {
   }
 
   /**
-   * This method matches path, specified in argument with patterns from {@link Command} in
-   * {@code commandList}. When first matching found procedure stops and return {@link Command}
-   * object with such {@link Pattern}. Throw PageNotFoundException when no matcher found.
+   * This method matches path, specified in argument with patterns from {@link Command} in {@code
+   * commandList}. When first matching found procedure stops and return {@link Command} object with
+   * such {@link Pattern}. Throw PageNotFoundException when no matcher found.
    *
    * @param path {@link String} object which is going to be matched with patterns.
    * @return {@link Command}

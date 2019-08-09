@@ -50,24 +50,25 @@ public class CourseUpdateModel extends JspModelAbstract {
     if (!(o instanceof CourseUpdateModel)) return false;
     if (!super.equals(o)) return false;
     CourseUpdateModel that = (CourseUpdateModel) o;
-    return Objects.equals(course, that.course) &&
-      Objects.equals(errorCourseDataMessage, that.errorCourseDataMessage) &&
-      Objects.equals(errorScheduleMessage, that.errorScheduleMessage) &&
-      Objects.equals(lecturers, that.lecturers);
+    return Objects.equals(course, that.course)
+        && Objects.equals(errorCourseDataMessage, that.errorCourseDataMessage)
+        && Objects.equals(errorScheduleMessage, that.errorScheduleMessage)
+        && Objects.equals(lecturers, that.lecturers);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), course, errorCourseDataMessage, errorScheduleMessage, lecturers);
+    return Objects.hash(
+        super.hashCode(), course, errorCourseDataMessage, errorScheduleMessage, lecturers);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", CourseUpdateModel.class.getSimpleName() + "[", "]")
-      .add("course=" + course)
-      .add("errorCourseDataMessage='" + errorCourseDataMessage + "'")
-      .add("errorScheduleMessage='" + errorScheduleMessage + "'")
-      .add("lecturers=" + lecturers)
-      .toString();
+        .add("course=" + course)
+        .add("errorCourseDataMessage='" + errorCourseDataMessage + "'")
+        .add("errorScheduleMessage='" + errorScheduleMessage + "'")
+        .add("lecturers=" + lecturers)
+        .toString();
   }
 }

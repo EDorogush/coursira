@@ -54,7 +54,8 @@ public class PersonalUpdateCommand implements Command {
       case "GET":
         return getPersonalUpdate(principal);
       case "POST":
-        String referer = CommandUtils.getReferer(request);
+        String referer = request.getServletPath();
+        logger.debug("referer is {}", referer);
         if (request.getContentType().contains("multipart/form-data")) {
           final Part filePart;
           try {
@@ -133,7 +134,7 @@ public class PersonalUpdateCommand implements Command {
       userService.updateUserPhoto(principal, part);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.error("ClientServiceException", e);
+      logger.debug("ClientServiceException", e);
       UserUpdateModel userUpdateModel = new UserUpdateModel();
       userUpdateModel.setErrorImageMessage(e.getMessage());
       userUpdateModel.setPrincipal(principal);

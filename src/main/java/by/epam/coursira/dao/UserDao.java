@@ -205,13 +205,14 @@ public class UserDao {
           return Optional.empty();
         }
         user = parseUserFromResultSet(rs);
-        session = new Session.Builder()
-          .setId(rs.getString("session_id"))
-          .setUserId(rs.getInt("id"))
-          .setExpDate(rs.getTimestamp("expire_date").toInstant())
-          .setLanguage(Language.valueOf(rs.getString("language")))
-          .setZoneOffSet(ZoneOffset.ofTotalSeconds(rs.getInt("zone_offset_of_total_seconds")))
-          .build();
+        session =
+            new Session.Builder()
+                .setId(rs.getString("session_id"))
+                .setUserId(rs.getInt("id"))
+                .setExpDate(rs.getTimestamp("expire_date").toInstant())
+                .setLanguage(Language.valueOf(rs.getString("language")))
+                .setZoneOffSet(ZoneOffset.ofTotalSeconds(rs.getInt("zone_offset_of_total_seconds")))
+                .build();
       }
       principal = new Principal(session, user);
     } catch (SQLException | PoolConnectionException e) {
@@ -495,20 +496,19 @@ public class UserDao {
         Optional.ofNullable(rs.getTimestamp("registration_expire_date"))
             .map(Timestamp::toInstant)
             .orElse(null);
-       return new User.Builder()
-            .setId(rs.getInt("id"))
-            .setEmail(rs.getString("email"))
-            .setPassword(rs.getString("password"))
-            .setFirstName(rs.getString("firstname"))
-            .setLastName(rs.getString("lastname"))
-            .setRole(Role.valueOf(rs.getString("role")))
-            .setOrganization(rs.getString("organization"))
-            .setAge(rs.getInt("age"))
-            .setInterests(rs.getString("interests"))
-            .setRegistrationCode(rs.getString("registration_code"))
-            .setRegistrationExpDate(registrationExpDate)
-            .setBase64Image(base64Image)
-            .build();
-
+    return new User.Builder()
+        .setId(rs.getInt("id"))
+        .setEmail(rs.getString("email"))
+        .setPassword(rs.getString("password"))
+        .setFirstName(rs.getString("firstname"))
+        .setLastName(rs.getString("lastname"))
+        .setRole(Role.valueOf(rs.getString("role")))
+        .setOrganization(rs.getString("organization"))
+        .setAge(rs.getInt("age"))
+        .setInterests(rs.getString("interests"))
+        .setRegistrationCode(rs.getString("registration_code"))
+        .setRegistrationExpDate(registrationExpDate)
+        .setBase64Image(base64Image)
+        .build();
   }
 }

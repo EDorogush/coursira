@@ -37,9 +37,6 @@ public class CourseServiceTest {
   private User userStudent =
       new User.Builder().setId(1).setEmail("email").setRole(Role.STUDENT).build();
 
-  private User userLecturer =
-      new User.Builder().setId(1).setEmail("email").setRole(Role.LECTURER).build();
-
   private User userAnonymous =
       new User.Builder().setId(1).setEmail("email").setRole(Role.ANONYMOUS).build();
 
@@ -106,7 +103,8 @@ public class CourseServiceTest {
     int offset = 10;
     int limit = 10;
     assertThrows(
-       AccessDeniedException.class, () -> courseService.viewCoursesPersonal(principal, limit, offset));
+        AccessDeniedException.class,
+        () -> courseService.viewCoursesPersonal(principal, limit, offset));
   }
 
   @Test
@@ -166,20 +164,13 @@ public class CourseServiceTest {
 
   @Test
   public void testIsScheduleCrossWhenCourseDoesntExistThrowClientServiceException()
-    throws DaoException, ClientServiceException, ServiceException {
+      throws DaoException {
     Principal principal = new Principal(session, userStudent);
-    List<Lecture> studentSchedule = new ArrayList<>();
-    for (int i = 0; i < 3; i++) {
-      Lecture l1 =
-        new Lecture.Builder().withTimeStart(Instant.now()).withTimeEnd(Instant.now()).build();
-      studentSchedule.add(l1);
-    }
     // when
     when(mockCourseDao.isExistsCourse(anyInt())).thenReturn(false);
     // then
-    assertThrows(ClientServiceException.class, ()-> courseService.isScheduleCross(principal, 1));
+    assertThrows(ClientServiceException.class, () -> courseService.isScheduleCross(principal, 1));
   }
-
 
   @Test
   public void testJoinToCourse() {}

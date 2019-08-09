@@ -105,7 +105,7 @@ public class LoginCommand implements Command {
     try {
       Principal current =
           principalService.verifyPrincipleByPass(principal, loginValue, passwordValue);
-      logger.debug("user login: {}", current.toString());
+      logger.debug("user login: {}", current::toString);
       return new CommandResult(URL_TO_REDIRECT);
     } catch (ClientServiceException e) {
       // return jsp with error message

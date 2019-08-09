@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 import javax.mail.MessagingException;
@@ -164,7 +165,7 @@ public class CourseModificationService {
       try {
         mailSender.sendMail(invitedUser.getEmail(), INVITATION_SUBJECT, INVITATION_MESSAGE);
       } catch (MessagingException e) {
-        logger.error(e.getMessage());
+        logger.warn(e.getMessage());
         courseDao.deleteCourseLecturer(courseId, invitedLecturerId);
         throw new ClientServiceException(bundle.getString("CANT_SEND_MESSAGE"));
       }
@@ -208,7 +209,7 @@ public class CourseModificationService {
                             bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LECTURER_ID)));
         mailSender.sendMail(invitedUser.getEmail(), DELETING_SUBJECT, DELETING_MESSAGE);
       } catch (MessagingException e) {
-        logger.error(e.getMessage());
+        logger.warn(e.getMessage());
         throw new ClientServiceException(bundle.getString("CANT_SEND_MESSAGE"));
       }
 
@@ -272,7 +273,7 @@ public class CourseModificationService {
       ValidationHelper.checkScheduleHaveCrossing(courseSchedule, currentLocale);
 
       courseDao.insertLecture(createdLecture);
-      logger.info("course {} was added to db", courseId);
+      logger.debug("course {} was added to db", courseId);
 
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -333,7 +334,7 @@ public class CourseModificationService {
       ValidationHelper.checkScheduleHaveCrossing(courseSchedule, currentLocale);
 
       courseDao.updateLecture(current);
-      logger.info("Lecture {} updated", lectureId);
+      logger.debug("Lecture {} updated", lectureId);
 
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -365,11 +366,22 @@ public class CourseModificationService {
         throw new AccessDeniedException(
             bundle.getString(RESOURCE_BUNDLE_MESSAGE_UPDATE_ACCESS_DENIED));
       }
+      // check if all lecturers has at least one lecture
+      Map<Lecturer, Integer> lecturerMap = courseDao.countLecturesInCourse(courseId);
+      for (Map.Entry<Lecturer, Integer> entry : lecturerMap.entrySet()) {
+        if (entry.getValue() == 0) {
+          throw new ClientServiceException(
+              String.format(
+                  bundle.getString("LECTURER_HAS_NO_LECTURES"),
+                  entry.getKey().getFirstName(),
+                  entry.getKey().getLastName()));
+        }
+      }
+      // if we here means we can try to activate
       boolean isActivate = courseDao.updateCourseOnSetReady(courseId);
       if (!isActivate) {
         throw new ClientServiceException(bundle.getString("CANT_ACTIVATE COURSE"));
       }
-
     } catch (DaoException e) {
       throw new ServiceException(e);
     }

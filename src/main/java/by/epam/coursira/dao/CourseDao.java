@@ -71,7 +71,11 @@ public class CourseDao {
 
   private static final String SQL_INSERT_INTO_COURSE_STUDENTS_TABLE =
       "INSERT INTO course_students(course_id, student_id) VALUES (?,?)";
+
   // SELECT
+
+  private static final String SQL_SELECT_COURSE_CAPACITY =
+      "SELECT c.capacity\n" + "FROM courses c\n" + "WHERE c.course_id = ?\n";
 
   private static final String SQL_SELECT_COURSE_DETAILS_BY_COURSE_ID =
       "SELECT l.lecture_id,\n"
@@ -120,14 +124,13 @@ public class CourseDao {
           + "ORDER BY course_id ASC;";
 
   private static final String SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS =
-      "SELECT count(lecture_id) FROM lectures\n"
-          + "      JOIN course_lecturers ON lectures.course_lecturer_id = course_lecturers.entry_id\n"
-          + "WHERE course_id = ? GROUP BY lecturer_id";
-
-  private static final String SQL_SELECT_COUNT_LECTURES_OF_COURSE_BY_LECTURER =
-      "SELECT count(lecture_id) FROM lectures\n"
-          + "      JOIN course_lecturers ON lectures.course_lecturer_id = course_lecturers.entry_id\n"
-          + "WHERE course_id = ? AND lecturer_id = ?";
+      "SELECT count(lecture_id), lecturer_id, u.firstname, u.lastname\n"
+          + "FROM lectures\n"
+          + "         RIGHT JOIN course_lecturers ON lectures.course_lecturer_id = course_lecturers.entry_id\n"
+          + "         JOIN users u ON course_lecturers.lecturer_id = u.id\n"
+          + "\n"
+          + "WHERE course_id = ?\n"
+          + "GROUP BY lecturer_id, u.firstname, u.lastname;";
 
   private static final String SQL_SELECT_TABLE_COUNTS =
       "SELECT (\n"
@@ -228,7 +231,7 @@ public class CourseDao {
       "UPDATE lectures SET time_start = ?, time_end = ?, description = ?" + "WHERE lecture_id = ?";
 
   private static final String SQL_UPDATE_COURSE_SET_READY =
-      "UPDATE courses SET ready = TRUE WHERE course_id = ?;";
+      "UPDATE courses SET ready = ? WHERE course_id = ?;";
 
   private static final String SQL_UPSERT_COURSE_LECTURER =
       "INSERT INTO course_lecturers (lecturer_id, course_id)\n"
@@ -236,8 +239,12 @@ public class CourseDao {
           + "ON CONFLICT (lecturer_id,course_id)\n"
           + "  DO NOTHING";
 
+  private static final String SQL_DELETE_FROM_COURSE_STUDENTS_TABLE =
+      "DELETE FROM course_students WHERE entry_id =\n"
+          + "      (SELECT entry_id FROM course_students WHERE course_id = ? AND student_id = ? LIMIT 1);";
+
   private static final String SQL_DELETE_COURSE_LECTURER =
-      "DELETE FROM course_lecturers " + "WHERE course_id = ? AND lecturer_id =?;";
+      "DELETE FROM course_lecturers WHERE course_id = ? AND lecturer_id =?;";
 
   private static final String SQL_DELETE_LECTURE = "DELETE FROM lectures WHERE lecture_id = ?";
 
@@ -261,7 +268,6 @@ public class CourseDao {
         return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
     } catch (SQLException | PoolConnectionException e) {
-      logger.info(e);
       throw new DaoException(e);
     }
   }
@@ -277,7 +283,6 @@ public class CourseDao {
         return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
     } catch (SQLException | PoolConnectionException e) {
-      logger.info(e);
       throw new DaoException(e);
     }
   }
@@ -293,7 +298,6 @@ public class CourseDao {
         return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
     } catch (SQLException | PoolConnectionException e) {
-      logger.info(e);
       throw new DaoException(e);
     }
   }
@@ -328,11 +332,11 @@ public class CourseDao {
           }
           courseId = gKeysCourseId.getInt(1);
         }
-        logger.info("new Course Id is {}", courseId);
+        logger.debug("new Course Id is {}", courseId);
         // 2. insert to course_students empty spots
         psInsertCourseStudents.setInt(1, courseId);
+        psInsertCourseStudents.setInt(2, 0); // empty spot
         for (int i = 0; i < course.getCapacity(); i++) {
-          psInsertCourseStudents.setInt(2, 0); // empty spot
           psInsertCourseStudents.executeUpdate();
         }
         // 3. insert Lecturers:
@@ -343,14 +347,14 @@ public class CourseDao {
           int entryId;
           try (ResultSet gKeysEntryId = psInsertCourseLecturer.getGeneratedKeys()) {
             if (!gKeysEntryId.next()) {
-              logger.info("transaction rollback");
+              logger.warn("transaction rollback");
               connection.rollback();
               throw new SQLException("No record was inserted to course_lecturers table");
             }
             // 4 insertLecturers
             entryId = gKeysEntryId.getInt(1);
           }
-          logger.info("new entry_Id is {}", entryId);
+          logger.debug("new entry_Id is {}", entryId);
           psInsertLecture.setInt(1, entryId);
           for (Lecture lecture : course.getLectures()) {
             if (lecture.getLecturer().getId() == lecturer.getId()) {
@@ -358,7 +362,7 @@ public class CourseDao {
               psInsertLecture.setTimestamp(3, Timestamp.from(lecture.getEndTime()));
               psInsertLecture.setString(4, course.getTitle());
               psInsertLecture.executeUpdate();
-              logger.info("one record was added to lectures");
+              logger.debug("one record was added to lectures");
             }
           }
         }
@@ -367,7 +371,7 @@ public class CourseDao {
         connection.setAutoCommit(true);
         return courseId;
       } catch (SQLException e) {
-        logger.error("Can't add course record. rollback transaction");
+        logger.debug("Can't add course record. rollback transaction");
         connection.rollback();
         connection.setAutoCommit(true);
         throw new DaoException(e);
@@ -441,7 +445,7 @@ public class CourseDao {
     } catch (SQLException e) {
       // if lecturer has constraint records on lectures table, SQLException with code 23503 will be
       // thrown.
-      logger.info(e);
+      logger.debug(e);
       if (e.getSQLState().equals(FOREIGN_KEY_VIOLATION_CODE)) {
         return 0;
       } else throw new DaoException(e);
@@ -513,11 +517,7 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         courses = parseResultSetToCoursesList(rs);
       }
-    } catch (SQLException e) {
-      logger.info("SQLException in attempt to close PreparedStatement ps.");
-      throw new DaoException(e);
-    } catch (PoolConnectionException e) {
-      logger.info("Exception in attempt to get Connection");
+    } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
     }
     logger.debug("get {} records", courses.size());
@@ -583,10 +583,7 @@ public class CourseDao {
           return Optional.of(course);
         }
       }
-    } catch (SQLException e) {
-      throw new DaoException(e);
-    } catch (PoolConnectionException e) {
-      logger.info("Exception in attempt to get Connection");
+    } catch (SQLException | PoolConnectionException e) {
       throw new DaoException(e);
     }
     return Optional.empty();
@@ -606,51 +603,124 @@ public class CourseDao {
     }
   }
 
+  /**
+   * Method provide updating next course's data: "title", "description", "capacity". when "capacity"
+   * value changes the table "course_students" updates too.
+   *
+   * @param course
+   * @return
+   * @throws DaoException
+   */
   public boolean updateCourseData(Course course) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_COURSE_TABLE_BY_COURSE_ID)) {
-      ps.setString(1, course.getTitle());
-      ps.setString(2, course.getDescription());
-      ps.setInt(3, course.getCapacity());
-      ps.setInt(4, course.getId());
-      ps.executeUpdate();
+        PreparedStatement psSelectCourseCapacity =
+            connection.prepareStatement(SQL_SELECT_COURSE_CAPACITY)) {
+      // 1 step - select previous course capacity
+      final int capacityPrevious;
+      psSelectCourseCapacity.setInt(1, course.getId());
+      try (ResultSet rs = psSelectCourseCapacity.executeQuery()) {
+        if (rs.next()) {
+          capacityPrevious = rs.getInt("capacity");
+        } else throw new DaoException("can't read course capacity");
+      }
+      // start transaction
+      connection.setAutoCommit(false);
+      // decide what operation needed in course_student table: insert or delete
+      String query =
+          course.getCapacity() > capacityPrevious
+              ? SQL_INSERT_INTO_COURSE_STUDENTS_TABLE
+              : SQL_DELETE_FROM_COURSE_STUDENTS_TABLE;
+      try (PreparedStatement psUpdateCourseTable =
+              connection.prepareStatement(SQL_UPDATE_COURSE_TABLE_BY_COURSE_ID);
+          PreparedStatement psUpdateCourseStudentsTable = connection.prepareStatement(query)) {
+        psUpdateCourseTable.setString(1, course.getTitle());
+        psUpdateCourseTable.setString(2, course.getDescription());
+        psUpdateCourseTable.setInt(3, course.getCapacity());
+        psUpdateCourseTable.setInt(4, course.getId());
+        psUpdateCourseTable.executeUpdate();
+        logger.debug("course {} data updated", course.getId());
+        psUpdateCourseStudentsTable.setInt(1, course.getId());
+        psUpdateCourseStudentsTable.setInt(2, 0); // empty spot
+        for (int i = 0; i < Math.abs(course.getCapacity() - capacityPrevious); i++) {
+          psUpdateCourseStudentsTable.executeUpdate();
+        }
+        logger.debug("Table course_students updated");
+        connection.commit();
+      } catch (SQLException e) {
+        connection.rollback();
+        connection.setAutoCommit(true);
+        logger.warn("SQL Exception. transaction rollback");
+        throw e;
+      }
     } catch (PoolConnectionException | SQLException e) {
       throw new DaoException(e);
     }
     return true;
   }
 
-  public boolean updateCourseOnSetReady(int courseId) throws DaoException {
-    try (Connection connection = pool.getConnection()) {
-      connection.setAutoCommit(false);
-      try (PreparedStatement psUpdate = connection.prepareStatement(SQL_UPDATE_COURSE_SET_READY);
-          PreparedStatement psSelect =
-              connection.prepareStatement(SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS)) {
+  public Map<Lecturer, Integer> countLecturesInCourse(int courseId) throws DaoException {
+    Map<Lecturer, Integer> lecturerMap = new HashMap<>();
+    try (Connection connection = pool.getConnection();
+        PreparedStatement ps =
+            connection.prepareStatement(SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS)) {
+      ps.setInt(1, courseId);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          Lecturer lecturer =
+              new Lecturer(
+                  rs.getInt(COLUMN_NAME_LECTURER_ID),
+                  rs.getString(COLUMN_NAME_FIRST_NAME),
+                  rs.getString(COLUMN_NAME_LAST_NAME));
+          lecturerMap.put(lecturer, rs.getInt(COLUMN_NAME_COUNT));
+        }
+      }
+    } catch (PoolConnectionException | SQLException e) {
+      throw new DaoException(e);
+    }
+    return lecturerMap;
+  }
 
-        psUpdate.setInt(1, courseId);
-        psUpdate.executeUpdate();
-        // continue transaction
-        psSelect.setInt(1, courseId);
-        try (ResultSet rs = psSelect.executeQuery()) {
-          while (rs.next()) {
-            if (rs.getInt(COLUMN_NAME_COUNT) == 0) {
-              logger.info("find empty lecturer");
-              connection.rollback();
-              connection.setAutoCommit(true);
-              return false;
-            }
+  /**
+   * Method update "ready" column in "courses" table to set TRUE. It is important to exclude
+   * activation the course having lecturers without lectures. Since the default isolation level of
+   * db is READ COMMITTED, the method provide activation in two steps (without transaction). At
+   * first "ready" column is set to TRUE. This step prevents lecturers to update current course.
+   * Secondly the lecturesAmount for each lecturer involved in course is checked. If there were any
+   * zero lectureAmount, "ready" state of course is updated again with FALSE value. In this
+   * situation method returns false. To minimize possible problems with temporary false-activated
+   * course it is recommended to use method {@code countLecturesInCourse} to check if lecturers have
+   * no lectures.
+   *
+   * @param courseId id of current course.
+   * @return true if course was activated, false otherwise
+   * @throws DaoException - when attempt to provide work with db fails.
+   */
+  public boolean updateCourseOnSetReady(int courseId) throws DaoException {
+    try (Connection connection = pool.getConnection();
+        PreparedStatement psUpdate = connection.prepareStatement(SQL_UPDATE_COURSE_SET_READY);
+        PreparedStatement psSelect =
+            connection.prepareStatement(SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS)) {
+
+      psUpdate.setBoolean(1, true);
+      psUpdate.setInt(2, courseId);
+      psUpdate.executeUpdate();
+      logger.debug("course {} activated", courseId);
+
+      psSelect.setInt(1, courseId);
+      try (ResultSet rs = psSelect.executeQuery()) {
+        while (rs.next()) {
+          if (rs.getInt(COLUMN_NAME_COUNT) == 0) {
+            logger.debug("lectureAmount = 0 was found");
+            psUpdate.setBoolean(1, false);
+            psUpdate.setInt(2, courseId);
+            psUpdate.executeUpdate();
+            logger.debug("course {} deactivated", courseId);
+            return false;
           }
         }
         // if we here means all OK
-        connection.commit();
-        connection.setAutoCommit(true);
         return true;
-      } catch (SQLException e) {
-        connection.rollback();
-        connection.setAutoCommit(true);
-        throw new DaoException(e);
       }
-
     } catch (PoolConnectionException | SQLException e) {
       throw new DaoException(e);
     }

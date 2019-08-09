@@ -8,12 +8,10 @@ public final class CoursiraJspPath {
   public static final String COURSE_DETAILS = JSP_ROOT_DIR + "courseDetail.jsp";
   public static final String COURSE_UPDATE = JSP_ROOT_DIR + "courseUpdate.jsp";
   public static final String LOGIN = JSP_ROOT_DIR + "login.jsp";
-
   public static final String PERSONAL = JSP_ROOT_DIR + "personal.jsp";
   public static final String UPDATE_PERSONAL = JSP_ROOT_DIR + "personalUpdate.jsp";
   public static final String SIGN_IN = JSP_ROOT_DIR + "signUp.jsp";
   public static final String REGISTRATION_CONFIRM = JSP_ROOT_DIR + "registrationComplete.jsp";
-
 
   private CoursiraJspPath() {}
 }

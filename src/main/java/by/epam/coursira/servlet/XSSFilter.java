@@ -21,7 +21,7 @@ public class XSSFilter implements Filter {
   private static final Logger logger = LogManager.getLogger();
 
   @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
+  public void init(FilterConfig filterConfig) {
     logger.info("filter XSS init");
   }
 
@@ -80,7 +80,7 @@ public class XSSFilter implements Filter {
     }
 
     private String stripXSS(String value) {
-      if (value==null) {
+      if (value == null) {
         return null;
       }
       value = value.replaceAll("<\\s*/?\\s*script\\s*>", "");

@@ -24,7 +24,7 @@ public class CharacterEncodingFilter implements Filter {
   public void doFilter(
       ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
       throws IOException, ServletException {
-    logger.info("in encoding filter");
+    logger.debug("in encoding filter");
     servletRequest.setCharacterEncoding("UTF-8");
     servletResponse.setContentType("text/html; charset=UTF-8");
     filterChain.doFilter(servletRequest, servletResponse);

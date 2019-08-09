@@ -48,9 +48,9 @@ public class IndexModel extends JspModelAbstract {
     if (!(o instanceof IndexModel)) return false;
     if (!super.equals(o)) return false;
     IndexModel that = (IndexModel) o;
-    return coursesAmount == that.coursesAmount &&
-      lecturerAmount == that.lecturerAmount &&
-      studentsAmount == that.studentsAmount;
+    return coursesAmount == that.coursesAmount
+        && lecturerAmount == that.lecturerAmount
+        && studentsAmount == that.studentsAmount;
   }
 
   @Override
