@@ -112,7 +112,7 @@ public class UserService {
     user.setAge(age);
     user.setOrganization(organization);
     user.setInterests(interests);
-    logger.debug("update user data: {} ", user::toString);
+    logger.debug("update user data: {} ", user);
     try {
       userDao.updateUser(user);
     } catch (DaoException e) {

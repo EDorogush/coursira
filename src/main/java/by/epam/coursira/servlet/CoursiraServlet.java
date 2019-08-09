@@ -175,7 +175,7 @@ public class CoursiraServlet extends HttpServlet {
     String modelName = "model";
     try {
       Principal principal = principalService.verifyPrincipleBySessionId(sessionId);
-      logger.debug("principal verified: {}", principal::toString);
+      logger.debug("principal verified: {}", principal);
       try {
 
         Command command = new CommandFactory(commandList).getCommand(request.getServletPath());
