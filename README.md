@@ -26,7 +26,6 @@ CoursIra is study project within the Java Web Development training course. The a
 - look through courses they are involved in;
 - create new courses;
 - update unready courses: 
-     - First nested list item
      - Update course's title, description, student's amount;
      - Invite other lecturers to take part in new course;
      - Delete other lecturers who was invited but do not take part in course (do not have any lecture);
