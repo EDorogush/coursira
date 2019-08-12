@@ -1,6 +1,5 @@
 package by.epam.coursira.pool;
 
-import by.epam.coursira.exception.PageNotFoundException;
 import by.epam.coursira.exception.PoolConnectionException;
 import java.sql.Array;
 import java.sql.Blob;
