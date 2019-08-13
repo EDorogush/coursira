@@ -111,7 +111,7 @@ public class CourseCreateCommand implements Command {
       model.setErrorDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.NEW_COURSE, model);
     } catch (AccessDeniedException e) {
-      throw new ClientCommandException(e);
+      throw new ClientCommandException(e.getMessage());
     } catch (ServiceException e) {
       throw new CommandException(e);
     }

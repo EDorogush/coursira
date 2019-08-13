@@ -67,7 +67,7 @@ public class PersonalPageCommand implements Command {
     } catch (ServiceException e) {
       throw new CommandException(e);
     } catch (ClientServiceException | AccessDeniedException e) {
-      throw new ClientCommandException(e);
+      throw new ClientCommandException(e.getMessage());
     }
 
     return new CommandResult(CoursiraJspPath.PERSONAL, personalModel);

@@ -37,7 +37,7 @@ public class CourseDao {
   private static final String FOREIGN_KEY_VIOLATION_CODE = "23503";
 
   private static final String SQL_EXISTS_COURSE_ID =
-      "SELECT EXISTS(SELECT 1 FROM courses WHERE course_id = ?);";
+      "SELECT EXISTS(SELECT 1 FROM courses WHERE course_id = ? AND ready);";
 
   private static final String SQL_EXISTS_COURSE_IN_LECTURER_UPDATE_LIST =
       "SELECT exists(\n"
@@ -260,7 +260,7 @@ public class CourseDao {
     this.pool = pool;
   }
 
-  public boolean isExistsCourse(int courseId) throws DaoException {
+  public boolean isExistCourseReady(int courseId) throws DaoException {
     try (Connection connection = pool.getConnection();
         PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_COURSE_ID)) {
       ps.setInt(1, courseId);
@@ -577,6 +577,7 @@ public class CourseDao {
           course.setDescription(rs.getString("course_description"));
           course.setCapacity(rs.getInt("capacity"));
           course.setStudentsAmount(rs.getInt("student_amount"));
+          course.setReady(rs.getBoolean("ready"));
           course.setLectures(lectureList);
           course.setLecturers(lecturers);
           logger.debug("get {} records", lectureList.size());

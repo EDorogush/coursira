@@ -129,9 +129,9 @@ public class CourseServiceTest {
         .thenReturn(studentSchedule);
     when(mockCourseDao.selectCourseById(anyInt(), anyInt(), anyInt()))
         .thenReturn(Optional.of(course));
-    when(mockCourseDao.isExistsCourse(anyInt())).thenReturn(true);
+    when(mockCourseDao.isExistCourseReady(anyInt())).thenReturn(true);
     // then
-    assertFalse(courseService.isScheduleCross(principal, 1));
+    assertFalse(courseService.isStudentScheduleCross(principal, 1));
   }
 
   @Test
@@ -157,9 +157,9 @@ public class CourseServiceTest {
         .thenReturn(studentSchedule);
     when(mockCourseDao.selectCourseById(anyInt(), anyInt(), anyInt()))
         .thenReturn(Optional.of(course));
-    when(mockCourseDao.isExistsCourse(anyInt())).thenReturn(true);
+    when(mockCourseDao.isExistCourseReady(anyInt())).thenReturn(true);
     // then
-    assertTrue(courseService.isScheduleCross(principal, 1));
+    assertTrue(courseService.isStudentScheduleCross(principal, 1));
   }
 
   @Test
@@ -167,9 +167,9 @@ public class CourseServiceTest {
       throws DaoException {
     Principal principal = new Principal(session, userStudent);
     // when
-    when(mockCourseDao.isExistsCourse(anyInt())).thenReturn(false);
+    when(mockCourseDao.isExistCourseReady(anyInt())).thenReturn(false);
     // then
-    assertThrows(ClientServiceException.class, () -> courseService.isScheduleCross(principal, 1));
+    assertThrows(ClientServiceException.class, () -> courseService.isStudentScheduleCross(principal, 1));
   }
 
   @Test

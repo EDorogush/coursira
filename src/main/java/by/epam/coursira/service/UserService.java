@@ -161,7 +161,7 @@ public class UserService {
           userDao
               .selectUserById(id)
               .orElseThrow(() -> new ClientServiceException(bundle.getString("WRONG_LECTURER_ID")));
-      if (user.getRole() != Role.LECTURER || user.getRegistrationCode() == null) {
+      if (user.getRole() != Role.LECTURER || user.getRegistrationCode() != null) {
         throw new ClientServiceException(bundle.getString("WRONG_LECTURER_ID"));
       }
       lecturer = new Lecturer(user.getId(), user.getFirstName(), user.getLastName());

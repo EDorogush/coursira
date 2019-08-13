@@ -66,10 +66,10 @@ public class CourseIdCommand implements Command {
     // get course by courseId
     try {
       course = courseService.viewCourseDetails(principal, courseId, paginationLimit + 1, offset);
-      courseDetailModel.setAbleToJoin(!courseService.isScheduleCross(principal, courseId));
+      courseDetailModel.setAbleToJoin(!courseService.isStudentScheduleCross(principal, courseId));
       courseDetailModel.setInUserList(courseService.isInUserListCourse(principal, courseId));
     } catch (ClientServiceException e) {
-      throw new ClientCommandException(e);
+      throw new ClientCommandException(e.getMessage());
     } catch (ServiceException e) {
       throw new CommandException(e);
     }

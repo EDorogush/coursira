@@ -50,7 +50,7 @@
       <form name="UpdatePersonalForm" method="post" action="${pageContext.request.contextPath}/personal/update">
         <div class="form-group">
           <label><fmt:message key="first_name"/>&#42 :</label>
-          <input type="text" name="firstName" required minlength="1" maxlength="128"
+          <input type="text" name="firstName" minlength="1" maxlength="128"
                  value="${model.principal.user.firstName}"/><br/>
         </div>
         <div class="form-group">

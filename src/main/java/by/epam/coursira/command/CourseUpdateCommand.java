@@ -141,7 +141,7 @@ public class CourseUpdateCommand implements Command {
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
-      throw new ClientCommandException(e);
+      throw new ClientCommandException(e.getMessage());
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -166,7 +166,7 @@ public class CourseUpdateCommand implements Command {
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
-      throw new ClientCommandException(e);
+      throw new ClientCommandException(e.getMessage());
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -207,7 +207,7 @@ public class CourseUpdateCommand implements Command {
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
-      throw new ClientCommandException(e);
+      throw new ClientCommandException(e.getMessage());
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -427,7 +427,7 @@ public class CourseUpdateCommand implements Command {
     } catch (ServiceException e) {
       throw new CommandException(e);
     } catch (ClientServiceException e) {
-      throw new ClientCommandException(e);
+      throw new ClientCommandException(e.getMessage());
     }
     return model;
   }

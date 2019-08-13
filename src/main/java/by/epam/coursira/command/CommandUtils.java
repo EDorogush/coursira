@@ -216,7 +216,7 @@ public final class CommandUtils {
    * @return {@link String} the value of previous page's servletContext
    */
   static String refererServletContext(HttpServletRequest request) {
-    String urlToGoFromEmail =
+    String url =
       request.getScheme() // http
         + "://"
         + request.getServerName() // localhost
@@ -224,7 +224,7 @@ public final class CommandUtils {
         + request.getServerPort() // 8080
         + request.getContextPath();
     String referer =
-      request.getHeader("referer").substring(urlToGoFromEmail.length());
+      request.getHeader("referer").substring(url.length());
     logger.debug("referer's servletContext is {}", referer);
     return referer;
   }

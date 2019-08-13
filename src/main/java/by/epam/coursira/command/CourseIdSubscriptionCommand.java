@@ -74,7 +74,7 @@ public class CourseIdSubscriptionCommand implements Command {
         courseService.leaveCourse(principal, courseId);
       }
     } catch (ClientServiceException | AccessDeniedException e) {
-      throw new ClientCommandException(e);
+      throw new ClientCommandException(e.getMessage());
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
