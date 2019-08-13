@@ -49,7 +49,7 @@
       <form name="loginForm" method="post" action="${pageContext.request.contextPath}/login">
         <div class="form-group">
           <label><fmt:message key="email"/>&#42 :</label>
-          <input type="text" name="login" required minlength="1" maxlength="128" class="form-control"
+          <input type="text" name="login" minlength="1" maxlength="128" class="form-control"
                  placeholder="Enter email">
         </div>
 

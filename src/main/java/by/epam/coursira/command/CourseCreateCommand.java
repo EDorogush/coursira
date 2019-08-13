@@ -101,7 +101,7 @@ public class CourseCreateCommand implements Command {
           courseModificationService.createCourse(principal, title, description, capacity);
       return new CommandResult(String.format("/courses/%d/update", courseId));
     } catch (ClientServiceException e) {
-      logger.debug(e.getMessage());
+      logger.debug(e);
       // return with message
       CourseCreateModel model = new CourseCreateModel();
       model.setPrincipal(principal);
@@ -111,7 +111,7 @@ public class CourseCreateCommand implements Command {
       model.setErrorDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.NEW_COURSE, model);
     } catch (AccessDeniedException e) {
-      throw new ClientCommandException(e.getMessage());
+      throw new ClientCommandException(e);
     } catch (ServiceException e) {
       throw new CommandException(e);
     }

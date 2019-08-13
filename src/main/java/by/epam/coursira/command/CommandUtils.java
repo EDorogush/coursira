@@ -209,4 +209,23 @@ public final class CommandUtils {
     }
     return id;
   }
+
+  /**
+   * Method returns previous page's ServletContext value;
+   * @param request client's request
+   * @return {@link String} the value of previous page's servletContext
+   */
+  static String refererServletContext(HttpServletRequest request) {
+    String urlToGoFromEmail =
+      request.getScheme() // http
+        + "://"
+        + request.getServerName() // localhost
+        + ":"
+        + request.getServerPort() // 8080
+        + request.getContextPath();
+    String referer =
+      request.getHeader("referer").substring(urlToGoFromEmail.length());
+    logger.debug("referer's servletContext is {}", referer);
+    return referer;
+  }
 }

@@ -136,12 +136,12 @@ public class CourseUpdateCommand implements Command {
       courseModificationService.addLecturerToCourse(principal, courseId, invitedLecturerId);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.debug(e.getMessage());
+      logger.debug(e);
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
-      throw new ClientCommandException(e.getMessage());
+      throw new ClientCommandException(e);
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -166,7 +166,7 @@ public class CourseUpdateCommand implements Command {
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
-      throw new ClientCommandException(e.getMessage());
+      throw new ClientCommandException(e);
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -207,7 +207,7 @@ public class CourseUpdateCommand implements Command {
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
     } catch (AccessDeniedException e) {
-      throw new ClientCommandException(e.getMessage());
+      throw new ClientCommandException(e);
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
@@ -273,7 +273,7 @@ public class CourseUpdateCommand implements Command {
           principal, lectureId, courseId, description, lectureBegins, lectureFinish);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.debug(e.getMessage());
+      logger.debug(e);
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);
@@ -339,7 +339,7 @@ public class CourseUpdateCommand implements Command {
           principal, courseId, description, lectureBegins, lectureFinish);
       return new CommandResult(referer);
     } catch (ClientServiceException e) {
-      logger.debug(e.getMessage());
+      logger.debug(e);
       CourseUpdateModel model = fillModelForView(principal, courseId);
       model.setErrorCourseDataMessage(e.getMessage());
       return new CommandResult(CoursiraJspPath.COURSE_UPDATE, model);

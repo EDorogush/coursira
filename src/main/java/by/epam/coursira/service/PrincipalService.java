@@ -136,9 +136,11 @@ public class PrincipalService {
       @NotNull Principal previous, @NotNull String email, @NotNull String password)
       throws ServiceException, ClientServiceException {
     final Principal principal;
-    ResourceBundle bundle =
-        ResourceBundle.getBundle(
-            RESOURCE_BUNDLE_ERROR_MESSAGE, previous.getSession().getLanguage().getLocale());
+    Locale locale = previous.getSession().getLanguage().getLocale();
+    ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, locale);
+    // check email and pass
+    ValidationHelper.validateText(email, locale, "email");
+    ValidationHelper.validateText(password, locale, "password");
     // check if user authorized
     if (previous.getUser().getRole() != Role.ANONYMOUS) {
       logout(previous);
@@ -177,7 +179,7 @@ public class PrincipalService {
       logger.debug("Session record was linked to {} user and increase session time.", email);
       principal = new Principal(session, user);
     } catch (DaoException e) {
-      throw new ServiceException(e.getMessage());
+      throw new ServiceException(e);
     }
     return principal;
   }
@@ -203,7 +205,7 @@ public class PrincipalService {
               .orElseThrow(() -> new ServiceException("Can't read default user"));
       return new Principal(session, user);
     } catch (DaoException e) {
-      throw new ServiceException(e.getMessage());
+      throw new ServiceException(e);
     }
   }
 
@@ -287,7 +289,7 @@ public class PrincipalService {
                 registrationLink);
         mailSender.sendMail(email, REGISTRATION_CONFIRM_SUBJECT, registrationMessage);
       } catch (MessagingException e) {
-        logger.debug(e.getMessage());
+        logger.debug(e);
         logger.debug("delete user record from db");
         userDao.deleteUser(userId);
         throw new ClientServiceException(bundle.getString("CANT_SEND_MESSAGE"));

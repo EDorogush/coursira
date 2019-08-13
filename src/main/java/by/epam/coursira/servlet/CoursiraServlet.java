@@ -141,7 +141,7 @@ public class CoursiraServlet extends HttpServlet {
                 principalService.cleanFromExpiredSessions();
                 principalService.cleanFromExpiredRegistrationCode();
               } catch (ServiceException e) {
-                logger.error("cleaner procedure init fails: {}", e.getMessage());
+                logger.error("cleaner procedure init fails: {}", e);
               }
             },
             cleanerInitialDelay,
@@ -215,7 +215,7 @@ public class CoursiraServlet extends HttpServlet {
       connectionPool.close();
       logger.info("Servlet destroyed");
     } catch (PoolConnectionException e) {
-      logger.error("Servlet can't be destroyed correctly  {}", e.getMessage());
+      logger.error("Servlet can't be destroyed correctly  {}", e);
     }
   }
 

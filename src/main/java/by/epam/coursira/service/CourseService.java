@@ -288,7 +288,7 @@ public class CourseService {
       try {
         return ValidationHelper.checkScheduleHaveCrossing(scheduleStudent, locale);
       } catch (ClientServiceException e) {
-        logger.debug(e.getMessage()); // found crossing
+        logger.debug(e); // found crossing
         return true;
       }
     } catch (DaoException e) {

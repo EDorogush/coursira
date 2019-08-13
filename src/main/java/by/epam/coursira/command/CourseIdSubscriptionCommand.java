@@ -43,8 +43,7 @@ public class CourseIdSubscriptionCommand implements Command {
       case "GET":
         throw new PageNotFoundException();
       case "POST":
-        String referer = request.getServletPath();
-        logger.debug("referer is {}", referer);
+        String referer = CommandUtils.refererServletContext(request);
         Matcher matcher = resourcePattern.matcher(request.getServletPath());
         if (!matcher.matches()) {
           throw new PageNotFoundException();
@@ -75,7 +74,7 @@ public class CourseIdSubscriptionCommand implements Command {
         courseService.leaveCourse(principal, courseId);
       }
     } catch (ClientServiceException | AccessDeniedException e) {
-      throw new ClientCommandException(e.getMessage());
+      throw new ClientCommandException(e);
     } catch (ServiceException e) {
       throw new CommandException(e);
     }

@@ -4,11 +4,16 @@ import by.epam.coursira.entity.Lecture;
 import by.epam.coursira.exception.ClientServiceException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.http.Part;
@@ -161,4 +166,6 @@ final class ValidationHelper {
     }
     return false;
   }
+
+
 }

@@ -41,8 +41,7 @@ public class LanguageCommand implements Command {
     logger.debug("In LanguageCommand");
     switch (request.getMethod()) {
       case "POST":
-        String referer = request.getServletPath();
-        logger.debug("referer is {}", referer);
+        String referer = CommandUtils.refererServletContext(request);
         return postLanguage(principal, referer, request.getParameterMap());
       case "GET":
         throw new PageNotFoundException();

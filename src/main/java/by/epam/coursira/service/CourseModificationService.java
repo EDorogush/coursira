@@ -165,7 +165,7 @@ public class CourseModificationService {
       try {
         mailSender.sendMail(invitedUser.getEmail(), INVITATION_SUBJECT, INVITATION_MESSAGE);
       } catch (MessagingException e) {
-        logger.warn(e.getMessage());
+        logger.warn(e);
         courseDao.deleteCourseLecturer(courseId, invitedLecturerId);
         throw new ClientServiceException(bundle.getString("CANT_SEND_MESSAGE"));
       }
@@ -209,7 +209,7 @@ public class CourseModificationService {
                             bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LECTURER_ID)));
         mailSender.sendMail(invitedUser.getEmail(), DELETING_SUBJECT, DELETING_MESSAGE);
       } catch (MessagingException e) {
-        logger.warn(e.getMessage());
+        logger.warn(e);
         throw new ClientServiceException(bundle.getString("CANT_SEND_MESSAGE"));
       }
 

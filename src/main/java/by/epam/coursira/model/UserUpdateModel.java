@@ -33,6 +33,8 @@ public class UserUpdateModel extends JspModelAbstract {
         && Objects.equals(errorDataMessage, that.errorDataMessage);
   }
 
+
+
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), errorImageMessage, errorDataMessage);

@@ -109,7 +109,7 @@ public class StudentDao {
         courses = parseResultSetToCoursesList(rs);
       }
     } catch (SQLException | PoolConnectionException e) {
-      throw new DaoException(e.getMessage());
+      throw new DaoException(e);
     }
     return courses;
   }

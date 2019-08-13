@@ -99,7 +99,7 @@ public class CourseCommand implements Command {
         courses = courseService.viewCourses(principal, paginationLimit + 1, offset);
       }
     } catch (ClientServiceException | AccessDeniedException e) {
-      throw new ClientCommandException(e.getMessage());
+      throw new ClientCommandException(e);
     } catch (ServiceException e) {
       throw new CommandException(e);
     }
