@@ -50,6 +50,7 @@ CoursIra is study project within the Java Web Development training course. The a
 JDK: [Version 11 or higher](https://openjdk.java.net).\
 [PostgreSQL 11.3](https://www.postgresql.org) \
 SMTP credentials.
+ 
 
 ## How to start PostgreSQL 
 
@@ -66,11 +67,11 @@ initdb --locale=C -E UTF-8 postgres
 postgres -D postgres
 ```
 
-### Create database with name coursiradb: 
+### Create database with name coursiradb (IMPORTANT : if You use Windows OS here and below use " instead of '): 
 ```
 psql -d postgres -c 'create database coursiradb'
 ```
-
+ 
 ### Create user with name coursirauser: 
 ```
 psql -d postgres  -c 'create user coursirauser'
@@ -85,7 +86,10 @@ psql -d postgres -c 'grant all privileges on database coursiradb to coursirauser
 ```
 psql -d coursiradb -U coursirauser -f schema.sql
 ``` 
-
+### Insert dbInitData  
+```
+psql -d coursiradb -U coursirauser -f dbInitData.sql
+``` 
 #### You may also need following commands:
 ##### Start db in background:
 ```

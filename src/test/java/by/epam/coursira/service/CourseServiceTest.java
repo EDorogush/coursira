@@ -107,32 +107,6 @@ public class CourseServiceTest {
         () -> courseService.viewCoursesPersonal(principal, limit, offset));
   }
 
-  @Test
-  public void testIsScheduleCrossWhenDontHaveCrossingReturnFalse()
-      throws DaoException, ClientServiceException, ServiceException {
-    Principal principal = new Principal(session, userStudent);
-    List<Lecture> studentSchedule = new ArrayList<>();
-    for (int i = 0; i < 3; i++) {
-      Lecture l1 =
-          new Lecture.Builder().withTimeStart(Instant.now()).withTimeEnd(Instant.now()).build();
-      studentSchedule.add(l1);
-    }
-    List<Lecture> courseSchedule = new ArrayList<>();
-    for (int i = 0; i < 3; i++) {
-      Lecture l1 =
-          new Lecture.Builder().withTimeStart(Instant.now()).withTimeEnd(Instant.now()).build();
-      studentSchedule.add(l1);
-    }
-    Course course = new Course.Builder().withLectures(courseSchedule).build();
-    // when
-    when(mockStudentDao.selectScheduleByStudentId(anyInt(), anyInt(), anyInt()))
-        .thenReturn(studentSchedule);
-    when(mockCourseDao.selectCourseById(anyInt(), anyInt(), anyInt()))
-        .thenReturn(Optional.of(course));
-    when(mockCourseDao.isExistCourseReady(anyInt())).thenReturn(true);
-    // then
-    assertFalse(courseService.isStudentScheduleCross(principal, 1));
-  }
 
   @Test
   public void testIsScheduleCrossWhenHaveCrossingReturnTrue()
