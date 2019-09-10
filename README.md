@@ -51,7 +51,16 @@ JDK: [Version 11 or higher](https://openjdk.java.net).\
 [PostgreSQL 11.3](https://www.postgresql.org) \
 SMTP credentials.
  
+## Jenkins Credentials:
+use [Jenkins service](http://epbyminw7566:8081) to deploy application
+#### as administrator: 
+login: administrator\
+password: password
+#### as developer: 
+login: developer\
+password: password
 
+ 
 ## How to start PostgreSQL 
 
 Database is installed entirely inside the application folder. 
