@@ -77,6 +77,7 @@ public class CoursiraServlet extends HttpServlet {
     ServletContext context = getServletContext();
     // initParams
     final String url = context.getInitParameter("jdbcDriver");
+    logger.info(url);
     final int dbPoolSize = Integer.parseInt(context.getInitParameter("dbPoolSize"));
     final int cleanerInitialDelay =
         Integer.parseInt(context.getInitParameter("cleanerInitialDelay"));
@@ -98,9 +99,10 @@ public class CoursiraServlet extends HttpServlet {
     final int paginationLimit = Integer.parseInt(context.getInitParameter("paginationLimit"));
 
     try {
+      Class.forName("org.postgresql.Driver");
       connectionPool = new ConnectionPoolImpl(dbPoolSize, url);
       logger.info("pool constructed");
-    } catch (PoolConnectionException e) {
+    } catch (PoolConnectionException | ClassNotFoundException e) {
       throw new ServletException(e);
     }
     CourseDao courseDao = new CourseDao(connectionPool);

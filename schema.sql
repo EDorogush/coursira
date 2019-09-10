@@ -1,3 +1,5 @@
+SET CLIENT_ENCODING TO 'utf8';
+
 CREATE SEQUENCE users_id_seq
     MINVALUE 0;
 

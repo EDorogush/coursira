@@ -1,3 +1,5 @@
+SET CLIENT_ENCODING TO 'utf8';
+
 INSERT INTO users(email, password, firstname, lastname, role, organization, age, interests)
 VALUES ('', '', '', '', 'ANONYMOUS', NULL, NULL, NULL),
        ('dorogushelena+snow@gmail.com', '$2a$10$wiEIavGl5U6sQUnnmffMPeBpzh9VDA9tVgN0MYpsF6o3sEWQ13Zv6', 'Snow', 'White', 'STUDENT',

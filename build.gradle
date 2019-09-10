@@ -56,7 +56,7 @@ gretty {
   servletContainer = 'tomcat9'
   contextPath = '/'
 //database data
-  initParameter('jdbcDriver', 'jdbc:postgresql://localhost:5432/coursiradb?user=coursirauser')
+  initParameter('jdbcDriver', 'jdbc:postgresql://localhost:5432/coursiradb?user=coursirauser&charSet=UNICODE')
   initParameter('dbPoolSize', '5')
   initParameter('sessionLoginDurationHours', '10')
   initParameter('sessionAnonymousDurationHours', '1')
