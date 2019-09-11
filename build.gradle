@@ -1,6 +1,8 @@
+
 plugins {
   id 'war'
   id 'org.gretty' version '2.3.1'
+  id "com.bmuschko.cargo" version "2.6.1"
 }
 
 group 'by.epam'
@@ -15,6 +17,7 @@ repositories {
 }
 
 dependencies {
+
   // https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
   providedCompile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
 
@@ -73,6 +76,21 @@ gretty {
   initParameter('cleanerDelay', '1')
 }
 
+cargo {
+  containerId = 'tomcat9x'
+  port = 8080
+
+  deployable {
+    context = 'coursira'
+  }
+
+  remote {
+    hostname = 'localhost'
+    username = System.getenv("TOMCAT_ADMIN")
+    password = System.getenv("TOMCAT_PASSWORD")
+  }
+
+}
 test {
   useTestNG()
 }
