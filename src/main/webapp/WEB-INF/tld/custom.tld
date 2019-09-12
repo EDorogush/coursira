@@ -51,4 +51,15 @@
       <rtexprvalue>true</rtexprvalue>
     </attribute>
   </tag>
+
+  <tag>
+    <name>versionTag</name>
+    <tag-class>by.epam.coursira.tag.VersionTag</tag-class>
+    <body-content>empty</body-content>
+  </tag>
+  <tag>
+    <name>assemblyTimeTag</name>
+    <tag-class>by.epam.coursira.tag.AssemblyTimeTag</tag-class>
+    <body-content>empty</body-content>
+  </tag>
 </taglib>

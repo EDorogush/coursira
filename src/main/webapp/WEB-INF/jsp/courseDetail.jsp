@@ -144,5 +144,6 @@
 
 
   </body>
+   <%@include file="parts/footer.jsp" %>
   </html>
 </fmt:bundle>

@@ -86,7 +86,7 @@
       <div class="text-danger"><strong> ${model.errorDataMessage}</strong></div>
     </div>
 
-
+ <%@include file="parts/footer.jsp" %>
   </body>
   </html>
 

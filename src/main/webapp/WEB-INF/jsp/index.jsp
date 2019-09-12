@@ -18,6 +18,8 @@
     <p>${model.studentsAmount} <fmt:message key="STUDENT_HAVE_ALREADY_JOIN_US"/></p>
 
   </div>
+  <%@include file="parts/footer.jsp" %>
   </body>
 </fmt:bundle>
+
 </html>

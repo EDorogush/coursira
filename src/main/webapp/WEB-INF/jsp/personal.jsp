@@ -120,7 +120,7 @@
   </fmt:bundle>
 </ul>
 
-
+ <%@include file="parts/footer.jsp" %>
 </body>
 </html>
 

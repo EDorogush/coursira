@@ -14,6 +14,8 @@
     <fmt:message key="message"/>
   </div>
   <a href="${pageContext.request.contextPath}/" class="btn btn-success"><fmt:message key="home_page"/></a>
+
+   <%@include file="parts/footer.jsp" %>
   </body>
 
   </html>

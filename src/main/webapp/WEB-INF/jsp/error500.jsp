@@ -9,7 +9,7 @@
   <div class="alert alert-warning" role="alert">
     <a href="http://www.nooooooooooooooo.com"><fmt:message key="message"/></a>
   </div>
-
+ <%@include file="parts/footer.jsp" %>
   </body>
 
   </html>
