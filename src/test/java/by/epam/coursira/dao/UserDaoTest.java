@@ -121,6 +121,7 @@ public class UserDaoTest {
     verify(mockPreparedStmt, times(1)).executeUpdate();
 
     assertEquals(actual, expected);
+
   }
 
   @Test
