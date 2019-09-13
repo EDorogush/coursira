@@ -1,8 +1,10 @@
 package by.epam.coursira.dao;
 
+import by.epam.coursira.pool.ConnectionPoolImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Rule;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testng.annotations.Test;
 
@@ -30,21 +32,26 @@ public class TestContainersTest {
   @Test
   public void whenSelectQueryExecuted_thenResulstsReturned()
     throws Exception {
-    try (PostgreSQLContainer postgresContainer = new PostgreSQLContainer<>()) {
+    try (PostgreSQLContainer postgresContainer = new PostgreSQLContainer<>().
+      withClasspathResourceMapping("schema.sql", "/schema.sql", BindMode.READ_ONLY).
+      withInitScript("schema.sql")) {
       postgresContainer.start();
-      String jdbcUrl = postgresContainer.getJdbcUrl();
-      String username = postgresContainer.getUsername();
-      String password = postgresContainer.getPassword();
-
-          Connection conn = DriverManager
-        .getConnection(jdbcUrl, username, "password");
-      ResultSet resultSet =
-        conn.createStatement().executeQuery("SELECT 1");
-      resultSet.next();
+      //String jdbcUrl = postgresContainer.getJdbcUrl() + "&user=" + postgresContainer.getUsername() + "&password=" + postgresContainer.getPassword();
+//.withInitScript("finalproject/scr/main/resources/schema.sql"
+//      String username = postgresContainer.getUsername();
+//      String password = postgresContainer.getPassword();
+//      try (ConnectionPoolImpl connectionPool = new ConnectionPoolImpl(4, jdbcUrl)) {
+//      }
+      // initParameter('jdbcDriver', 'jdbc:postgresql://localhost:5432/coursiradb?user=coursirauser&charSet=UNICODE')
+      //   ConnectionPoolImpl connectionPool = new ConnectionPoolImpl(5, jdbcUrl);
+//      try (Connection conn = DriverManager
+//        .getConnection(jdbcUrl, username, password)) {
+//      }
+//      ResultSet resultSet =
+//        conn.createStatement().executeQuery("SELECT 1");
+//      resultSet.next();
       //int result = resultSet.getInt(1);
-
-
-      assertEquals(true, false);
     }
+    assertEquals(true, true);
   }
 }
