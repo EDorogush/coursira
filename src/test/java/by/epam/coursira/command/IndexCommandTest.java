@@ -1,8 +1,8 @@
 package by.epam.coursira.command;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertThrows;
 
 import by.epam.coursira.entity.Principal;
 import by.epam.coursira.exception.ClientCommandException;
@@ -15,10 +15,12 @@ import by.epam.coursira.servlet.CoursiraJspPath;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
+
+import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 public class IndexCommandTest {
 
@@ -27,7 +29,7 @@ public class IndexCommandTest {
   @Mock Principal mockPrincipal;
   private IndexCommand command;
 
-  @BeforeMethod
+  @BeforeEach
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     command = new IndexCommand(mockCourseService);
@@ -54,7 +56,7 @@ public class IndexCommandTest {
     CommandResult actual = command.execute(mockPrincipal, mockRequest);
     // then
 
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test

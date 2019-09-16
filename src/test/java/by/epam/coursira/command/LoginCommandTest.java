@@ -1,8 +1,8 @@
 package by.epam.coursira.command;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertThrows;
 
 import by.epam.coursira.entity.Principal;
 import by.epam.coursira.exception.ClientCommandException;
@@ -14,10 +14,11 @@ import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;
 import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 public class LoginCommandTest {
   @Mock HttpServletRequest mockRequest;
@@ -26,7 +27,7 @@ public class LoginCommandTest {
   private LoginCommand command;
   private HashMap<String, String[]> queryParams;
 
-  @BeforeMethod
+  @BeforeEach
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     command = new LoginCommand(mockPrincipalService);
@@ -66,6 +67,6 @@ public class LoginCommandTest {
 
     CommandResult expected = new CommandResult(CoursiraJspPath.LOGIN, model);
     CommandResult actual = command.execute(mockPrincipal, mockRequest);
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 }

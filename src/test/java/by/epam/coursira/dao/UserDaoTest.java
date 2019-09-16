@@ -1,5 +1,6 @@
 package by.epam.coursira.dao;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -7,10 +8,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertThrows;
-import static org.testng.Assert.assertTrue;
 
 import by.epam.coursira.entity.Language;
 import by.epam.coursira.entity.Role;
@@ -27,16 +24,17 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
+
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 public class UserDaoTest {
 
   @Mock private ConnectionPool mockPool;
-
   @Mock private Connection mockConnection;
   @Mock private PreparedStatement mockPreparedStmt;
   @Mock private ResultSet mockResultSet;
@@ -45,7 +43,7 @@ public class UserDaoTest {
   private User user;
   private Session session;
 
-  @BeforeMethod
+  @BeforeEach
   public void setUp() throws SQLException, PoolConnectionException {
     session =
         new Session.Builder()
@@ -104,7 +102,7 @@ public class UserDaoTest {
     userDao = new UserDao(mockPool);
   }
 
-  @AfterMethod
+  @AfterEach
   public void tearDown() throws SQLException {}
 
   @Test
@@ -120,7 +118,7 @@ public class UserDaoTest {
     verify(mockPreparedStmt, times(1)).setTimestamp(anyInt(), any(Timestamp.class));
     verify(mockPreparedStmt, times(1)).executeUpdate();
 
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
 
   }
 
@@ -137,7 +135,7 @@ public class UserDaoTest {
     verify(mockPreparedStmt, times(1)).setTimestamp(anyInt(), any(Timestamp.class));
     verify(mockPreparedStmt, times(1)).executeUpdate();
 
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -161,7 +159,7 @@ public class UserDaoTest {
     verify(mockPreparedStmt, times(1)).setTimestamp(anyInt(), any(Timestamp.class));
     verify(mockPreparedStmt, times(1)).executeUpdate();
 
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -169,7 +167,7 @@ public class UserDaoTest {
     int expected = 1;
     when(mockResultSet.getInt(1)).thenReturn(expected);
     int actual = userDao.updateSession(session);
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -181,7 +179,7 @@ public class UserDaoTest {
     verify(mockResultSet, times(1)).getTimestamp(anyString());
     verify(mockResultSet, times(1)).getBytes(anyString());
     verify(mockResultSet, times(2)).getInt(anyString());
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test

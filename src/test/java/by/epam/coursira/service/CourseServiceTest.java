@@ -1,11 +1,8 @@
 package by.epam.coursira.service;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertThrows;
-import static org.testng.Assert.assertTrue;
 
 import by.epam.coursira.dao.CourseDao;
 import by.epam.coursira.dao.StudentDao;
@@ -26,11 +23,12 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 public class CourseServiceTest {
 
@@ -58,13 +56,13 @@ public class CourseServiceTest {
   private CourseService courseService;
   private Principal principal;
 
-  @BeforeMethod
+  @BeforeEach
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     courseService = new CourseService(mockCourseDao, mockStudentDao, mockUserDao);
   }
 
-  @AfterMethod
+  @AfterEach
   public void tearDown() {}
 
   @Test
@@ -80,7 +78,7 @@ public class CourseServiceTest {
         .thenReturn(expected);
     List<Course> actual = courseService.viewCoursesPersonal(principal, limit, offset);
     // then
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test

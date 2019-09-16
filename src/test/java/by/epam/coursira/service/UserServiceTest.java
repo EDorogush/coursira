@@ -1,12 +1,12 @@
 package by.epam.coursira.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertThrows;
 
 import by.epam.coursira.dao.UserDao;
 import by.epam.coursira.entity.Language;
@@ -24,11 +24,12 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import javax.servlet.http.Part;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 public class UserServiceTest {
 
@@ -56,7 +57,7 @@ public class UserServiceTest {
   private User userStudent;
   private UserService userService;
 
-  @BeforeMethod
+  @BeforeEach
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     userService = new UserService(mockUserDao);
@@ -71,7 +72,7 @@ public class UserServiceTest {
             .build();
   }
 
-  @AfterMethod
+  @AfterEach
   public void tearDown() {}
 
   @Test
@@ -141,7 +142,7 @@ public class UserServiceTest {
             updated.getOrganization(),
             updated.getInterests());
 
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test

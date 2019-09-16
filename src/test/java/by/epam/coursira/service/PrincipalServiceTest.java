@@ -1,14 +1,12 @@
 package by.epam.coursira.service;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertThrows;
 
 import by.epam.coursira.dao.UserDao;
 import by.epam.coursira.entity.Language;
@@ -26,11 +24,12 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import javax.mail.MessagingException;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mindrot.jbcrypt.BCrypt;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 public class PrincipalServiceTest {
 
@@ -54,7 +53,7 @@ public class PrincipalServiceTest {
   private Session session;
   private PrincipalService service;
 
-  @BeforeMethod
+  @BeforeEach
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     Duration sessionLoginDuration = Duration.ofHours(2);
@@ -122,7 +121,7 @@ public class PrincipalServiceTest {
     verify(mockUserDao, times(1)).updateSession(any(Session.class));
     verify(mockUserDao, times(2)).selectPrincipalBySessionId(anyString());
 
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -162,7 +161,7 @@ public class PrincipalServiceTest {
         service.verifyPrincipleByPass(previous, userStudent.getEmail(), userStudent.getPassword());
     // then
     verify(mockUserDao, times(1)).updateSession(any(Session.class));
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -228,7 +227,7 @@ public class PrincipalServiceTest {
     Principal actual = service.logout(previous);
     // then
     verify(mockUserDao, times(1)).updateSession(any(Session.class));
-    assertEquals(actual, expected);
+    assertEquals(expected, actual);
   }
 
   @Test
