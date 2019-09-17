@@ -1,6 +1,9 @@
 package by.epam.coursira.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
@@ -143,13 +146,5 @@ public class CourseServiceTest {
     // then
     assertThrows(ClientServiceException.class, () -> courseService.isStudentScheduleCross(principal, 1));
   }
-
-  @Test
-  public void testJoinToCourse() {}
-
-  @Test
-  public void testLeaveCourse() {}
-
-  @Test
-  public void testIsInUserListCourse() {}
 }
+

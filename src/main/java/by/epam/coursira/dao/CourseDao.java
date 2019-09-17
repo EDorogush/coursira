@@ -581,6 +581,7 @@ public class CourseDao {
           course.setLectures(lectureList);
           course.setLecturers(lecturers);
           logger.debug("get {} records", lectureList.size());
+          logger.debug(course.getId());
           return Optional.of(course);
         }
       }

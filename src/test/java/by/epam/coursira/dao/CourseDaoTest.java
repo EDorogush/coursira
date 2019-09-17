@@ -10,10 +10,11 @@ import by.epam.coursira.entity.Lecturer;
 
 import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.PoolConnectionException;
+import by.epam.coursira.pool.ConnectionPool;
 import by.epam.coursira.pool.ConnectionPoolImpl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
@@ -23,21 +24,19 @@ import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class CourseDaoTest {
-  private final int dbPoolSize = 10;
   private PostgreSQLContainer postgresContainer;
-
-  private ConnectionPoolImpl connectionPool;
   private CourseDao courseDao;
 
   @BeforeEach
   public void setUp() throws PoolConnectionException {
+    final int dbPoolSize = 10;
     postgresContainer =
-        new PostgreSQLContainer<>()
-            .withClasspathResourceMapping("dbscripts", "/dbscripts", BindMode.READ_WRITE)
-            .withDatabaseName("coursiradb")
-            .withUsername("coursirauser")
-            .withPassword("password")
-            .withInitScript("dbscripts/schema.sql");
+      new PostgreSQLContainer<>()
+        .withClasspathResourceMapping("dbscripts", "/dbscripts", BindMode.READ_WRITE)
+        .withDatabaseName("coursiradb")
+        .withUsername("coursirauser")
+        .withPassword("password")
+        .withInitScript("dbscripts/schema.sql");
     postgresContainer.start();
     String jdbcUrl =
       postgresContainer.getJdbcUrl()
@@ -46,7 +45,7 @@ public class CourseDaoTest {
         + "&password="
         + postgresContainer.getPassword();
 
-    connectionPool = new ConnectionPoolImpl(dbPoolSize, jdbcUrl);
+    ConnectionPool connectionPool = new ConnectionPoolImpl(dbPoolSize, jdbcUrl);
     courseDao = new CourseDao(connectionPool);
   }
 
@@ -101,7 +100,7 @@ public class CourseDaoTest {
         .withDescription("description")
         .withCapacity(studentCapacity)
         .withStudentsAmount(0)
-        .withLecturers(Arrays.asList(new Lecturer(lecturerId, "1", "1")))
+        .withLecturers(Collections.singletonList(new Lecturer(lecturerId, "1", "1")))
         .withLectures(new ArrayList<>())
         .build();
     int expected = 6;
@@ -110,7 +109,7 @@ public class CourseDaoTest {
   }
 
   @Test
-  public void testInsertCourseRollbackWhenLecturerIdWrong() throws DaoException {
+  public void testInsertCourseRollbackWhenLecturerIdWrong() {
     int studentCapacity = 10;
     int lecturerId = 100;
 
@@ -120,7 +119,7 @@ public class CourseDaoTest {
         .withDescription("description")
         .withCapacity(studentCapacity)
         .withStudentsAmount(0)
-        .withLecturers(Arrays.asList(new Lecturer(lecturerId, "1", "1")))
+        .withLecturers(Collections.singletonList(new Lecturer(lecturerId, "1", "1")))
         .withLectures(new ArrayList<>())
         .build();
 

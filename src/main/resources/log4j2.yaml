@@ -55,6 +55,9 @@ Configuration:
 
       - name: by.epam.coursira.pool
         level: error
+
+      - name: by.epam.coursira.command
+        level: debug
     root:
       level: info
       AppenderRef:

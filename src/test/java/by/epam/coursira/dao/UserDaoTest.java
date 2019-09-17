@@ -1,6 +1,9 @@
 package by.epam.coursira.dao;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -16,6 +19,7 @@ import by.epam.coursira.entity.User;
 import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.PoolConnectionException;
 import by.epam.coursira.pool.ConnectionPool;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,8 +29,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 
-
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -34,10 +36,14 @@ import org.mockito.MockitoAnnotations;
 
 public class UserDaoTest {
 
-  @Mock private ConnectionPool mockPool;
-  @Mock private Connection mockConnection;
-  @Mock private PreparedStatement mockPreparedStmt;
-  @Mock private ResultSet mockResultSet;
+  @Mock
+  private ConnectionPool mockPool;
+  @Mock
+  private Connection mockConnection;
+  @Mock
+  private PreparedStatement mockPreparedStmt;
+  @Mock
+  private ResultSet mockResultSet;
 
   private UserDao userDao;
   private User user;
@@ -46,29 +52,29 @@ public class UserDaoTest {
   @BeforeEach
   public void setUp() throws SQLException, PoolConnectionException {
     session =
-        new Session.Builder()
-            .setExpDate(Instant.now())
-            .setId("abc")
-            .setUserId(1)
-            .setLanguage(Language.EN)
-            .setZoneOffSet(ZoneOffset.UTC)
-            .build();
+      new Session.Builder()
+        .setExpDate(Instant.now())
+        .setId("abc")
+        .setUserId(1)
+        .setLanguage(Language.EN)
+        .setZoneOffSet(ZoneOffset.UTC)
+        .build();
 
     user =
-        new User.Builder()
-            .setId(1)
-            .setEmail("email")
-            .setFirstName("firstName")
-            .setLastName("lastName")
-            .setPassword("password")
-            .setRegistrationExpDate(Instant.now())
-            .setRegistrationCode("code")
-            .setOrganization("organization")
-            .setInterests("interests")
-            .setAge(100)
-            .setRole(Role.ANONYMOUS)
-            .setBase64Image(null)
-            .build();
+      new User.Builder()
+        .setId(1)
+        .setEmail("email")
+        .setFirstName("firstName")
+        .setLastName("lastName")
+        .setPassword("password")
+        .setRegistrationExpDate(Instant.now())
+        .setRegistrationCode("code")
+        .setOrganization("organization")
+        .setInterests("interests")
+        .setAge(100)
+        .setRole(Role.ANONYMOUS)
+        .setBase64Image(null)
+        .build();
 
     MockitoAnnotations.initMocks(this);
     assertNotNull(mockPool);
@@ -96,18 +102,15 @@ public class UserDaoTest {
     when(mockResultSet.getInt("age")).thenReturn(user.getAge());
     when(mockResultSet.getInt("id")).thenReturn(user.getId());
     when(mockResultSet.getTimestamp("registration_expire_date"))
-        .thenReturn(Timestamp.from(user.getRegistrationExpDate()));
+      .thenReturn(Timestamp.from(user.getRegistrationExpDate()));
     when(mockResultSet.getBytes("photo")).thenReturn(null);
 
     userDao = new UserDao(mockPool);
   }
 
-  @AfterEach
-  public void tearDown() throws SQLException {}
-
-  @Test
+   @Test
   public void testInsertSessionSucceed()
-      throws DaoException, PoolConnectionException, SQLException {
+    throws DaoException, PoolConnectionException, SQLException {
     int expected = 1;
     int actual = userDao.insertSession(session);
 
@@ -148,7 +151,7 @@ public class UserDaoTest {
 
   @Test
   public void testDeleteSessionSucceed()
-      throws DaoException, PoolConnectionException, SQLException {
+    throws DaoException, PoolConnectionException, SQLException {
     int expected = 1;
     when(mockResultSet.getInt(1)).thenReturn(expected);
     int actual = userDao.deleteSession(Instant.now());

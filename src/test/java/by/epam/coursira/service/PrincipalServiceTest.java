@@ -1,6 +1,9 @@
 package by.epam.coursira.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -19,6 +22,7 @@ import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.mail.MailSender;
 import by.epam.coursira.security.BCryptHashMethod;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -33,21 +37,24 @@ import org.mockito.MockitoAnnotations;
 
 public class PrincipalServiceTest {
 
-  @Mock UserDao mockUserDao;
+  @Mock
+  UserDao mockUserDao;
 
-  @Mock BCryptHashMethod mockBCryptHashing;
+  @Mock
+  BCryptHashMethod mockBCryptHashing;
 
-  @Mock MailSender mockMailSender;
+  @Mock
+  MailSender mockMailSender;
 
   private User userAnonymous =
-      new User.Builder()
-          .setId(0)
-          .setEmail("email")
-          .setFirstName("firstName")
-          .setLastName("lastName")
-          .setPassword("password")
-          .setRole(Role.ANONYMOUS)
-          .build();
+    new User.Builder()
+      .setId(0)
+      .setEmail("email")
+      .setFirstName("firstName")
+      .setLastName("lastName")
+      .setPassword("password")
+      .setRole(Role.ANONYMOUS)
+      .build();
 
   private User userStudent;
   private Session session;
@@ -61,36 +68,36 @@ public class PrincipalServiceTest {
 
 
     service =
-        new PrincipalService(
-            mockUserDao,
-            sessionLoginDuration,
-            sessionAnonymousDuration,
-            mockBCryptHashing,
-            mockMailSender);
+      new PrincipalService(
+        mockUserDao,
+        sessionLoginDuration,
+        sessionAnonymousDuration,
+        mockBCryptHashing,
+        mockMailSender);
 
     userStudent =
-        new User.Builder()
-            .setId(1)
-            .setEmail("email")
-            .setFirstName("firstName")
-            .setLastName("lastName")
-            .setPassword(BCrypt.hashpw("password", BCrypt.gensalt()))
-            .setRole(Role.STUDENT)
-            .build();
+      new User.Builder()
+        .setId(1)
+        .setEmail("email")
+        .setFirstName("firstName")
+        .setLastName("lastName")
+        .setPassword(BCrypt.hashpw("password", BCrypt.gensalt()))
+        .setRole(Role.STUDENT)
+        .build();
 
     session =
-        new Session.Builder()
-            .setExpDate(Instant.now())
-            .setId("abc")
-            .setUserId(1)
-            .setLanguage(Language.EN)
-            .setZoneOffSet(ZoneOffset.UTC)
-            .build();
+      new Session.Builder()
+        .setExpDate(Instant.now())
+        .setId("abc")
+        .setUserId(1)
+        .setLanguage(Language.EN)
+        .setZoneOffSet(ZoneOffset.UTC)
+        .build();
   }
 
   @Test
   public void testVerifyPrincipleBySessionIdAuthenticationSucceed()
-      throws DaoException, ServiceException {
+    throws DaoException, ServiceException {
 
     Principal expected = new Principal(session, userStudent);
     expected.getSession().setExpDate(Instant.now().plusSeconds(1000));
@@ -101,20 +108,20 @@ public class PrincipalServiceTest {
 
     verify(mockUserDao, never()).updateSession(any(Session.class));
     verify(mockUserDao, times(1)).selectPrincipalBySessionId(anyString());
-    assertSame(actual.getUser().getRole(), Role.STUDENT);
+    assertSame(Role.STUDENT, actual.getUser().getRole());
   }
 
   @Test
   public void testVerifyPrincipleBySessionIdSessionTimeExpired()
-      throws DaoException, ServiceException {
+    throws DaoException, ServiceException {
     // given
     session.setExpDate(Instant.now().minusSeconds(100));
     Principal verified = new Principal(session, userStudent);
 
     Principal expected = new Principal(session, userAnonymous);
     when(mockUserDao.selectPrincipalBySessionId(anyString()))
-        .thenReturn(Optional.of(verified))
-        .thenReturn(Optional.of(expected));
+      .thenReturn(Optional.of(verified))
+      .thenReturn(Optional.of(expected));
     // when
     Principal actual = service.verifyPrincipleBySessionId(verified.getSession().getId());
     // then
@@ -126,7 +133,7 @@ public class PrincipalServiceTest {
 
   @Test
   public void testVerifyPrincipleBySessionIdSessionNotFound()
-      throws DaoException, ServiceException {
+    throws DaoException, ServiceException {
     // given
     Principal expected = new Principal(session, userAnonymous);
     // when
@@ -137,7 +144,7 @@ public class PrincipalServiceTest {
     verify(mockUserDao, never()).updateSession(any(Session.class));
     verify(mockUserDao, times(1)).insertSession(any(Session.class));
 
-    assertSame(actual.getUser().getRole(), Role.ANONYMOUS);
+    assertSame(Role.ANONYMOUS, actual.getUser().getRole());
   }
 
   @Test
@@ -150,7 +157,7 @@ public class PrincipalServiceTest {
 
   @Test
   public void testVerifyPrincipleByPassEmailAndPassMatch()
-      throws DaoException, ServiceException, ClientServiceException {
+    throws DaoException, ServiceException, ClientServiceException {
     // given
     Principal previous = new Principal(session, userAnonymous);
     Principal expected = new Principal(session, userStudent);
@@ -158,7 +165,7 @@ public class PrincipalServiceTest {
     when(mockUserDao.selectUserByEmail(anyString())).thenReturn(Optional.of(userStudent));
     when(mockBCryptHashing.verify(anyString(), anyString())).thenReturn(true);
     Principal actual =
-        service.verifyPrincipleByPass(previous, userStudent.getEmail(), userStudent.getPassword());
+      service.verifyPrincipleByPass(previous, userStudent.getEmail(), userStudent.getPassword());
     // then
     verify(mockUserDao, times(1)).updateSession(any(Session.class));
     assertEquals(expected, actual);
@@ -166,7 +173,7 @@ public class PrincipalServiceTest {
 
   @Test
   public void testVerifyPrincipleByPassWhenPassDoesntMatchThrowClientServiceException()
-      throws DaoException {
+    throws DaoException {
     // given
     Principal previous = new Principal(session, userAnonymous);
     // when
@@ -174,30 +181,30 @@ public class PrincipalServiceTest {
     when(mockBCryptHashing.verify(anyString(), anyString())).thenReturn(false);
     // then
     assertThrows(
-        ClientServiceException.class,
-        () ->
-            service.verifyPrincipleByPass(
-                previous, userStudent.getEmail(), userStudent.getPassword()));
+      ClientServiceException.class,
+      () ->
+        service.verifyPrincipleByPass(
+          previous, userStudent.getEmail(), userStudent.getPassword()));
   }
 
   @Test
   public void testVerifyPrincipleByPassWhenUserDoesntExistThrowClientServiceException()
-      throws DaoException {
+    throws DaoException {
     // given
     Principal previous = new Principal(session, userAnonymous);
     // when
     when(mockUserDao.selectUserByEmail(anyString())).thenReturn(Optional.empty());
     // then
     assertThrows(
-        ClientServiceException.class,
-        () ->
-            service.verifyPrincipleByPass(
-                previous, userStudent.getEmail(), userStudent.getPassword()));
+      ClientServiceException.class,
+      () ->
+        service.verifyPrincipleByPass(
+          previous, userStudent.getEmail(), userStudent.getPassword()));
   }
 
   @Test
   public void testVerifyPrincipleByPassWhenRegistrationExpiredThrowClientServiceException()
-      throws DaoException, ServiceException {
+    throws DaoException, ServiceException {
     // given
     userStudent.setRegistrationExpDate(Instant.now().minusSeconds(100));
     Principal previous = new Principal(session, userAnonymous);
@@ -211,10 +218,10 @@ public class PrincipalServiceTest {
       verify(mockUserDao, times(1)).deleteUser(userStudent.getId());
     }
     assertThrows(
-        ClientServiceException.class,
-        () ->
-            service.verifyPrincipleByPass(
-                previous, userStudent.getEmail(), userStudent.getPassword()));
+      ClientServiceException.class,
+      () ->
+        service.verifyPrincipleByPass(
+          previous, userStudent.getEmail(), userStudent.getPassword()));
   }
 
   @Test
@@ -232,7 +239,7 @@ public class PrincipalServiceTest {
 
   @Test
   public void testRegisterUserSucceed()
-      throws ClientServiceException, ServiceException, DaoException, MessagingException {
+    throws ClientServiceException, ServiceException, DaoException, MessagingException {
     // given
     Principal previous = new Principal(session, userAnonymous);
 
@@ -240,14 +247,14 @@ public class PrincipalServiceTest {
     when(mockMailSender.sendMail(anyString(), anyString(), anyString())).thenReturn(true);
     when(mockBCryptHashing.toHash(anyString())).thenReturn(anyString());
     service.registerUser(
-        previous,
-        "",
-        userStudent.getEmail(),
-        userStudent.getPassword(),
-        userStudent.getPassword(),
-        userStudent.getFirstName(),
-        userStudent.getLastName(),
-        userStudent.getRole());
+      previous,
+      "",
+      userStudent.getEmail(),
+      userStudent.getPassword(),
+      userStudent.getPassword(),
+      userStudent.getFirstName(),
+      userStudent.getLastName(),
+      userStudent.getRole());
     // then
     verify(mockUserDao, times(1)).insertUser(any(User.class));
     verify(mockMailSender, times(1)).sendMail(anyString(), anyString(), anyString());
@@ -255,7 +262,7 @@ public class PrincipalServiceTest {
 
   @Test
   public void testRegisterUserWhenEmailExistsThrowClientServiceException()
-      throws DaoException, MessagingException {
+    throws DaoException, MessagingException {
     // given
     Principal previous = new Principal(session, userAnonymous);
     // when
@@ -264,22 +271,22 @@ public class PrincipalServiceTest {
     when(mockUserDao.isExistsEmail(userStudent.getEmail())).thenReturn(true);
     // then
     assertThrows(
-        ClientServiceException.class,
-        () ->
-            service.registerUser(
-                previous,
-                "",
-                userStudent.getEmail(),
-                userStudent.getPassword(),
-                userStudent.getPassword(),
-                userStudent.getFirstName(),
-                userStudent.getFirstName(),
-                userStudent.getRole()));
+      ClientServiceException.class,
+      () ->
+        service.registerUser(
+          previous,
+          "",
+          userStudent.getEmail(),
+          userStudent.getPassword(),
+          userStudent.getPassword(),
+          userStudent.getFirstName(),
+          userStudent.getFirstName(),
+          userStudent.getRole()));
   }
 
   @Test
   public void testActivateRegistrationSucceed()
-      throws ClientServiceException, ServiceException, DaoException {
+    throws ClientServiceException, ServiceException, DaoException {
     // given
     userStudent.setRegistrationExpDate(Instant.now().plusSeconds(100));
     Principal previous = new Principal(session, userAnonymous);
@@ -293,7 +300,7 @@ public class PrincipalServiceTest {
 
   @Test
   public void testActivateRegistrationWhenTimeExpiredThenThrowClientServiceException()
-      throws DaoException {
+    throws DaoException {
     // given
     userStudent.setRegistrationExpDate(Instant.now().minusSeconds(100));
     Principal previous = new Principal(session, userAnonymous);

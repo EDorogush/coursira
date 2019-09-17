@@ -14,7 +14,9 @@ import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.PoolConnectionException;
 import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.mail.MailSender;
+import by.epam.coursira.pool.ConnectionPool;
 import by.epam.coursira.pool.ConnectionPoolImpl;
+
 import java.time.Instant;
 import java.time.ZoneOffset;
 
@@ -26,36 +28,75 @@ import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CourseModificationServiceTest {
-  private final int dbPoolSize = 10;
   private PostgreSQLContainer postgresContainer;
-  private ConnectionPoolImpl connectionPool;
-  private CourseModificationService service;
+    private CourseModificationService service;
   private CourseDao courseDao;
 
-  @Mock MailSender mockMailSender;
+  private int courseId = 5;
+  private Principal courseOwner = new Principal(
+    new Session.Builder()
+      .setExpDate(Instant.now())
+      .setId("abc")
+      .setUserId(9)
+      .setLanguage(Language.EN)
+      .setZoneOffSet(ZoneOffset.UTC)
+      .build(),
+    new User.Builder()
+      .setId(9)
+      .setEmail("email")
+      .setFirstName("firstName")
+      .setLastName("lastName")
+      .setPassword("password")
+      .setRole(Role.LECTURER)
+      .build()
+  );
+
+  private Principal notCourseOwner = new Principal(
+    new Session.Builder()
+      .setExpDate(Instant.now())
+      .setId("abc")
+      .setUserId(3)
+      .setLanguage(Language.EN)
+      .setZoneOffSet(ZoneOffset.UTC)
+      .build(),
+    new User.Builder()
+      .setId(3)
+      .setEmail("email")
+      .setFirstName("firstName")
+      .setLastName("lastName")
+      .setPassword("password")
+      .setRole(Role.STUDENT)
+      .build()
+  );
+
+
+  @Mock
+  MailSender mockMailSender;
 
   @BeforeEach
   public void setUp() throws PoolConnectionException {
     MockitoAnnotations.initMocks(this);
+    int dbPoolSize = 10;
     postgresContainer =
-        new PostgreSQLContainer<>()
-            .withClasspathResourceMapping("dbscripts", "/dbscripts", BindMode.READ_WRITE)
-            .withDatabaseName("coursiradb")
-            .withUsername("coursirauser")
-            .withPassword("password")
-            .withInitScript("dbscripts/schema.sql");
+      new PostgreSQLContainer<>()
+        .withClasspathResourceMapping("dbscripts", "/dbscripts", BindMode.READ_WRITE)
+        .withDatabaseName("coursiradb")
+        .withUsername("coursirauser")
+        .withPassword("password")
+        .withInitScript("dbscripts/schema.sql");
     postgresContainer.start();
     String jdbcUrl =
-        postgresContainer.getJdbcUrl()
-            + "&user="
-            + postgresContainer.getUsername()
-            + "&password="
-            + postgresContainer.getPassword();
+      postgresContainer.getJdbcUrl()
+        + "&user="
+        + postgresContainer.getUsername()
+        + "&password="
+        + postgresContainer.getPassword();
 
-    connectionPool = new ConnectionPoolImpl(dbPoolSize, jdbcUrl);
+    ConnectionPool connectionPool = new ConnectionPoolImpl(dbPoolSize, jdbcUrl);
     courseDao = new CourseDao(connectionPool);
     UserDao userDao = new UserDao(connectionPool);
 
@@ -68,45 +109,43 @@ public class CourseModificationServiceTest {
   }
 
   @Test
-  public void testCreateCourse()
-      throws ClientServiceException, ServiceException, AccessDeniedException, DaoException {
-    int lectureId = 9;
-    int courseId = 5;
+  public void testUpdateCourseSucceed()
+    throws ClientServiceException, ServiceException, AccessDeniedException, DaoException {
     String afterUpdateTitle = "new title";
     String afterUpdateDescription = "new description";
     int afterUpdateCapacity = 2;
 
-    User user =
-        new User.Builder()
-            .setId(lectureId)
-            .setEmail("email")
-            .setFirstName("firstName")
-            .setLastName("lastName")
-            .setPassword("password")
-            .setRole(Role.LECTURER)
-            .build();
-
-    Session session =
-        new Session.Builder()
-            .setExpDate(Instant.now())
-            .setId("abc")
-            .setUserId(lectureId)
-            .setLanguage(Language.EN)
-            .setZoneOffSet(ZoneOffset.UTC)
-            .build();
-
-    Principal principal = new Principal(session, user);
-
     service.updateCourse(
-        principal, courseId, afterUpdateTitle, afterUpdateDescription, afterUpdateCapacity);
+      courseOwner, courseId, afterUpdateTitle, afterUpdateDescription, afterUpdateCapacity);
     Course afterUpdateCourse =
-        courseDao
-            .selectCourseById(courseId, 10, 0)
-            .orElseThrow(() -> new ServiceException("No Such course in db!"));
+      courseDao
+        .selectCourseById(courseId, 10, 0)
+        .orElseThrow(() -> new ServiceException("No Such course in db!"));
     assertTrue(
-        afterUpdateCourse.getCapacity() == afterUpdateCapacity
-            && afterUpdateCourse.getTitle().equals(afterUpdateTitle)
-            && afterUpdateCourse.getDescription().equals(afterUpdateDescription));
+      afterUpdateCourse.getCapacity() == afterUpdateCapacity
+        && afterUpdateCourse.getTitle().equals(afterUpdateTitle)
+        && afterUpdateCourse.getDescription().equals(afterUpdateDescription));
   }
+
+  @Test
+  public void testUpdateCourseFailsWithAccessDeniedException() {
+    String afterUpdateTitle = "new title";
+    String afterUpdateDescription = "new description";
+    int afterUpdateCapacity = 2;
+
+    assertThrows(AccessDeniedException.class, () -> service.updateCourse(
+      notCourseOwner, courseId, afterUpdateTitle, afterUpdateDescription, afterUpdateCapacity));
+  }
+
+  @Test
+  public void testActivateCourseThrowsAccessDeniedException() {
+    assertThrows(AccessDeniedException.class, () -> service.activateCourse(notCourseOwner, courseId));
+  }
+
+  @Test
+  public void testActivateCourseThrowsExceptionWhenLecturerHasNoLectures() throws ClientServiceException, ServiceException, AccessDeniedException {
+    assertThrows(ClientServiceException.class, () -> service.activateCourse(courseOwner, courseId));
+  }
+
 }
 
