@@ -5,4 +5,5 @@
 /logs
 /.gradle
 /postgres
+/target
 *.java-version
