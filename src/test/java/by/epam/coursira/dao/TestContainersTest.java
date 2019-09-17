@@ -37,9 +37,9 @@ public class TestContainersTest {
             .withDatabaseName("coursiradb")
             .withUsername("coursirauser")
             .withPassword("password")
-            .withInitScript("dbscripts/dbInitData.sql")
             .withInitScript("dbscripts/schema.sql")) {
       postgresContainer.start();
+
       String jdbcUrl =
           postgresContainer.getJdbcUrl()
               + "&user="
@@ -51,7 +51,7 @@ public class TestContainersTest {
       Optional<User> user = userDao.selectUserByEmail("dorogushelena+snow@gmail.com");
       user.isPresent();
 
-      assertEquals(true, true);
+      assertEquals("dorogushelena+snow@gmail.com", user.get().getEmail());
     }
   }
 }
