@@ -32,11 +32,11 @@ public class CourseDaoTest {
     final int dbPoolSize = 10;
     postgresContainer =
       new PostgreSQLContainer<>()
-        .withClasspathResourceMapping("dbscripts", "/dbscripts", BindMode.READ_WRITE)
+        .withClasspathResourceMapping("testdbscripts", "/testdbscripts", BindMode.READ_WRITE)
         .withDatabaseName("coursiradb")
         .withUsername("coursirauser")
         .withPassword("password")
-        .withInitScript("dbscripts/schema.sql");
+        .withInitScript("testdbscripts/schema.sql");
     postgresContainer.start();
     String jdbcUrl =
       postgresContainer.getJdbcUrl()

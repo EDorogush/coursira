@@ -76,28 +76,32 @@ initdb --locale=C -E UTF-8 postgres
 postgres -D postgres
 ```
 
-### Create database with name coursiradb (IMPORTANT : if You use Windows OS here and below use " instead of '): 
+### Create database with name coursiradb: 
 ```
 psql -d postgres -c 'create database coursiradb'
 ```
- 
-### Create user with name coursirauser: 
+ ### Create user with name coursirauser: 
 ```
 psql -d postgres  -c 'create user coursirauser'
 ```
-
 ### Grant privileges to coursirauser: 
 ```
 psql -d postgres -c 'grant all privileges on database coursiradb to coursirauser'
 ```
+## IMPORTANT: When work from Windows OS use next commands instead of mentioned above:
+```
+psql -d postgres -c "create database coursiradb"
+psql -d postgres  -c "create user coursirauser"
+psql -d postgres -c "grant all privileges on database coursiradb to coursirauser"
+```
 
 ### Create application schemas on coursiradb  
 ```
-psql -d coursiradb -U coursirauser -f schema.sql
+psql -d coursiradb -U coursirauser -f dbscripts/schema.sql
 ``` 
 ### Insert dbInitData  
 ```
-psql -d coursiradb -U coursirauser -f dbInitData.sql
+psql -d coursiradb -U coursirauser -f dbscripts/dbInitData.sql
 ``` 
 #### You may also need following commands:
 ##### Start db in background:
@@ -121,7 +125,7 @@ After getting the App password, export Email address and password as environment
 ## Start Application
 Use the command:
 ```
-./gradlew appRun
+gradlew appRun
 ```
  
 
