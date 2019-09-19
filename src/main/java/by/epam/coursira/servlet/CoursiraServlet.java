@@ -54,6 +54,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 @WebServlet(
     urlPatterns = {"/"},
@@ -74,6 +76,7 @@ public class CoursiraServlet extends HttpServlet {
 
   @Override
   public void init() throws ServletException {
+    ApplicationContext springContext = new ClassPathXmlApplicationContext("/spring.xml");
     ServletContext context = getServletContext();
     // initParams
     final String url = context.getInitParameter("jdbcDriver");
@@ -105,9 +108,12 @@ public class CoursiraServlet extends HttpServlet {
     } catch (PoolConnectionException | ClassNotFoundException e) {
       throw new ServletException(e);
     }
-    CourseDao courseDao = new CourseDao(connectionPool);
-    StudentDao studentDao = new StudentDao(connectionPool);
-    UserDao userDao = new UserDao(connectionPool);
+    //CourseDao courseDao = new CourseDao(connectionPool);
+//    StudentDao studentDao = new StudentDao(connectionPool);
+//    UserDao userDao = new UserDao(connectionPool);
+    CourseDao courseDao = springContext.getBean(CourseDao.class);
+    StudentDao studentDao = springContext.getBean(StudentDao.class);
+    UserDao userDao = springContext.getBean(UserDao.class);
     MailSender mailSender = new MailSender(gmailAddress, gmailPassword, propSmtp);
     principalService =
         new PrincipalService(

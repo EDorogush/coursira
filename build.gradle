@@ -5,6 +5,7 @@ plugins {
   id 'org.sonarqube' version '2.7.1'
   id 'jacoco'
   id 'net.ltgt.errorprone' version '0.8.1'
+ // id "org.springframework.boot" version "2.1.8.RELEASE"
 
 }
 
@@ -74,6 +75,17 @@ dependencies {
 
   // https://mvnrepository.com/artifact/org.testcontainers/postgresql
   testCompile group: 'org.testcontainers', name: 'postgresql', version: '1.12.1'
+
+  // https://mvnrepository.com/artifact/org.springframework/spring-context
+  compile group: 'org.springframework', name: 'spring-context', version: '5.1.9.RELEASE'
+
+
+
+//  // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web
+//  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.1.8.RELEASE'
+//// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test
+//  testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.1.8.RELEASE'
+
 }
 
 gretty {
