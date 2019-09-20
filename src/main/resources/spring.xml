@@ -6,23 +6,173 @@
  		http://www.springframework.org/schema/beans/spring-beans.xsd">
   <!--  https://docs.spring.io/spring/docs/4.2.x/spring-framework-reference/html/xsd-configuration.html-->
 
+  <bean id="connectionPool" class="by.epam.coursira.pool.ConnectionPoolImpl">
+    <constructor-arg type="int" value="#{servletContext.getInitParameter('dbPoolSize')}"/>
+    <constructor-arg type="java.lang.String" value="#{servletContext.getInitParameter('jdbcDriver')}"/>
+  </bean>
 
-  <!--  </bean>-->
-  <!--  <bean id="connectionPool" class="by.epam.coursira.pool.ConnectionPoolImpl">-->
-  <!--    <constructor-arg type="int" value=""/>-->
-  <!--    <constructor-arg type=""-->
+  <bean id="courseDao" class="by.epam.coursira.dao.CourseDao">
+    <constructor-arg ref="connectionPool"/>
+  </bean>
+  <bean id="studentDao" class="by.epam.coursira.dao.StudentDao">
+    <constructor-arg ref="connectionPool"/>
+  </bean>
 
-  <!--  </bean>-->
+  <bean id="userDao" class="by.epam.coursira.dao.UserDao">
+    <constructor-arg ref="connectionPool"/>
+  </bean>
 
-  <!--  <bean id="courseDao" class="by.epam.coursira.dao.CourseDao">-->
-  <!--    <constructor-arg ref="pool"/>-->
-  <!--  </bean>-->
+  <bean id="propSmtp" class="java.util.Properties">
+    <constructor-arg>
+      <props>
+        <prop key="mail.smtp.host">#{servletContext.getInitParameter('mail.smtp.host')}</prop>
+        <prop key="mail.smtp.port">#{servletContext.getInitParameter('mail.smtp.port')}</prop>
+        <prop key="mail.smtp.auth">#{servletContext.getInitParameter('mail.smtp.auth')}</prop>
+        <prop key="mail.smtp.starttls.enable">#{servletContext.getInitParameter('mail.smtp.starttls.enable')}</prop>
+      </props>
+    </constructor-arg>
+  </bean>
 
-  <!--  <bean id="ctudentDao" class="by.epam.coursira.dao.StudentDao">-->
-  <!--    <constructor-arg ref="pool"/>-->
-  <!--  </bean>-->
+  <bean id="mailSender" class="by.epam.coursira.mail.MailSender">
+    <constructor-arg index="0" value="#{servletContext.getInitParameter('gmailAddress')}"/>
+    <constructor-arg index="1" value="#{servletContext.getInitParameter('gmailPassword')}"/>
+    <constructor-arg index="2" ref="propSmtp"/>
+  </bean>
 
-  <!--  <bean id="cserDao" class="by.epam.coursira.dao.UserDao">-->
-  <!--    <constructor-arg ref="pool"/>-->
-  <!--  </bean>-->
+  <bean id="bcrypt" class="by.epam.coursira.security.BCryptHashMethod"/>
+
+  <bean id="principalService" class="by.epam.coursira.service.PrincipalService">
+    <constructor-arg index="0" ref="userDao"/>
+    <constructor-arg index="1"
+                     value="#{T(java.time.Duration).ofHours(servletContext.getInitParameter('sessionLoginDurationHours'))}"/>
+    <constructor-arg index="2"
+                     value="#{T(java.time.Duration).ofHours(servletContext.getInitParameter('sessionAnonymousDurationHours'))}"/>
+    <constructor-arg index="3" ref="bcrypt"/>
+    <constructor-arg index="4" ref="mailSender"/>
+  </bean>
+
+  <bean id="courseService" class="by.epam.coursira.service.CourseService">
+    <constructor-arg ref="courseDao"/>
+    <constructor-arg ref="studentDao"/>
+    <constructor-arg ref="userDao"/>
+  </bean>
+
+  <bean id="userService" class="by.epam.coursira.service.UserService">
+    <constructor-arg ref="userDao"/>
+  </bean>
+
+  <bean id="courseModificationService" class="by.epam.coursira.service.CourseModificationService">
+    <constructor-arg ref="courseDao"/>
+    <constructor-arg ref="userDao"/>
+    <constructor-arg ref="mailSender"/>
+  </bean>
+
+  <bean id="paginationLimit" class="java.lang.Integer">
+    <constructor-arg value="#{servletContext.getInitParameter('paginationLimit')}"/>
+  </bean>
+
+
+  <bean id="courseCommand" class="by.epam.coursira.command.CourseCommand">
+    <constructor-arg ref="courseService"/>
+    <constructor-arg ref="userService"/>
+    <constructor-arg ref="paginationLimit"/>
+  </bean>
+
+  <bean id="indexCommand" class="by.epam.coursira.command.IndexCommand">
+    <constructor-arg ref="courseService"/>
+  </bean>
+
+  <bean id="languageCommand" class="by.epam.coursira.command.LanguageCommand">
+    <constructor-arg ref="principalService"/>
+  </bean>
+
+  <bean id="loginCommand" class="by.epam.coursira.command.LoginCommand">
+    <constructor-arg ref="principalService"/>
+  </bean>
+
+  <bean id="logoutCommand" class="by.epam.coursira.command.LogoutCommand">
+    <constructor-arg ref="principalService"/>
+  </bean>
+
+  <bean id="courseIdCommand" class="by.epam.coursira.command.CourseIdCommand">
+    <constructor-arg ref="courseService"/>
+    <constructor-arg ref="paginationLimit"/>
+  </bean>
+
+  <bean id="courseIdSubscriptionCommand" class="by.epam.coursira.command.CourseIdSubscriptionCommand">
+    <constructor-arg ref="courseService"/>
+  </bean>
+
+  <bean id="personalPageCommand" class="by.epam.coursira.command.PersonalPageCommand">
+    <constructor-arg ref="courseService"/>
+    <constructor-arg ref="paginationLimit"/>
+  </bean>
+
+  <bean id="personalUpdateCommand" class="by.epam.coursira.command.PersonalUpdateCommand">
+    <constructor-arg ref="userService"/>
+  </bean>
+
+  <bean id="registrationCommand" class="by.epam.coursira.command.RegistrationCommand">
+    <constructor-arg ref="principalService"/>
+  </bean>
+
+  <bean id="registrationConfirmCommand" class="by.epam.coursira.command.RegistrationConfirmCommand">
+    <constructor-arg ref="principalService"/>
+  </bean>
+
+  <bean id="courseCreateCommand" class="by.epam.coursira.command.CourseCreateCommand">
+    <constructor-arg ref="courseModificationService"/>
+  </bean>
+
+
+  <bean id="courseUpdateCommand" class="by.epam.coursira.command.CourseUpdateCommand">
+    <constructor-arg ref="courseModificationService"/>
+    <constructor-arg ref="courseService"/>
+    <constructor-arg ref="userService"/>
+  </bean>
+
+
+  <bean id="commandList" class="java.util.ArrayList">
+    <constructor-arg>
+      <list>
+        <ref bean="courseCommand"/>
+        <ref bean="courseCreateCommand"/>
+        <ref bean="courseUpdateCommand"/>
+        <ref bean="indexCommand"/>
+        <ref bean="languageCommand"/>
+        <ref bean="loginCommand"/>
+        <ref bean="logoutCommand"/>
+        <ref bean="courseIdCommand"/>
+        <ref bean="courseIdSubscriptionCommand"/>
+        <ref bean="personalPageCommand"/>
+        <ref bean="personalUpdateCommand"/>
+        <ref bean="registrationCommand"/>
+        <ref bean="registrationConfirmCommand"/>
+      </list>
+    </constructor-arg>
+  </bean>
+
+
+  <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+    <constructor-arg ref="dataSource"/>
+  </bean>
+
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" destroy-method="close">
+    <constructor-arg ref="dataSource"/>
+
+    <property name="driverClassName" value="${jdbc.driverClassName}"/>
+    <property name="url" value="${jdbc.url}"/>
+    <property name="username" value="${jdbc.username}"/>
+    <property name="password" value="${jdbc.password}"/>
+
+  </bean>
+
+
+  <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+        destroy-method="close">
+    <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+    <property name="url" value="jdbc:mysql://localhost:3306/springjdbc"/>
+    <property name="username" value="guest_user"/>
+    <property name="password" value="guest_password"/>
+  </bean>
 </beans>
