@@ -32,6 +32,7 @@ import by.epam.coursira.service.CourseModificationService;
 import by.epam.coursira.service.CourseService;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.service.UserService;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Duration;
@@ -54,12 +55,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.GenericApplicationContext;
+
 
 @WebServlet(
-    urlPatterns = {"/"},
-    loadOnStartup = 1)
+  urlPatterns = {"/"},
+  loadOnStartup = 1)
 @MultipartConfig
 public class CoursiraServlet extends HttpServlet {
   private static final Logger logger = LogManager.getLogger();
@@ -68,7 +72,7 @@ public class CoursiraServlet extends HttpServlet {
   private static ConnectionPoolImpl connectionPool;
   private ScheduledFuture<?> scheduledFuture;
   private static ScheduledExecutorService cleanerThread =
-      Executors.newSingleThreadScheduledExecutor();
+    Executors.newSingleThreadScheduledExecutor();
 
   public CoursiraServlet() {
     logger.info("Servlet constructed");
@@ -76,20 +80,34 @@ public class CoursiraServlet extends HttpServlet {
 
   @Override
   public void init() throws ServletException {
-    ApplicationContext springContext = new ClassPathXmlApplicationContext("/spring.xml");
-    ServletContext context = getServletContext();
+    //https://stackoverflow.com/questions/496711/adding-a-pre-constructed-bean-to-a-spring-application-context
+    //create parent BeanFactory
+    DefaultListableBeanFactory parentBeanFactory = new DefaultListableBeanFactory();
+    //register your pre-fabricated object in it
+    parentBeanFactory.registerSingleton("servletContext", getServletContext());
+    //wrap BeanFactory inside ApplicationContext
+    GenericApplicationContext parentContext =
+      new GenericApplicationContext(parentBeanFactory);
+    parentContext.refresh(); //as suggested "itzgeoff", to overcome a warning about events
+    // create your "child" ApplicationContext that contains the beans from "beans.xml"
+    //note that we are passing previously made parent ApplicationContext as parent
+    ApplicationContext springContext = new ClassPathXmlApplicationContext(
+      new String[]{"/spring.xml"}, parentContext);
+
+    ServletContext context = springContext.getBean(ServletContext.class);
+
     // initParams
     final String url = context.getInitParameter("jdbcDriver");
     logger.info(url);
     final int dbPoolSize = Integer.parseInt(context.getInitParameter("dbPoolSize"));
     final int cleanerInitialDelay =
-        Integer.parseInt(context.getInitParameter("cleanerInitialDelay"));
+      Integer.parseInt(context.getInitParameter("cleanerInitialDelay"));
 
     final Duration sessionLoginDuration =
-        Duration.ofHours(Integer.parseInt(context.getInitParameter("sessionLoginDurationHours")));
+      Duration.ofHours(Integer.parseInt(context.getInitParameter("sessionLoginDurationHours")));
     final Duration sessionAnonymousDuration =
-        Duration.ofHours(
-            Integer.parseInt(context.getInitParameter("sessionAnonymousDurationHours")));
+      Duration.ofHours(
+        Integer.parseInt(context.getInitParameter("sessionAnonymousDurationHours")));
     final int cleanerProcedureDelay = Integer.parseInt(context.getInitParameter("cleanerDelay"));
     final String gmailPassword = context.getInitParameter("gmailPassword");
     final String gmailAddress = context.getInitParameter("gmailAddress");
@@ -98,7 +116,7 @@ public class CoursiraServlet extends HttpServlet {
     propSmtp.put("mail.smtp.port", context.getInitParameter("mail.smtp.port"));
     propSmtp.put("mail.smtp.auth", context.getInitParameter("mail.smtp.auth"));
     propSmtp.put(
-        "mail.smtp.starttls.enable", context.getInitParameter("mail.smtp.starttls.enable"));
+      "mail.smtp.starttls.enable", context.getInitParameter("mail.smtp.starttls.enable"));
     final int paginationLimit = Integer.parseInt(context.getInitParameter("paginationLimit"));
 
     try {
@@ -108,24 +126,24 @@ public class CoursiraServlet extends HttpServlet {
     } catch (PoolConnectionException | ClassNotFoundException e) {
       throw new ServletException(e);
     }
-    //CourseDao courseDao = new CourseDao(connectionPool);
-//    StudentDao studentDao = new StudentDao(connectionPool);
-//    UserDao userDao = new UserDao(connectionPool);
-    CourseDao courseDao = springContext.getBean(CourseDao.class);
-    StudentDao studentDao = springContext.getBean(StudentDao.class);
-    UserDao userDao = springContext.getBean(UserDao.class);
+    CourseDao courseDao = new CourseDao(connectionPool);
+    StudentDao studentDao = new StudentDao(connectionPool);
+    UserDao userDao = new UserDao(connectionPool);
+//    CourseDao courseDao = springContext.getBean(CourseDao.class);
+//    StudentDao studentDao = springContext.getBean(StudentDao.class);
+//    UserDao userDao = springContext.getBean(UserDao.class);
     MailSender mailSender = new MailSender(gmailAddress, gmailPassword, propSmtp);
     principalService =
-        new PrincipalService(
-            userDao,
-            sessionLoginDuration,
-            sessionAnonymousDuration,
-            new BCryptHashMethod(),
-            mailSender);
+      new PrincipalService(
+        userDao,
+        sessionLoginDuration,
+        sessionAnonymousDuration,
+        new BCryptHashMethod(),
+        mailSender);
     CourseService courseService = new CourseService(courseDao, studentDao, userDao);
     UserService userService = new UserService(userDao);
     CourseModificationService courseModificationService =
-        new CourseModificationService(courseDao, userDao, mailSender);
+      new CourseModificationService(courseDao, userDao, mailSender);
 
     commandList.add(new CourseCommand(courseService, userService, paginationLimit));
     commandList.add(new IndexCommand(courseService));
@@ -143,18 +161,18 @@ public class CoursiraServlet extends HttpServlet {
     logger.info("commandList constructed ");
 
     scheduledFuture =
-        cleanerThread.scheduleWithFixedDelay(
-            () -> {
-              try {
-                principalService.cleanFromExpiredSessions();
-                principalService.cleanFromExpiredRegistrationCode();
-              } catch (ServiceException e) {
-                logger.error("cleaner procedure init fails: {}", e);
-              }
-            },
-            cleanerInitialDelay,
-            cleanerProcedureDelay,
-            TimeUnit.HOURS);
+      cleanerThread.scheduleWithFixedDelay(
+        () -> {
+          try {
+            principalService.cleanFromExpiredSessions();
+            principalService.cleanFromExpiredRegistrationCode();
+          } catch (ServiceException e) {
+            logger.error("cleaner procedure init fails: {}", e);
+          }
+        },
+        cleanerInitialDelay,
+        cleanerProcedureDelay,
+        TimeUnit.HOURS);
     logger.info("cleaner thread constructed");
   }
 
@@ -177,7 +195,7 @@ public class CoursiraServlet extends HttpServlet {
   }
 
   private void processRequest(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+    throws IOException {
     logger.debug("request {}", () -> httpServletRequestToString(request));
     String sessionId = request.getSession().getId();
     String modelName = "model";
@@ -229,16 +247,16 @@ public class CoursiraServlet extends HttpServlet {
 
   private String httpServletRequestToString(HttpServletRequest request) {
     String requestInfo =
-        "Request Method = ["
-            + request.getMethod()
-            + "], Request URL Path = ["
-            + request.getRequestURL()
-            + "], ";
+      "Request Method = ["
+        + request.getMethod()
+        + "], Request URL Path = ["
+        + request.getRequestURL()
+        + "], ";
     String headers =
-        Collections.list(request.getHeaderNames()).stream()
-            .map(
-                headerName -> headerName + " : " + Collections.list(request.getHeaders(headerName)))
-            .collect(Collectors.joining(", "));
+      Collections.list(request.getHeaderNames()).stream()
+        .map(
+          headerName -> headerName + " : " + Collections.list(request.getHeaders(headerName)))
+        .collect(Collectors.joining(", "));
 
     if (headers.isEmpty()) {
       requestInfo += "Request headers: NONE,";
@@ -246,9 +264,9 @@ public class CoursiraServlet extends HttpServlet {
       requestInfo += "Request headers: [" + headers + "],";
     }
     String parameters =
-        Collections.list(request.getParameterNames()).stream()
-            .map(p -> p + " : " + Arrays.asList(request.getParameterValues(p)))
-            .collect(Collectors.joining(", "));
+      Collections.list(request.getParameterNames()).stream()
+        .map(p -> p + " : " + Arrays.asList(request.getParameterValues(p)))
+        .collect(Collectors.joining(", "));
 
     if (parameters.isEmpty()) {
       requestInfo += "Request parameters: NONE.";

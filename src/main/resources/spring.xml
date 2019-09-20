@@ -5,30 +5,24 @@
  		http://www.springframework.org/schema/beans
  		http://www.springframework.org/schema/beans/spring-beans.xsd">
   <!--  https://docs.spring.io/spring/docs/4.2.x/spring-framework-reference/html/xsd-configuration.html-->
-  <!--  <bean id="client" class="ua.epam.spring.core.beans.Client"/>-->
-  <!--  <bean id="eventLogger" class="ua.epam.spring.core.loggers.ConsoleEventLogger"/>-->
-  <!--  <bean id="app" class="ua.epam.spring.core.App"/>-->
-
-  ServletContext context = getServletContext();
-  <bean id="context" class="javax.servlet.ServletContext">
 
 
-  </bean>
-  <bean id="connectionPool" class="by.epam.coursira.pool.ConnectionPoolImpl">
-    <constructor-arg type="int" value=""/>
-    <constructor-arg type=""
+  <!--  </bean>-->
+  <!--  <bean id="connectionPool" class="by.epam.coursira.pool.ConnectionPoolImpl">-->
+  <!--    <constructor-arg type="int" value=""/>-->
+  <!--    <constructor-arg type=""-->
 
-  </bean>
+  <!--  </bean>-->
 
-  <bean id="courseDao" class="by.epam.coursira.dao.CourseDao">
-    <constructor-arg ref="pool"/>
-  </bean>
+  <!--  <bean id="courseDao" class="by.epam.coursira.dao.CourseDao">-->
+  <!--    <constructor-arg ref="pool"/>-->
+  <!--  </bean>-->
 
-  <bean id="ctudentDao" class="by.epam.coursira.dao.StudentDao">
-    <constructor-arg ref="pool"/>
-  </bean>
+  <!--  <bean id="ctudentDao" class="by.epam.coursira.dao.StudentDao">-->
+  <!--    <constructor-arg ref="pool"/>-->
+  <!--  </bean>-->
 
-  <bean id="cserDao" class="by.epam.coursira.dao.UserDao">
-    <constructor-arg ref="pool"/>
-  </bean>
+  <!--  <bean id="cserDao" class="by.epam.coursira.dao.UserDao">-->
+  <!--    <constructor-arg ref="pool"/>-->
+  <!--  </bean>-->
 </beans>
