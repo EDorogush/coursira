@@ -85,6 +85,10 @@ dependencies {
 // https://mvnrepository.com/artifact/com.mchange/c3p0
   compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.4'
 
+  // https://mvnrepository.com/artifact/com.zaxxer/HikariCP
+  compile group: 'com.zaxxer', name: 'HikariCP', version: '3.4.0'
+
+
 //  // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web
 //  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.1.8.RELEASE'
 //// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test

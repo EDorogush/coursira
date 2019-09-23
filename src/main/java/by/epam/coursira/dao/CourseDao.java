@@ -4,8 +4,6 @@ import by.epam.coursira.entity.Course;
 import by.epam.coursira.entity.Lecture;
 import by.epam.coursira.entity.Lecturer;
 import by.epam.coursira.exception.DaoException;
-import by.epam.coursira.exception.PoolConnectionException;
-import by.epam.coursira.pool.ConnectionPool;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.sql.DataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -254,9 +253,9 @@ public class CourseDao {
           + "JOIN courses c ON cl.course_id = c.course_id\n"
           + "WHERE lecturer_id = ? AND c.ready;";
 
-  private final ConnectionPool pool;
+  private final DataSource pool;
 
-  public CourseDao(ConnectionPool pool) {
+  public CourseDao(DataSource pool) {
     this.pool = pool;
   }
 
@@ -267,7 +266,7 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -282,7 +281,7 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -297,7 +296,7 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -376,7 +375,7 @@ public class CourseDao {
         connection.setAutoCommit(true);
         throw new DaoException(e);
       }
-    } catch (PoolConnectionException | SQLException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -403,7 +402,7 @@ public class CourseDao {
         }
       }
       logger.debug("list contains {}", lectureList.size());
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return lectureList;
@@ -427,7 +426,7 @@ public class CourseDao {
           throw new SQLException("Creating user failed, no ID obtained.");
         }
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return entryId;
@@ -449,8 +448,6 @@ public class CourseDao {
       if (e.getSQLState().equals(FOREIGN_KEY_VIOLATION_CODE)) {
         return 0;
       } else throw new DaoException(e);
-    } catch (PoolConnectionException e) {
-      throw new DaoException(e);
     }
     return updatedRows;
   }
@@ -466,7 +463,7 @@ public class CourseDao {
         } else throw new DaoException("ResultSet returns null");
       }
 
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -482,7 +479,7 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         courses = parseResultSetToCoursesList(rs);
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return courses;
@@ -500,7 +497,7 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         courses = parseResultSetToCoursesList(rs);
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return courses;
@@ -517,7 +514,7 @@ public class CourseDao {
       try (ResultSet rs = ps.executeQuery()) {
         courses = parseResultSetToCoursesList(rs);
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     logger.debug("get {} records", courses.size());
@@ -585,7 +582,7 @@ public class CourseDao {
           return Optional.of(course);
         }
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return Optional.empty();
@@ -600,7 +597,7 @@ public class CourseDao {
       psUpdate.setString(3, lecture.getDescription());
       psUpdate.setInt(4, lecture.getId());
       psUpdate.executeUpdate();
-    } catch (PoolConnectionException | SQLException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -654,7 +651,7 @@ public class CourseDao {
         logger.warn("SQL Exception. transaction rollback");
         throw e;
       }
-    } catch (PoolConnectionException | SQLException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return true;
@@ -676,7 +673,7 @@ public class CourseDao {
           lecturerMap.put(lecturer, rs.getInt(COLUMN_NAME_COUNT));
         }
       }
-    } catch (PoolConnectionException | SQLException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return lecturerMap;
@@ -723,7 +720,7 @@ public class CourseDao {
         // if we here means all OK
         return true;
       }
-    } catch (PoolConnectionException | SQLException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -739,7 +736,7 @@ public class CourseDao {
         pairs.put("lecturers", rs.getInt("lecturers"));
         pairs.put("students", rs.getInt("students"));
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return pairs;
@@ -750,7 +747,7 @@ public class CourseDao {
         PreparedStatement ps = connection.prepareStatement(SQL_DELETE_LECTURE)) {
       ps.setInt(1, lectureId);
       ps.executeUpdate();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return true;
@@ -792,7 +789,7 @@ public class CourseDao {
           throw new SQLException("Inserting lecture failed, no ID obtained.");
         }
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return lectureId;

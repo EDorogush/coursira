@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import javax.sql.DataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -96,9 +97,9 @@ public class UserDao {
 
   private static final String SQL_EXISTS_LECTURER_WITH_ID =
       "SELECT EXISTS(SELECT 1 FROM users WHERE id = ? AND role = 'LECTURER')";
-  private final ConnectionPool pool;
+  private final DataSource pool;
 
-  public UserDao(ConnectionPool pool) {
+  public UserDao(DataSource pool) {
     this.pool = pool;
   }
 
@@ -120,7 +121,7 @@ public class UserDao {
       ps.setInt(5, session.getZoneOffset().getTotalSeconds());
       ps.executeUpdate();
       return ps.getUpdateCount();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -153,7 +154,7 @@ public class UserDao {
           throw new SQLException("Creating user failed, no ID obtained.");
         }
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return userId;
@@ -178,7 +179,7 @@ public class UserDao {
         }
         user = parseUserFromResultSet(rs);
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return Optional.of(user);
@@ -215,7 +216,7 @@ public class UserDao {
                 .build();
       }
       principal = new Principal(session, user);
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return Optional.of(principal);
@@ -242,7 +243,7 @@ public class UserDao {
           user = parseUserFromResultSet(rs);
         }
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return Optional.of(user);
@@ -268,7 +269,7 @@ public class UserDao {
           user = parseUserFromResultSet(rs);
         }
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return Optional.of(user);
@@ -296,7 +297,7 @@ public class UserDao {
         }
       }
 
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return users;
@@ -320,7 +321,7 @@ public class UserDao {
       ps.setString(5, session.getId());
       ps.executeUpdate();
       return ps.getUpdateCount();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -344,7 +345,7 @@ public class UserDao {
       ps.setInt(7, current.getId());
       ps.executeUpdate();
       return ps.getUpdateCount();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -364,7 +365,7 @@ public class UserDao {
       ps.setInt(3, userId);
       ps.executeUpdate();
       return ps.getUpdateCount();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -384,7 +385,7 @@ public class UserDao {
       ps.setBinaryStream(1, image);
       ps.executeUpdate();
       return ps.getUpdateCount();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -407,7 +408,7 @@ public class UserDao {
       ps.setInt(1, id);
       ps.executeUpdate();
       return ps.getUpdateCount();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -425,7 +426,7 @@ public class UserDao {
       ps.setTimestamp(1, Timestamp.from(timePoint));
       ps.executeUpdate();
       return ps.getUpdateCount();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -444,7 +445,7 @@ public class UserDao {
       ps.setTimestamp(1, Timestamp.from(timePoint));
       ps.executeUpdate();
       return ps.getUpdateCount();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -463,7 +464,7 @@ public class UserDao {
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next() && rs.getBoolean("exists");
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -482,7 +483,7 @@ public class UserDao {
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next() && rs.getBoolean("exists");
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }

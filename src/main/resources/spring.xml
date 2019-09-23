@@ -6,10 +6,25 @@
  		http://www.springframework.org/schema/beans/spring-beans.xsd">
   <!--  https://docs.spring.io/spring/docs/4.2.x/spring-framework-reference/html/xsd-configuration.html-->
 
-  <bean id="connectionPool" class="by.epam.coursira.pool.ConnectionPoolImpl">
-    <constructor-arg type="int" value="#{servletContext.getInitParameter('dbPoolSize')}"/>
-    <constructor-arg type="java.lang.String" value="#{servletContext.getInitParameter('jdbcDriver')}"/>
+
+  <!--  HikariPC bean-->
+  <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+    <constructor-arg ref="dataSource"/>
   </bean>
+
+  <bean id="dataConfig" class="com.zaxxer.hikari.HikariConfig">
+    <property name="jdbcUrl" value="#{servletContext.getInitParameter('jdbcDriver')}"/>
+    <property name="maximumPoolSize" value="#{servletContext.getInitParameter('dbPoolSize')}"/>
+  </bean>
+
+  <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close" name="connectionPool">
+    <constructor-arg ref="dataConfig"/>
+  </bean>
+
+  <!--  <bean id="connectionPool" class="by.epam.coursira.pool.ConnectionPoolImpl">-->
+  <!--    <constructor-arg type="int" value="#{servletContext.getInitParameter('dbPoolSize')}"/>-->
+  <!--    <constructor-arg type="java.lang.String" value="#{servletContext.getInitParameter('jdbcDriver')}"/>-->
+  <!--  </bean>-->
 
   <bean id="courseDao" class="by.epam.coursira.dao.CourseDao">
     <constructor-arg ref="connectionPool"/>
@@ -153,26 +168,4 @@
   </bean>
 
 
-  <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
-    <constructor-arg ref="dataSource"/>
-  </bean>
-
-  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" destroy-method="close">
-    <constructor-arg ref="dataSource"/>
-
-    <property name="driverClassName" value="${jdbc.driverClassName}"/>
-    <property name="url" value="${jdbc.url}"/>
-    <property name="username" value="${jdbc.username}"/>
-    <property name="password" value="${jdbc.password}"/>
-
-  </bean>
-
-
-  <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
-        destroy-method="close">
-    <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
-    <property name="url" value="jdbc:mysql://localhost:3306/springjdbc"/>
-    <property name="username" value="guest_user"/>
-    <property name="password" value="guest_password"/>
-  </bean>
 </beans>

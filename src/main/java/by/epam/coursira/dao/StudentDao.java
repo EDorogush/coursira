@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import javax.sql.DataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -90,9 +91,9 @@ public class StudentDao {
   private static final String SQL_COUNT_COURSES_BY_STUDENT_ID =
       "SELECT count(course_id)\n" + "FROM course_students\n" + "WHERE student_id = ?;";
 
-  private final ConnectionPool pool;
+  private final DataSource pool;
 
-  public StudentDao(ConnectionPool pool) {
+  public StudentDao(DataSource pool) {
     this.pool = pool;
   }
 
@@ -108,7 +109,7 @@ public class StudentDao {
       try (ResultSet rs = ps.executeQuery()) {
         courses = parseResultSetToCoursesList(rs);
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return courses;
@@ -122,7 +123,7 @@ public class StudentDao {
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next() && rs.getBoolean("exists");
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -153,7 +154,7 @@ public class StudentDao {
         }
       }
       logger.debug("list contains {}", lectureList.size());
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
     return lectureList;
@@ -173,7 +174,7 @@ public class StudentDao {
         return false;
       }
       return true;
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -186,7 +187,7 @@ public class StudentDao {
       ps.setInt(1, studentId);
       ps.setInt(2, courseId);
       return ps.executeUpdate();
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
@@ -202,7 +203,7 @@ public class StudentDao {
           } else throw new DaoException("ResultSet returns null");
         }
       }
-    } catch (SQLException | PoolConnectionException e) {
+    } catch (SQLException e) {
       throw new DaoException(e);
     }
   }
