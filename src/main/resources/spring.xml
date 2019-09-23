@@ -34,7 +34,7 @@
   </bean>
 
   <bean id="userDao" class="by.epam.coursira.dao.UserDao">
-    <constructor-arg ref="connectionPool"/>
+    <constructor-arg ref="jdbcTemplate"/>
   </bean>
 
   <bean id="propSmtp" class="java.util.Properties">

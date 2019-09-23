@@ -4,6 +4,7 @@ import by.epam.coursira.entity.Course;
 import by.epam.coursira.entity.Lecture;
 import by.epam.coursira.entity.Lecturer;
 import by.epam.coursira.exception.DaoException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,13 +12,19 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.sql.DataSource;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  * This is DAO class providing CRUD operations for database containing data about next application
@@ -36,285 +43,263 @@ public class CourseDao {
   private static final String FOREIGN_KEY_VIOLATION_CODE = "23503";
 
   private static final String SQL_EXISTS_COURSE_ID =
-      "SELECT EXISTS(SELECT 1 FROM courses WHERE course_id = ? AND ready);";
+    "SELECT EXISTS(SELECT 1 FROM courses WHERE course_id = ? AND ready)";
 
   private static final String SQL_EXISTS_COURSE_IN_LECTURER_UPDATE_LIST =
-      "SELECT exists(\n"
-          + "         SELECT c.course_id\n"
-          + "         FROM courses c\n"
-          + "                JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
-          + "         WHERE lecturer_id = ?\n"
-          + "           AND c.course_id = ?"
-          + "           AND NOT c.ready);";
+    "SELECT exists(\n"
+      + "         SELECT c.course_id\n"
+      + "         FROM courses c\n"
+      + "                JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
+      + "         WHERE lecturer_id = ?\n"
+      + "           AND c.course_id = ?"
+      + "           AND NOT c.ready);";
 
   private static final String SQL_EXISTS_LECTURE_IN_LECTURER_UPDATE_LIST =
-      "SELECT exists(\n"
-          + "         SELECT l.lecture_id\n"
-          + "         FROM lectures l\n"
-          + "                JOIN course_lecturers cl ON l.course_lecturer_id = cl.entry_id\n"
-          + "                JOIN courses c ON cl.course_id = c.course_id\n"
-          + "         WHERE lecture_id = ?\n"
-          + "           AND lecturer_id = ?"
-          + "           AND NOT c.ready);";
+    "SELECT exists(\n"
+      + "         SELECT l.lecture_id\n"
+      + "         FROM lectures l\n"
+      + "                JOIN course_lecturers cl ON l.course_lecturer_id = cl.entry_id\n"
+      + "                JOIN courses c ON cl.course_id = c.course_id\n"
+      + "         WHERE lecture_id = ?\n"
+      + "           AND lecturer_id = ?"
+      + "           AND NOT c.ready);";
 
   // INSERT
 
   private static final String SQL_INSERT_INTO_COURSE_TABLE =
-      "INSERT INTO courses(title, description, capacity, ready) VALUES (?,?,?,?)";
+    "INSERT INTO courses(title, description, capacity, ready) VALUES (?,?,?,?)";
 
   private static final String SQL_INSERT_INTO_LECTURE_TABLE =
-      "INSERT INTO lectures(course_lecturer_id, time_start, time_end, description) VALUES (?,?,?,?)";
+    "INSERT INTO lectures(course_lecturer_id, time_start, time_end, description) VALUES (?,?,?,?)";
 
   private static final String SQL_INSERT_INTO_COURSE_LECTURER_TABLE =
-      "INSERT INTO course_lecturers(course_id, lecturer_id ) VALUES (?,?)";
+    "INSERT INTO course_lecturers(course_id, lecturer_id ) VALUES (?,?)";
 
   private static final String SQL_INSERT_INTO_COURSE_STUDENTS_TABLE =
-      "INSERT INTO course_students(course_id, student_id) VALUES (?,?)";
+    "INSERT INTO course_students(course_id, student_id) VALUES (?,?)";
 
   // SELECT
 
   private static final String SQL_SELECT_COURSE_CAPACITY =
-      "SELECT c.capacity\n" + "FROM courses c\n" + "WHERE c.course_id = ?\n";
+    "SELECT c.capacity\n" + "FROM courses c\n" + "WHERE c.course_id = ?\n";
 
   private static final String SQL_SELECT_COURSE_DETAILS_BY_COURSE_ID =
-      "SELECT l.lecture_id,\n"
-          + "       l.description  AS lecture_description,\n"
-          + "       l.time_start,\n"
-          + "       l.time_end,\n"
-          + "       cl.lecturer_id,\n"
-          + "       u.firstname,\n"
-          + "       u.lastname,\n"
-          + "       c.title,\n"
-          + "       c.description AS course_description,\n"
-          + "       c.capacity,"
-          + "       c.ready,\n"
-          + "       count(cs.student_id) AS student_amount\n"
-          + "FROM lectures l\n"
-          + "       RIGHT JOIN course_lecturers cl ON l.course_lecturer_id = cl.entry_id\n"
-          + "       JOIN users u ON cl.lecturer_id = u.id\n"
-          + "       JOIN courses c ON cl.course_id = c.course_id\n"
-          + "       LEFT JOIN course_students cs ON c.course_id = cs.course_id AND student_id != 0\n"
-          + "WHERE cl.course_id = ?\n"
-          + "GROUP BY l.lecture_id,cl.lecturer_id,u.firstname, u.lastname, c.title, c.description, c.capacity, c.ready\n"
-          + "ORDER BY time_start ASC LIMIT ? OFFSET ?;";
+    "SELECT l.lecture_id,\n"
+      + "       l.description  AS lecture_description,\n"
+      + "       l.time_start,\n"
+      + "       l.time_end,\n"
+      + "       cl.lecturer_id,\n"
+      + "       u.firstname,\n"
+      + "       u.lastname,\n"
+      + "       c.title,\n"
+      + "       c.description AS course_description,\n"
+      + "       c.capacity,"
+      + "       c.ready,\n"
+      + "       count(cs.student_id) AS student_amount\n"
+      + "FROM lectures l\n"
+      + "       RIGHT JOIN course_lecturers cl ON l.course_lecturer_id = cl.entry_id\n"
+      + "       JOIN users u ON cl.lecturer_id = u.id\n"
+      + "       JOIN courses c ON cl.course_id = c.course_id\n"
+      + "       LEFT JOIN course_students cs ON c.course_id = cs.course_id AND student_id != 0\n"
+      + "WHERE cl.course_id = ?\n"
+      + "GROUP BY l.lecture_id,cl.lecturer_id,u.firstname, u.lastname, c.title, c.description, c.capacity, c.ready\n"
+      + "ORDER BY time_start ASC LIMIT ? OFFSET ?;";
 
   private static final String SQL_SELECT_ALL_READY_COURSES_LIMIT_OFFSET =
-      "SELECT c.course_id,\n"
-          + "       c.title,\n"
-          + "       c.description,\n"
-          + "       c.capacity,"
-          + "       c.ready,\n"
-          + "       count(cs.student_id) AS student_amount,\n"
-          + "       cl.lecturer_id,\n"
-          + "       u.firstname,\n"
-          + "       u.lastname\n"
-          + "FROM courses c\n"
-          + "       LEFT JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
-          + "       LEFT JOIN course_students cs ON c.course_id = cs.course_id AND student_id != 0\n"
-          + "       LEFT JOIN users u ON cl.lecturer_id = u.id\n"
-          + "WHERE ready AND c.course_id IN\n"
-          + "      (\n"
-          + "        SELECT course_id\n"
-          + "        FROM courses\n"
-          + "        ORDER BY course_id ASC\n"
-          + "        LIMIT ? OFFSET ?\n"
-          + "      )\n"
-          + "GROUP BY c.course_id, cl.lecturer_id, u.firstname, u.lastname\n"
-          + "ORDER BY course_id ASC;";
+    "SELECT c.course_id,\n"
+      + "       c.title,\n"
+      + "       c.description,\n"
+      + "       c.capacity,"
+      + "       c.ready,\n"
+      + "       count(cs.student_id) AS student_amount,\n"
+      + "       cl.lecturer_id,\n"
+      + "       u.firstname,\n"
+      + "       u.lastname\n"
+      + "FROM courses c\n"
+      + "       LEFT JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
+      + "       LEFT JOIN course_students cs ON c.course_id = cs.course_id AND student_id != 0\n"
+      + "       LEFT JOIN users u ON cl.lecturer_id = u.id\n"
+      + "WHERE ready AND c.course_id IN\n"
+      + "      (\n"
+      + "        SELECT course_id\n"
+      + "        FROM courses\n"
+      + "        ORDER BY course_id ASC\n"
+      + "        LIMIT ? OFFSET ?\n"
+      + "      )\n"
+      + "GROUP BY c.course_id, cl.lecturer_id, u.firstname, u.lastname\n"
+      + "ORDER BY course_id ASC;";
 
   private static final String SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS =
-      "SELECT count(lecture_id), lecturer_id, u.firstname, u.lastname\n"
-          + "FROM lectures\n"
-          + "         RIGHT JOIN course_lecturers ON lectures.course_lecturer_id = course_lecturers.entry_id\n"
-          + "         JOIN users u ON course_lecturers.lecturer_id = u.id\n"
-          + "\n"
-          + "WHERE course_id = ?\n"
-          + "GROUP BY lecturer_id, u.firstname, u.lastname;";
+    "SELECT count(lecture_id), lecturer_id, u.firstname, u.lastname\n"
+      + "FROM lectures\n"
+      + "         RIGHT JOIN course_lecturers ON lectures.course_lecturer_id = course_lecturers.entry_id\n"
+      + "         JOIN users u ON course_lecturers.lecturer_id = u.id\n"
+      + "\n"
+      + "WHERE course_id = ?\n"
+      + "GROUP BY lecturer_id, u.firstname, u.lastname;";
 
   private static final String SQL_SELECT_TABLE_COUNTS =
-      "SELECT (\n"
-          + "         SELECT count(course_id)\n"
-          + "         FROM courses WHERE ready"
-          + "       ) AS courses,\n"
-          + "       (\n"
-          + "         SELECT count(lecture_id)\n"
-          + "         FROM lectures\n"
-          + "           JOIN course_lecturers cl ON lectures.course_lecturer_id = cl.entry_id\n"
-          + "           JOIN courses c ON cl.course_id = c.course_id\n"
-          + "         WHERE c.ready"
-          + "       ) AS lectures,\n"
-          + "       (\n"
-          + "         SELECT count(email)\n"
-          + "         FROM users\n"
-          + "         WHERE role = 'LECTURER' AND registration_code ISNULL \n"
-          + "       ) AS lecturers,\n"
-          + "       (\n"
-          + "         SELECT count(email)\n"
-          + "         FROM users\n"
-          + "         WHERE role = 'STUDENT'\n AND registration_code ISNULL"
-          + "       ) AS students\n";
+    "SELECT (\n"
+      + "         SELECT count(course_id)\n"
+      + "         FROM courses WHERE ready"
+      + "       ) AS courses,\n"
+      + "       (\n"
+      + "         SELECT count(lecture_id)\n"
+      + "         FROM lectures\n"
+      + "           JOIN course_lecturers cl ON lectures.course_lecturer_id = cl.entry_id\n"
+      + "           JOIN courses c ON cl.course_id = c.course_id\n"
+      + "         WHERE c.ready"
+      + "       ) AS lectures,\n"
+      + "       (\n"
+      + "         SELECT count(email)\n"
+      + "         FROM users\n"
+      + "         WHERE role = 'LECTURER' AND registration_code ISNULL \n"
+      + "       ) AS lecturers,\n"
+      + "       (\n"
+      + "         SELECT count(email)\n"
+      + "         FROM users\n"
+      + "         WHERE role = 'STUDENT'\n AND registration_code ISNULL"
+      + "       ) AS students\n";
 
   private static final String SQL_SELECT_ENTRY_ID_FROM_COURSE_LECTURERS =
-      "SELECT entry_id FROM course_lecturers WHERE course_id = ? AND lecturer_id = ?;";
+    "SELECT entry_id FROM course_lecturers WHERE course_id = ? AND lecturer_id = ?;";
 
   private static final String SQL_SELECT_ALL_COURSES_BY_LECTURER_ID =
-      "SELECT c.course_id,\n"
-          + "       c.title,\n"
-          + "       c.description,\n"
-          + "       c.capacity,"
-          + "       c.ready,\n"
-          + "       count(cs.student_id) AS student_amount,\n"
-          + "       cl.lecturer_id,\n"
-          + "       u.firstname,\n"
-          + "       u.lastname\n"
-          + "FROM courses c\n"
-          + "       LEFT JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
-          + "       LEFT JOIN course_students cs ON c.course_id = cs.course_id AND student_id != 0\n"
-          + "       LEFT JOIN users u ON cl.lecturer_id = u.id\n"
-          + "WHERE c.course_id IN\n"
-          + "      (\n"
-          + "        SELECT course_id\n"
-          + "        FROM course_lecturers\n"
-          + "        WHERE lecturer_id = ?\n"
-          + "        ORDER BY course_id ASC\n"
-          + "        LIMIT ? OFFSET ?\n"
-          + "      )\n"
-          + "GROUP BY c.course_id, cl.lecturer_id, u.firstname, u.lastname\n"
-          + "ORDER BY course_id ASC;\n";
+    "SELECT c.course_id,\n"
+      + "       c.title,\n"
+      + "       c.description,\n"
+      + "       c.capacity,"
+      + "       c.ready,\n"
+      + "       count(cs.student_id) AS student_amount,\n"
+      + "       cl.lecturer_id,\n"
+      + "       u.firstname,\n"
+      + "       u.lastname\n"
+      + "FROM courses c\n"
+      + "       LEFT JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
+      + "       LEFT JOIN course_students cs ON c.course_id = cs.course_id AND student_id != 0\n"
+      + "       LEFT JOIN users u ON cl.lecturer_id = u.id\n"
+      + "WHERE c.course_id IN\n"
+      + "      (\n"
+      + "        SELECT course_id\n"
+      + "        FROM course_lecturers\n"
+      + "        WHERE lecturer_id = ?\n"
+      + "        ORDER BY course_id ASC\n"
+      + "        LIMIT ? OFFSET ?\n"
+      + "      )\n"
+      + "GROUP BY c.course_id, cl.lecturer_id, u.firstname, u.lastname\n"
+      + "ORDER BY course_id ASC;\n";
 
   private static final String SQL_SELECT_READY_COURSES_BY_LECTURER_ID =
-      "SELECT c.course_id,\n"
-          + "       c.title,\n"
-          + "       c.description,\n"
-          + "       c.capacity,\n"
-          + "       c.ready,\n"
-          + "       count(cs.student_id) AS student_amount,\n"
-          + "       cl.lecturer_id,\n"
-          + "       u.firstname,\n"
-          + "       u.lastname\n"
-          + "FROM courses c\n"
-          + "       LEFT JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
-          + "       LEFT JOIN course_students cs ON c.course_id = cs.course_id AND student_id != 0\n"
-          + "       LEFT JOIN users u ON cl.lecturer_id = u.id\n"
-          + "WHERE c.course_id IN\n"
-          + "      (\n"
-          + "        SELECT course_id\n"
-          + "        FROM course_lecturers\n"
-          + "        WHERE lecturer_id = ? AND  ready\n"
-          + "        ORDER BY course_id ASC\n"
-          + "        LIMIT ? OFFSET ?\n"
-          + "      )\n"
-          + "GROUP BY c.course_id, cl.lecturer_id, u.firstname, u.lastname\n"
-          + "ORDER BY course_id ASC;";
+    "SELECT c.course_id,\n"
+      + "       c.title,\n"
+      + "       c.description,\n"
+      + "       c.capacity,\n"
+      + "       c.ready,\n"
+      + "       count(cs.student_id) AS student_amount,\n"
+      + "       cl.lecturer_id,\n"
+      + "       u.firstname,\n"
+      + "       u.lastname\n"
+      + "FROM courses c\n"
+      + "       LEFT JOIN course_lecturers cl ON c.course_id = cl.course_id\n"
+      + "       LEFT JOIN course_students cs ON c.course_id = cs.course_id AND student_id != 0\n"
+      + "       LEFT JOIN users u ON cl.lecturer_id = u.id\n"
+      + "WHERE c.course_id IN\n"
+      + "      (\n"
+      + "        SELECT course_id\n"
+      + "        FROM course_lecturers\n"
+      + "        WHERE lecturer_id = ? AND  ready\n"
+      + "        ORDER BY course_id ASC\n"
+      + "        LIMIT ? OFFSET ?\n"
+      + "      )\n"
+      + "GROUP BY c.course_id, cl.lecturer_id, u.firstname, u.lastname\n"
+      + "ORDER BY course_id ASC;";
 
   private static final String SQL_SELECT_SCHEDULE_BY_LECTURER_ID =
-      "SELECT l.lecture_id,\n"
-          + "       l.description,\n"
-          + "       l.time_start,\n"
-          + "       l.time_end,\n"
-          + "       cl.course_id,\n"
-          + "       c.title\n"
-          + "FROM lectures l\n"
-          + "       JOIN course_lecturers cl ON l.course_lecturer_id = cl.entry_id\n"
-          + "       JOIN courses c ON cl.course_id = c.course_id\n"
-          + "WHERE cl.lecturer_id = ? AND c.ready\n"
-          + "ORDER BY time_start ASC\n"
-          + "LIMIT ? OFFSET ?;\n";
+    "SELECT l.lecture_id,\n"
+      + "       l.description,\n"
+      + "       l.time_start,\n"
+      + "       l.time_end,\n"
+      + "       cl.course_id,\n"
+      + "       c.title\n"
+      + "FROM lectures l\n"
+      + "       JOIN course_lecturers cl ON l.course_lecturer_id = cl.entry_id\n"
+      + "       JOIN courses c ON cl.course_id = c.course_id\n"
+      + "WHERE cl.lecturer_id = ? AND c.ready\n"
+      + "ORDER BY time_start ASC\n"
+      + "LIMIT ? OFFSET ?;\n";
 
   // UPDATE
 
   private static final String SQL_UPDATE_COURSE_TABLE_BY_COURSE_ID =
-      "UPDATE courses SET title = ?, description = ?, capacity = ? " + "WHERE course_id = ?";
+    "UPDATE courses SET title = ?, description = ?, capacity = ? " + "WHERE course_id = ?";
 
   private static final String SQL_UPDATE_LECTURES_TABLE_BY_LECTURE_ID =
-      "UPDATE lectures SET time_start = ?, time_end = ?, description = ?" + "WHERE lecture_id = ?";
+    "UPDATE lectures SET time_start = ?, time_end = ?, description = ?" + "WHERE lecture_id = ?";
 
   private static final String SQL_UPDATE_COURSE_SET_READY =
-      "UPDATE courses SET ready = ? WHERE course_id = ?;";
+    "UPDATE courses SET ready = ? WHERE course_id = ?;";
 
   private static final String SQL_UPSERT_COURSE_LECTURER =
-      "INSERT INTO course_lecturers (lecturer_id, course_id)\n"
-          + "VALUES (?,?)\n"
-          + "ON CONFLICT (lecturer_id,course_id)\n"
-          + "  DO NOTHING";
+    "INSERT INTO course_lecturers (lecturer_id, course_id)\n"
+      + "VALUES (?,?)\n"
+      + "ON CONFLICT (lecturer_id,course_id)\n"
+      + "  DO NOTHING";
 
   private static final String SQL_DELETE_FROM_COURSE_STUDENTS_TABLE =
-      "DELETE FROM course_students WHERE entry_id =\n"
-          + "      (SELECT entry_id FROM course_students WHERE course_id = ? AND student_id = ? LIMIT 1);";
+    "DELETE FROM course_students WHERE entry_id =\n"
+      + "      (SELECT entry_id FROM course_students WHERE course_id = ? AND student_id = ? LIMIT 1);";
 
   private static final String SQL_DELETE_COURSE_LECTURER =
-      "DELETE FROM course_lecturers WHERE course_id = ? AND lecturer_id =?;";
+    "DELETE FROM course_lecturers WHERE course_id = ? AND lecturer_id =?;";
 
   private static final String SQL_DELETE_LECTURE = "DELETE FROM lectures WHERE lecture_id = ?";
 
   private static final String SQL_COUNT_READY_COURSES_BY_LECTURER_ID =
-      "SELECT count(cl.course_id)\n"
-          + "FROM course_lecturers cl\n"
-          + "JOIN courses c ON cl.course_id = c.course_id\n"
-          + "WHERE lecturer_id = ? AND c.ready;";
+    "SELECT count(cl.course_id)\n"
+      + "FROM course_lecturers cl\n"
+      + "JOIN courses c ON cl.course_id = c.course_id\n"
+      + "WHERE lecturer_id = ? AND c.ready;";
 
   private final DataSource pool;
+  private final JdbcTemplate jdbcTemplate;
 
   public CourseDao(DataSource pool) {
     this.pool = pool;
+    this.jdbcTemplate = new JdbcTemplate(pool);
+
   }
 
-  public boolean isExistCourseReady(int courseId) throws DaoException {
-    try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_COURSE_ID)) {
-      ps.setInt(1, courseId);
-      try (ResultSet rs = ps.executeQuery()) {
-        return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
-      }
-    } catch (SQLException e) {
-      throw new DaoException(e);
-    }
+  public Boolean isExistCourseReady(int courseId) {
+    Integer[] params = new Integer[]{courseId};
+    return jdbcTemplate.queryForObject(SQL_EXISTS_COURSE_ID, params, Boolean.class);
   }
 
-  public boolean isExistsCourseInLecturerUpdateList(int courseId, int lecturerId)
-      throws DaoException {
-    try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_EXISTS_COURSE_IN_LECTURER_UPDATE_LIST)) {
-      ps.setInt(1, lecturerId);
-      ps.setInt(2, courseId);
-      try (ResultSet rs = ps.executeQuery()) {
-        return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
-      }
-    } catch (SQLException e) {
-      throw new DaoException(e);
-    }
+  public Boolean isExistsCourseInLecturerUpdateList(int courseId, int lecturerId) throws DaoException {
+    Integer[] params = new Integer[]{lecturerId, courseId};
+    return jdbcTemplate.queryForObject(SQL_EXISTS_COURSE_IN_LECTURER_UPDATE_LIST, params, Boolean.class);
   }
 
-  public boolean isExistsLectureInLecturerUpdateList(int lectureId, int lecturerId)
-      throws DaoException {
-    try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_EXISTS_LECTURE_IN_LECTURER_UPDATE_LIST)) {
-      ps.setInt(1, lectureId);
-      ps.setInt(2, lecturerId);
-      try (ResultSet rs = ps.executeQuery()) {
-        return rs.next() && rs.getBoolean(COLUMN_NAME_EXISTS);
-      }
-    } catch (SQLException e) {
-      throw new DaoException(e);
-    }
+  public Boolean isExistsLectureInLecturerUpdateList(int lectureId, int lecturerId)
+    throws DaoException {
+    Integer[] params = new Integer[]{lectureId, lecturerId};
+    return jdbcTemplate.queryForObject(SQL_EXISTS_LECTURE_IN_LECTURER_UPDATE_LIST, params, Boolean.class);
   }
 
   public int insertCourse(Course course) throws DaoException {
     final int courseId;
+
     try (Connection connection = pool.getConnection()) {
       connection.setAutoCommit(false);
       try (PreparedStatement psInsertCourse =
-              connection.prepareStatement(
-                  SQL_INSERT_INTO_COURSE_TABLE, Statement.RETURN_GENERATED_KEYS);
-          PreparedStatement psInsertCourseStudents =
-              connection.prepareStatement(SQL_INSERT_INTO_COURSE_STUDENTS_TABLE);
-          PreparedStatement psInsertCourseLecturer =
-              connection.prepareStatement(
-                  SQL_INSERT_INTO_COURSE_LECTURER_TABLE, Statement.RETURN_GENERATED_KEYS);
-          PreparedStatement psInsertLecture =
-              connection.prepareStatement(SQL_INSERT_INTO_LECTURE_TABLE)) {
+             connection.prepareStatement(
+               SQL_INSERT_INTO_COURSE_TABLE, Statement.RETURN_GENERATED_KEYS);
+           PreparedStatement psInsertCourseStudents =
+             connection.prepareStatement(SQL_INSERT_INTO_COURSE_STUDENTS_TABLE);
+           PreparedStatement psInsertCourseLecturer =
+             connection.prepareStatement(
+               SQL_INSERT_INTO_COURSE_LECTURER_TABLE, Statement.RETURN_GENERATED_KEYS);
+           PreparedStatement psInsertLecture =
+             connection.prepareStatement(SQL_INSERT_INTO_LECTURE_TABLE)) {
         // 1. insert Course data
         psInsertCourse.setString(1, course.getTitle());
         psInsertCourse.setString(2, course.getDescription());
@@ -381,23 +366,23 @@ public class CourseDao {
   }
 
   public List<Lecture> selectScheduleByLecturerId(int lecturerId, int limit, int offset)
-      throws DaoException {
+    throws DaoException {
     List<Lecture> lectureList = new ArrayList<>();
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_SELECT_SCHEDULE_BY_LECTURER_ID)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_SCHEDULE_BY_LECTURER_ID)) {
       ps.setInt(1, lecturerId);
       ps.setInt(2, limit);
       ps.setInt(3, offset);
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
           Lecture current =
-              new Lecture.Builder()
-                  .withLectureId(rs.getInt(COLUMN_NAME_LECTURE_ID))
-                  .withTimeStart(rs.getTimestamp("time_start").toInstant())
-                  .withTimeEnd(rs.getTimestamp("time_end").toInstant())
-                  .withCourseId(rs.getInt("course_id"))
-                  .withDescription(rs.getString("description"))
-                  .build();
+            new Lecture.Builder()
+              .withLectureId(rs.getInt(COLUMN_NAME_LECTURE_ID))
+              .withTimeStart(rs.getTimestamp("time_start").toInstant())
+              .withTimeEnd(rs.getTimestamp("time_end").toInstant())
+              .withCourseId(rs.getInt("course_id"))
+              .withDescription(rs.getString("description"))
+              .build();
           lectureList.add(current);
         }
       }
@@ -411,9 +396,9 @@ public class CourseDao {
   public int upsertCourseLecturer(int courseId, int lecturerId) throws DaoException {
     final int entryId;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(
-                SQL_UPSERT_COURSE_LECTURER, Statement.RETURN_GENERATED_KEYS)) {
+         PreparedStatement ps =
+           connection.prepareStatement(
+             SQL_UPSERT_COURSE_LECTURER, Statement.RETURN_GENERATED_KEYS)) {
       ps.setInt(1, lecturerId);
       ps.setInt(2, courseId);
       ps.executeUpdate();
@@ -421,7 +406,7 @@ public class CourseDao {
         if (generatedKeys.next()) {
           entryId = generatedKeys.getInt(1);
           logger.debug(
-              "lecturer {} added to course {} : entryId is {}", lecturerId, courseId, entryId);
+            "lecturer {} added to course {} : entryId is {}", lecturerId, courseId, entryId);
         } else {
           throw new SQLException("Creating user failed, no ID obtained.");
         }
@@ -435,7 +420,7 @@ public class CourseDao {
   public int deleteCourseLecturer(int courseId, int lecturerId) throws DaoException {
     final int updatedRows;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_DELETE_COURSE_LECTURER)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_DELETE_COURSE_LECTURER)) {
       ps.setInt(1, courseId);
       ps.setInt(2, lecturerId);
       ps.executeUpdate();
@@ -452,27 +437,16 @@ public class CourseDao {
     return updatedRows;
   }
 
-  public int countLecturerReadyCourses(int lecturerId) throws DaoException {
-    try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_COUNT_READY_COURSES_BY_LECTURER_ID)) {
-      ps.setInt(1, lecturerId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return rs.getInt(COLUMN_NAME_COUNT);
-        } else throw new DaoException("ResultSet returns null");
-      }
-
-    } catch (SQLException e) {
-      throw new DaoException(e);
-    }
+  public Integer countLecturerReadyCourses(int lecturerId) throws DaoException {
+    Integer[] params = new Integer[]{lecturerId};
+    return jdbcTemplate.queryForObject(SQL_COUNT_READY_COURSES_BY_LECTURER_ID, params, Integer.class);
   }
 
   public List<Course> selectAllCoursesByLecturerId(int lecturerId, int limit, int offset)
-      throws DaoException {
+    throws DaoException {
     List<Course> courses;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_SELECT_ALL_COURSES_BY_LECTURER_ID)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_ALL_COURSES_BY_LECTURER_ID)) {
       ps.setInt(1, lecturerId);
       ps.setInt(2, limit);
       ps.setInt(3, offset);
@@ -486,28 +460,30 @@ public class CourseDao {
   }
 
   public List<Course> selectReadyCoursesByLecturerId(int lecturerId, int limit, int offset)
-      throws DaoException {
-    List<Course> courses;
-    try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_SELECT_READY_COURSES_BY_LECTURER_ID)) {
-      ps.setInt(1, lecturerId);
-      ps.setInt(2, limit);
-      ps.setInt(3, offset);
-      try (ResultSet rs = ps.executeQuery()) {
-        courses = parseResultSetToCoursesList(rs);
-      }
-    } catch (SQLException e) {
-      throw new DaoException(e);
-    }
-    return courses;
+    throws DaoException {
+    Integer[] params = new Integer[]{lecturerId, limit, offset};
+    return jdbcTemplate.query(SQL_SELECT_READY_COURSES_BY_LECTURER_ID, params, new CoursesResultSetExtractor());
+//    List<Course> courses;
+//    try (Connection connection = pool.getConnection();
+//         PreparedStatement ps =
+//           connection.prepareStatement(SQL_SELECT_READY_COURSES_BY_LECTURER_ID)) {
+//      ps.setInt(1, lecturerId);
+//      ps.setInt(2, limit);
+//      ps.setInt(3, offset);
+//      try (ResultSet rs = ps.executeQuery()) {
+//        courses = parseResultSetToCoursesList(rs);
+//      }
+//    } catch (SQLException e) {
+//      throw new DaoException(e);
+//    }
+//    return courses;
   }
 
   public List<Course> selectCoursesAllReady(int limit, int offset) throws DaoException {
     List<Course> courses;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_SELECT_ALL_READY_COURSES_LIMIT_OFFSET)) {
+         PreparedStatement ps =
+           connection.prepareStatement(SQL_SELECT_ALL_READY_COURSES_LIMIT_OFFSET)) {
 
       ps.setInt(1, limit);
       ps.setInt(2, offset);
@@ -522,14 +498,14 @@ public class CourseDao {
   }
 
   public Optional<Course> selectCourseById(int courseId, int limit, int offset)
-      throws DaoException {
+    throws DaoException {
     List<Lecture> lectureList = new ArrayList<>();
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(
-                SQL_SELECT_COURSE_DETAILS_BY_COURSE_ID,
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY)) {
+         PreparedStatement ps =
+           connection.prepareStatement(
+             SQL_SELECT_COURSE_DETAILS_BY_COURSE_ID,
+             ResultSet.TYPE_SCROLL_INSENSITIVE,
+             ResultSet.CONCUR_READ_ONLY)) {
       ps.setInt(1, courseId);
       ps.setInt(2, limit);
       ps.setInt(3, offset);
@@ -541,27 +517,27 @@ public class CourseDao {
           int currentLecturer = rs.getInt(COLUMN_NAME_LECTURER_ID);
           if (currentLecturer != previousLecturer) {
             Lecturer lecturer =
-                new Lecturer(
-                    rs.getInt(COLUMN_NAME_LECTURER_ID),
-                    rs.getString(COLUMN_NAME_FIRST_NAME),
-                    rs.getString(COLUMN_NAME_LAST_NAME));
+              new Lecturer(
+                rs.getInt(COLUMN_NAME_LECTURER_ID),
+                rs.getString(COLUMN_NAME_FIRST_NAME),
+                rs.getString(COLUMN_NAME_LAST_NAME));
             lecturers.add(lecturer);
             previousLecturer = currentLecturer;
           }
           Lecturer lecturer =
-              new Lecturer(
-                  rs.getInt(COLUMN_NAME_LECTURER_ID),
-                  rs.getString(COLUMN_NAME_FIRST_NAME),
-                  rs.getString(COLUMN_NAME_LAST_NAME));
+            new Lecturer(
+              rs.getInt(COLUMN_NAME_LECTURER_ID),
+              rs.getString(COLUMN_NAME_FIRST_NAME),
+              rs.getString(COLUMN_NAME_LAST_NAME));
           if (rs.getInt(COLUMN_NAME_LECTURE_ID) != 0) {
             Lecture current =
-                new Lecture.Builder()
-                    .withLectureId(rs.getInt(COLUMN_NAME_LECTURE_ID))
-                    .withDescription(rs.getString("lecture_description"))
-                    .withTimeStart(rs.getTimestamp("time_start").toInstant())
-                    .withTimeEnd(rs.getTimestamp("time_end").toInstant())
-                    .withLecturer(lecturer)
-                    .build();
+              new Lecture.Builder()
+                .withLectureId(rs.getInt(COLUMN_NAME_LECTURE_ID))
+                .withDescription(rs.getString("lecture_description"))
+                .withTimeStart(rs.getTimestamp("time_start").toInstant())
+                .withTimeEnd(rs.getTimestamp("time_end").toInstant())
+                .withLecturer(lecturer)
+                .build();
             lectureList.add(current);
           }
         }
@@ -590,8 +566,8 @@ public class CourseDao {
 
   public void updateLecture(Lecture lecture) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement psUpdate =
-            connection.prepareStatement(SQL_UPDATE_LECTURES_TABLE_BY_LECTURE_ID)) {
+         PreparedStatement psUpdate =
+           connection.prepareStatement(SQL_UPDATE_LECTURES_TABLE_BY_LECTURE_ID)) {
       psUpdate.setTimestamp(1, Timestamp.from(lecture.getStartTime()));
       psUpdate.setTimestamp(2, Timestamp.from(lecture.getEndTime()));
       psUpdate.setString(3, lecture.getDescription());
@@ -612,8 +588,8 @@ public class CourseDao {
    */
   public boolean updateCourseData(Course course) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement psSelectCourseCapacity =
-            connection.prepareStatement(SQL_SELECT_COURSE_CAPACITY)) {
+         PreparedStatement psSelectCourseCapacity =
+           connection.prepareStatement(SQL_SELECT_COURSE_CAPACITY)) {
       // 1 step - select previous course capacity
       final int capacityPrevious;
       psSelectCourseCapacity.setInt(1, course.getId());
@@ -626,12 +602,12 @@ public class CourseDao {
       connection.setAutoCommit(false);
       // decide what operation needed in course_student table: insert or delete
       String query =
-          course.getCapacity() > capacityPrevious
-              ? SQL_INSERT_INTO_COURSE_STUDENTS_TABLE
-              : SQL_DELETE_FROM_COURSE_STUDENTS_TABLE;
+        course.getCapacity() > capacityPrevious
+          ? SQL_INSERT_INTO_COURSE_STUDENTS_TABLE
+          : SQL_DELETE_FROM_COURSE_STUDENTS_TABLE;
       try (PreparedStatement psUpdateCourseTable =
-              connection.prepareStatement(SQL_UPDATE_COURSE_TABLE_BY_COURSE_ID);
-          PreparedStatement psUpdateCourseStudentsTable = connection.prepareStatement(query)) {
+             connection.prepareStatement(SQL_UPDATE_COURSE_TABLE_BY_COURSE_ID);
+           PreparedStatement psUpdateCourseStudentsTable = connection.prepareStatement(query)) {
         psUpdateCourseTable.setString(1, course.getTitle());
         psUpdateCourseTable.setString(2, course.getDescription());
         psUpdateCourseTable.setInt(3, course.getCapacity());
@@ -660,16 +636,16 @@ public class CourseDao {
   public Map<Lecturer, Integer> countLecturesInCourse(int courseId) throws DaoException {
     Map<Lecturer, Integer> lecturerMap = new HashMap<>();
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS)) {
+         PreparedStatement ps =
+           connection.prepareStatement(SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS)) {
       ps.setInt(1, courseId);
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
           Lecturer lecturer =
-              new Lecturer(
-                  rs.getInt(COLUMN_NAME_LECTURER_ID),
-                  rs.getString(COLUMN_NAME_FIRST_NAME),
-                  rs.getString(COLUMN_NAME_LAST_NAME));
+            new Lecturer(
+              rs.getInt(COLUMN_NAME_LECTURER_ID),
+              rs.getString(COLUMN_NAME_FIRST_NAME),
+              rs.getString(COLUMN_NAME_LAST_NAME));
           lecturerMap.put(lecturer, rs.getInt(COLUMN_NAME_COUNT));
         }
       }
@@ -696,9 +672,9 @@ public class CourseDao {
    */
   public boolean updateCourseOnSetReady(int courseId) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement psUpdate = connection.prepareStatement(SQL_UPDATE_COURSE_SET_READY);
-        PreparedStatement psSelect =
-            connection.prepareStatement(SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS)) {
+         PreparedStatement psUpdate = connection.prepareStatement(SQL_UPDATE_COURSE_SET_READY);
+         PreparedStatement psSelect =
+           connection.prepareStatement(SQL_SELECT_COUNT_LECTURES_OF_COURSE_GROUP_BY_LECTURERS)) {
 
       psUpdate.setBoolean(1, true);
       psUpdate.setInt(2, courseId);
@@ -728,8 +704,8 @@ public class CourseDao {
   public Map<String, Integer> countCoursesAndLecturesAndLecturersAndStudents() throws DaoException {
     Map<String, Integer> pairs = new HashMap<>();
     try (Connection connection = pool.getConnection();
-        Statement ps = connection.createStatement();
-        ResultSet rs = ps.executeQuery(SQL_SELECT_TABLE_COUNTS)) {
+         Statement ps = connection.createStatement();
+         ResultSet rs = ps.executeQuery(SQL_SELECT_TABLE_COUNTS)) {
       if (rs.next()) {
         pairs.put("courses", rs.getInt("courses"));
         pairs.put("lectures", rs.getInt("lectures"));
@@ -744,7 +720,7 @@ public class CourseDao {
 
   public boolean deleteLecture(int lectureId) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_DELETE_LECTURE)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_DELETE_LECTURE)) {
       ps.setInt(1, lectureId);
       ps.executeUpdate();
     } catch (SQLException e) {
@@ -756,11 +732,11 @@ public class CourseDao {
   public int insertLecture(Lecture lecture) throws DaoException {
     final int lectureId;
     try (Connection connection = pool.getConnection();
-        PreparedStatement psInsert =
-            connection.prepareStatement(
-                SQL_INSERT_INTO_LECTURE_TABLE, Statement.RETURN_GENERATED_KEYS);
-        PreparedStatement psSelectEntry =
-            connection.prepareStatement(SQL_SELECT_ENTRY_ID_FROM_COURSE_LECTURERS)) {
+         PreparedStatement psInsert =
+           connection.prepareStatement(
+             SQL_INSERT_INTO_LECTURE_TABLE, Statement.RETURN_GENERATED_KEYS);
+         PreparedStatement psSelectEntry =
+           connection.prepareStatement(SQL_SELECT_ENTRY_ID_FROM_COURSE_LECTURERS)) {
 
       // define entryId
       psSelectEntry.setInt(1, lecture.getCourseId());
@@ -771,9 +747,9 @@ public class CourseDao {
           entryId = rs.getInt("entry_id");
         } else {
           throw new DaoException(
-              String.format(
-                  "Can't Add lecture: no entry_id with course_id [%d] and lecturer_id [%d] found",
-                  lecture.getCourseId(), lecture.getLecturer().getId()));
+            String.format(
+              "Can't Add lecture: no entry_id with course_id [%d] and lecturer_id [%d] found",
+              lecture.getCourseId(), lecture.getLecturer().getId()));
         }
       }
       // insert lecture
@@ -805,10 +781,10 @@ public class CourseDao {
         logger.debug("next lector");
         // create lecturer
         Lecturer lecturer =
-            new Lecturer(
-                rs.getInt(COLUMN_NAME_LECTURER_ID),
-                rs.getString(COLUMN_NAME_FIRST_NAME),
-                rs.getString(COLUMN_NAME_LAST_NAME));
+          new Lecturer(
+            rs.getInt(COLUMN_NAME_LECTURER_ID),
+            rs.getString(COLUMN_NAME_FIRST_NAME),
+            rs.getString(COLUMN_NAME_LAST_NAME));
         logger.debug("size,{}", size);
         courses.get(size - 1).addLecturer(lecturer);
       } else {
@@ -820,10 +796,10 @@ public class CourseDao {
         course.setDescription(rs.getString("description"));
         course.setCapacity(rs.getInt("capacity"));
         Lecturer lecturer =
-            new Lecturer(
-                rs.getInt(COLUMN_NAME_LECTURER_ID),
-                rs.getString(COLUMN_NAME_FIRST_NAME),
-                rs.getString(COLUMN_NAME_LAST_NAME));
+          new Lecturer(
+            rs.getInt(COLUMN_NAME_LECTURER_ID),
+            rs.getString(COLUMN_NAME_FIRST_NAME),
+            rs.getString(COLUMN_NAME_LAST_NAME));
         course.addLecturer(lecturer);
         course.setStudentsAmount(rs.getInt("student_amount"));
         course.setReady(rs.getBoolean("ready"));
@@ -833,5 +809,51 @@ public class CourseDao {
       }
     }
     return courses;
+  }
+
+
+  private class CoursesResultSetExtractor implements ResultSetExtractor<List<Course>> {
+
+    @Override
+    public List<Course> extractData(ResultSet rs) throws SQLException {
+      List<Course> courses = new ArrayList<>();
+      int previousCourseId = 0;
+      int size = 0;
+      while (rs.next()) {
+        int currentCourseId = rs.getInt("course_id");
+        if (currentCourseId == previousCourseId) {
+          logger.debug("next lector");
+          // create lecturer
+          Lecturer lecturer =
+            new Lecturer(
+              rs.getInt(COLUMN_NAME_LECTURER_ID),
+              rs.getString(COLUMN_NAME_FIRST_NAME),
+              rs.getString(COLUMN_NAME_LAST_NAME));
+          logger.debug("size,{}", size);
+          courses.get(size - 1).addLecturer(lecturer);
+        } else {
+          // next course record
+          logger.debug("next course record");
+          Course course = new Course();
+          course.setId(currentCourseId);
+          course.setTitle(rs.getString("title"));
+          course.setDescription(rs.getString("description"));
+          course.setCapacity(rs.getInt("capacity"));
+          Lecturer lecturer =
+            new Lecturer(
+              rs.getInt(COLUMN_NAME_LECTURER_ID),
+              rs.getString(COLUMN_NAME_FIRST_NAME),
+              rs.getString(COLUMN_NAME_LAST_NAME));
+          course.addLecturer(lecturer);
+          course.setStudentsAmount(rs.getInt("student_amount"));
+          course.setReady(rs.getBoolean("ready"));
+          previousCourseId = currentCourseId;
+          courses.add(course);
+          size++;
+        }
+      }
+      return courses;
+    }
+
   }
 }

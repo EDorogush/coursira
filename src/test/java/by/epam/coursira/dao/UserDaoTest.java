@@ -34,10 +34,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.sql.DataSource;
+
 public class UserDaoTest {
 
   @Mock
-  private ConnectionPool mockPool;
+  private DataSource mockPool;
   @Mock
   private Connection mockConnection;
   @Mock
