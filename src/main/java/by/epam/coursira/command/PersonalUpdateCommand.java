@@ -21,10 +21,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
+
 /**
  * Class is intended to process client's requests to resource corresponding to "/personal/update"
  * pattern.
  */
+@Component
 public class PersonalUpdateCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
   private static final Pattern resourcePattern = Pattern.compile("/personal/update");

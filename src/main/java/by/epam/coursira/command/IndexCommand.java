@@ -13,12 +13,15 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 /**
  * Class is intended to process client's requests to resource corresponding to "/" pattern. This is
  * welcom-page and only GET method of request is possible. Request with POST method will throw
  * {@link PageNotFoundException}
  */
+
+@Component
 public class IndexCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
   /**

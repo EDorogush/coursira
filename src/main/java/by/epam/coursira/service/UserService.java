@@ -9,6 +9,7 @@ import by.epam.coursira.exception.AccessDeniedException;
 import by.epam.coursira.exception.ClientServiceException;
 import by.epam.coursira.exception.DaoException;
 import by.epam.coursira.exception.ServiceException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -18,9 +19,12 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import javax.annotation.Nullable;
 import javax.servlet.http.Part;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserService {
   private static final Logger logger = LogManager.getLogger();
   private static final String RESOURCE_BUNDLE_ERROR_MESSAGE = "errorMessages";
@@ -35,29 +39,29 @@ public class UserService {
    * for authorised user.
    *
    * @param principal {@link Principal} current principal
-   * @param image {@link Part} image. must be of image type.
+   * @param image     {@link Part} image. must be of image type.
    * @return {@link Principal} with updated field;
    * @throws ClientServiceException when {@link Part} image is incorrect.
-   * @throws ServiceException attempt to update fails.
-   * @throws AccessDeniedException when user has role = Role.ANONYMOUS
+   * @throws ServiceException       attempt to update fails.
+   * @throws AccessDeniedException  when user has role = Role.ANONYMOUS
    */
   public Principal updateUserPhoto(Principal principal, Part image)
-      throws ClientServiceException, ServiceException, AccessDeniedException {
+    throws ClientServiceException, ServiceException, AccessDeniedException {
     final Principal current;
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
       ResourceBundle bundle =
-          ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+        ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
       throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     ValidationHelper.checkImage(image, currentLocale);
     try (InputStream imageInputStream = image.getInputStream()) {
       userDao.updateUserPhoto(principal.getUser().getId(), imageInputStream);
       current =
-          userDao
-              .selectPrincipalBySessionId(principal.getSession().getId())
-              .orElseThrow(() -> new ServiceException("No such user"));
+        userDao
+          .selectPrincipalBySessionId(principal.getSession().getId())
+          .orElseThrow(() -> new ServiceException("No such user"));
     } catch (IOException | DaoException e) {
       throw new ServiceException(e);
     }
@@ -68,29 +72,29 @@ public class UserService {
    * Method updated user's data in database. This method is available for authorised user. Returns
    * updated {@link Principal} or throws ClientServiceException when input user data is incorrect.
    *
-   * @param principal current {@link Principal}.
-   * @param firstName {@link String} user's new first name.
-   * @param lastName {@link String} user's new lastName.
-   * @param age {@link Integer} user's new age.
+   * @param principal    current {@link Principal}.
+   * @param firstName    {@link String} user's new first name.
+   * @param lastName     {@link String} user's new lastName.
+   * @param age          {@link Integer} user's new age.
    * @param organization {@link String} user's new organization.
-   * @param interests {@link String} user's new interests.
+   * @param interests    {@link String} user's new interests.
    * @return updated {@link Principal} object.
    * @throws ClientServiceException when input user data is incorrect.
-   * @throws ServiceException when attempt to update record fails.
-   * @throws AccessDeniedException when user has role = Role.ANONYMOUS
+   * @throws ServiceException       when attempt to update record fails.
+   * @throws AccessDeniedException  when user has role = Role.ANONYMOUS
    */
   public Principal updateUserData(
-      Principal principal,
-      String firstName,
-      String lastName,
-      @Nullable Integer age,
-      @Nullable String organization,
-      @Nullable String interests)
-      throws ClientServiceException, ServiceException, AccessDeniedException {
+    Principal principal,
+    String firstName,
+    String lastName,
+    @Nullable Integer age,
+    @Nullable String organization,
+    @Nullable String interests)
+    throws ClientServiceException, ServiceException, AccessDeniedException {
     if (principal.getUser().getRole() == Role.ANONYMOUS) {
       Locale.setDefault(principal.getSession().getLanguage().getLocale());
       ResourceBundle bundle =
-          ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+        ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
       throw new AccessDeniedException(bundle.getString("ACCESS_DENIED"));
     }
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
@@ -101,7 +105,7 @@ public class UserService {
     }
     if (Optional.ofNullable(organization).isPresent()) {
       organization =
-          ValidationHelper.validateTextNullable(organization, currentLocale, "Organisation");
+        ValidationHelper.validateTextNullable(organization, currentLocale, "Organisation");
     }
     if (Optional.ofNullable(interests).isPresent()) {
       interests = ValidationHelper.validateTextNullable(interests, currentLocale, "Interests");
@@ -145,22 +149,22 @@ public class UserService {
    * there is no such lecturer in db or it's registration doesn't finish yet.
    *
    * @param principal current user's {@link Principal}.
-   * @param id {@code int} value of lecturer id.
+   * @param id        {@code int} value of lecturer id.
    * @return {@link Lecturer}
    * @throws ClientServiceException if there is no such lecturer in db or it's registration doesn't
-   *     finish yet
-   * @throws ServiceException if attempt to get data fails.
+   *                                finish yet
+   * @throws ServiceException       if attempt to get data fails.
    */
   public Lecturer defineLecturerNameById(Principal principal, int id)
-      throws ClientServiceException, ServiceException {
+    throws ClientServiceException, ServiceException {
     Locale locale = principal.getSession().getLanguage().getLocale();
     ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, locale);
     final Lecturer lecturer;
     try {
       User user =
-          userDao
-              .selectUserById(id)
-              .orElseThrow(() -> new ClientServiceException(bundle.getString("WRONG_LECTURER_ID")));
+        userDao
+          .selectUserById(id)
+          .orElseThrow(() -> new ClientServiceException(bundle.getString("WRONG_LECTURER_ID")));
       if (user.getRole() != Role.LECTURER || user.getRegistrationCode() != null) {
         throw new ClientServiceException(bundle.getString("WRONG_LECTURER_ID"));
       }

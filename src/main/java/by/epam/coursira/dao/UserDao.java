@@ -25,78 +25,80 @@ import java.util.Optional;
 import javax.sql.DataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserDao {
   private static final Logger logger = LogManager.getLogger();
 
   private static final String SQL_INSERT_SESSION =
-      "INSERT INTO sessions(id, expire_date, user_id, language, zone_offset_of_total_seconds)"
-          + " VALUES (?,?,?,?,?)";
+    "INSERT INTO sessions(id, expire_date, user_id, language, zone_offset_of_total_seconds)"
+      + " VALUES (?,?,?,?,?)";
 
   private static final String SQL_INSERT_USER =
-      "INSERT INTO users(email, password, firstname, lastname, role, "
-          + "registration_code,registration_expire_date)"
-          + " VALUES (?,?,?,?,?,?,?)";
+    "INSERT INTO users(email, password, firstname, lastname, role, "
+      + "registration_code,registration_expire_date)"
+      + " VALUES (?,?,?,?,?,?,?)";
 
   private static final String SQL_SELECT_PRINCIPAL_BY_SESSION_ID =
-      "SELECT users.id, users.email, users.password, users.firstname, users.lastname, users.role, "
-          + "users.organization, users.age, users.interests, users.photo, users.registration_code, "
-          + "users.registration_expire_date, "
-          + "sessions.id AS session_id,  sessions.expire_date, sessions.language,"
-          + "sessions.zone_offset_of_total_seconds FROM sessions "
-          + "JOIN users ON sessions.user_id = users.id WHERE sessions.id = ?";
+    "SELECT users.id, users.email, users.password, users.firstname, users.lastname, users.role, "
+      + "users.organization, users.age, users.interests, users.photo, users.registration_code, "
+      + "users.registration_expire_date, "
+      + "sessions.id AS session_id,  sessions.expire_date, sessions.language,"
+      + "sessions.zone_offset_of_total_seconds FROM sessions "
+      + "JOIN users ON sessions.user_id = users.id WHERE sessions.id = ?";
 
   private static final String SQL_SELECT_USER_BY_CODE =
-      "SELECT id, email, password, firstname, lastname, role, "
-          + "organization, age, interests, photo, registration_code, registration_expire_date "
-          + "FROM users WHERE registration_code = ?";
+    "SELECT id, email, password, firstname, lastname, role, "
+      + "organization, age, interests, photo, registration_code, registration_expire_date "
+      + "FROM users WHERE registration_code = ?";
 
   private static final String SQL_SELECT_USER_BY_ID =
-      "SELECT id, email, password, firstname, lastname, role, "
-          + "organization, age, interests, photo, registration_code, registration_expire_date "
-          + "FROM users WHERE id = ?";
+    "SELECT id, email, password, firstname, lastname, role, "
+      + "organization, age, interests, photo, registration_code, registration_expire_date "
+      + "FROM users WHERE id = ?";
 
   private static final String SQL_SELECT_USER_BY_ROLE_WITH_NO_REGISTRATION_CODE =
-      "SELECT id, email, password, firstname, lastname, role, "
-          + "organization, age, interests, photo, registration_code, registration_expire_date "
-          + "FROM users WHERE role = ? AND registration_code ISNULL ";
+    "SELECT id, email, password, firstname, lastname, role, "
+      + "organization, age, interests, photo, registration_code, registration_expire_date "
+      + "FROM users WHERE role = ? AND registration_code ISNULL ";
 
   private static final String SQL_SELECT_USER_BY_EMAIL =
-      "SELECT id, email, password, firstname, lastname, role, "
-          + "organization, age, interests, photo, registration_code, "
-          + "registration_expire_date FROM users  "
-          + "WHERE email = ?";
+    "SELECT id, email, password, firstname, lastname, role, "
+      + "organization, age, interests, photo, registration_code, "
+      + "registration_expire_date FROM users  "
+      + "WHERE email = ?";
 
   private static final String SQL_UPDATE_SESSION =
-      "UPDATE sessions SET expire_date = ?, user_id = ?, language = ?, "
-          + "zone_offset_of_total_seconds = ? "
-          + "WHERE id = ?";
+    "UPDATE sessions SET expire_date = ?, user_id = ?, language = ?, "
+      + "zone_offset_of_total_seconds = ? "
+      + "WHERE id = ?";
 
   private static final String SQL_UPDATE_USER =
-      "UPDATE users "
-          + "SET password = ?, firstname = ?, lastname = ?,"
-          + "organization = ?, age = ?, interests = ?"
-          + "WHERE id = ?";
+    "UPDATE users "
+      + "SET password = ?, firstname = ?, lastname = ?,"
+      + "organization = ?, age = ?, interests = ?"
+      + "WHERE id = ?";
 
   private static final String SQL_UPDATE_USER_PHOTO =
-      "UPDATE users " + "SET photo = ? " + "WHERE id = ?;";
+    "UPDATE users " + "SET photo = ? " + "WHERE id = ?;";
 
   private static final String SQL_UPDATE_USER_REGISTRATION =
-      "UPDATE users " + "SET registration_code = ?, registration_expire_date = ? " + "WHERE id = ?";
+    "UPDATE users " + "SET registration_code = ?, registration_expire_date = ? " + "WHERE id = ?";
 
   private static final String SQL_DELETE_WASTE_SESSIONS =
-      "DELETE FROM sessions WHERE expire_date < ?";
+    "DELETE FROM sessions WHERE expire_date < ?";
 
   private static final String SQL_DELETE_USER_WITH_REGISTRATION_CODE_EXPIRED =
-      "DELETE FROM users WHERE registration_expire_date < ?";
+    "DELETE FROM users WHERE registration_expire_date < ?";
 
   private static final String SQL_DELETE_USER = "DELETE FROM users WHERE id = ?";
 
   private static final String SQL_EXISTS_USER_EMAIL =
-      "" + "SELECT EXISTS(SELECT 1 FROM users WHERE email = ?);";
+    "" + "SELECT EXISTS(SELECT 1 FROM users WHERE email = ?);";
 
   private static final String SQL_EXISTS_LECTURER_WITH_ID =
-      "SELECT EXISTS(SELECT 1 FROM users WHERE id = ? AND role = 'LECTURER')";
+    "SELECT EXISTS(SELECT 1 FROM users WHERE id = ? AND role = 'LECTURER')";
   private final DataSource pool;
 
   public UserDao(DataSource pool) {
@@ -113,7 +115,7 @@ public class UserDao {
    */
   public int insertSession(Session session) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_INSERT_SESSION)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_INSERT_SESSION)) {
       ps.setString(1, session.getId());
       ps.setTimestamp(2, Timestamp.from(session.getExpDate()));
       ps.setInt(3, session.getUserId());
@@ -136,8 +138,8 @@ public class UserDao {
   public int insertUser(User user) throws DaoException {
     final int userId;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
+         PreparedStatement ps =
+           connection.prepareStatement(SQL_INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
       ps.setString(1, user.getEmail());
       ps.setString(2, user.getPassword());
       ps.setString(3, user.getFirstName());
@@ -171,7 +173,7 @@ public class UserDao {
   public Optional<User> selectUserByCode(String code) throws DaoException {
     final User user;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_CODE)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_CODE)) {
       ps.setString(1, code);
       try (ResultSet rs = ps.executeQuery()) {
         if (!rs.next()) {
@@ -196,7 +198,7 @@ public class UserDao {
   public Optional<Principal> selectPrincipalBySessionId(String sessionId) throws DaoException {
     final Principal principal;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_SELECT_PRINCIPAL_BY_SESSION_ID)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_PRINCIPAL_BY_SESSION_ID)) {
       ps.setString(1, sessionId);
       // get one line or none
       User user;
@@ -207,13 +209,13 @@ public class UserDao {
         }
         user = parseUserFromResultSet(rs);
         session =
-            new Session.Builder()
-                .setId(rs.getString("session_id"))
-                .setUserId(rs.getInt("id"))
-                .setExpDate(rs.getTimestamp("expire_date").toInstant())
-                .setLanguage(Language.valueOf(rs.getString("language")))
-                .setZoneOffSet(ZoneOffset.ofTotalSeconds(rs.getInt("zone_offset_of_total_seconds")))
-                .build();
+          new Session.Builder()
+            .setId(rs.getString("session_id"))
+            .setUserId(rs.getInt("id"))
+            .setExpDate(rs.getTimestamp("expire_date").toInstant())
+            .setLanguage(Language.valueOf(rs.getString("language")))
+            .setZoneOffSet(ZoneOffset.ofTotalSeconds(rs.getInt("zone_offset_of_total_seconds")))
+            .build();
       }
       principal = new Principal(session, user);
     } catch (SQLException e) {
@@ -233,7 +235,7 @@ public class UserDao {
   public Optional<User> selectUserByEmail(String email) throws DaoException {
     final User user;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_EMAIL)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_EMAIL)) {
       ps.setString(1, email);
       // get one line or none
       try (ResultSet rs = ps.executeQuery()) {
@@ -260,7 +262,7 @@ public class UserDao {
   public Optional<User> selectUserById(int id) throws DaoException {
     final User user;
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_ID)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_SELECT_USER_BY_ID)) {
       ps.setInt(1, id);
       try (ResultSet rs = ps.executeQuery()) {
         if (!rs.next()) {
@@ -287,8 +289,8 @@ public class UserDao {
   public List<User> selectUsersByRole(Role role) throws DaoException {
     List<User> users = new ArrayList<>();
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_SELECT_USER_BY_ROLE_WITH_NO_REGISTRATION_CODE)) {
+         PreparedStatement ps =
+           connection.prepareStatement(SQL_SELECT_USER_BY_ROLE_WITH_NO_REGISTRATION_CODE)) {
       ps.setString(1, role.toString());
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
@@ -313,7 +315,7 @@ public class UserDao {
    */
   public int updateSession(Session session) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_SESSION)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_SESSION)) {
       ps.setTimestamp(1, Timestamp.from(session.getExpDate()));
       ps.setInt(2, session.getUserId());
       ps.setString(3, session.getLanguage().toString());
@@ -335,7 +337,7 @@ public class UserDao {
    */
   public int updateUser(User current) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_USER)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_USER)) {
       ps.setString(1, current.getPassword());
       ps.setString(2, current.getFirstName());
       ps.setString(3, current.getLastName());
@@ -359,7 +361,7 @@ public class UserDao {
    */
   public int updateUserRegistrationToNull(int userId) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_USER_REGISTRATION)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_USER_REGISTRATION)) {
       ps.setNull(1, Types.INTEGER);
       ps.setNull(2, Types.TIMESTAMP);
       ps.setInt(3, userId);
@@ -380,7 +382,7 @@ public class UserDao {
    */
   public int updateUserPhoto(int userId, InputStream image) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_USER_PHOTO)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_UPDATE_USER_PHOTO)) {
       ps.setInt(2, userId);
       ps.setBinaryStream(1, image);
       ps.executeUpdate();
@@ -404,7 +406,7 @@ public class UserDao {
       throw new DaoException("You are not allowed to delete zeros user");
     }
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_DELETE_USER)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_DELETE_USER)) {
       ps.setInt(1, id);
       ps.executeUpdate();
       return ps.getUpdateCount();
@@ -422,7 +424,7 @@ public class UserDao {
    */
   public int deleteSession(Instant timePoint) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_DELETE_WASTE_SESSIONS)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_DELETE_WASTE_SESSIONS)) {
       ps.setTimestamp(1, Timestamp.from(timePoint));
       ps.executeUpdate();
       return ps.getUpdateCount();
@@ -440,8 +442,8 @@ public class UserDao {
    */
   public int deleteUserWithRegistrationCodeExpired(Instant timePoint) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps =
-            connection.prepareStatement(SQL_DELETE_USER_WITH_REGISTRATION_CODE_EXPIRED)) {
+         PreparedStatement ps =
+           connection.prepareStatement(SQL_DELETE_USER_WITH_REGISTRATION_CODE_EXPIRED)) {
       ps.setTimestamp(1, Timestamp.from(timePoint));
       ps.executeUpdate();
       return ps.getUpdateCount();
@@ -459,7 +461,7 @@ public class UserDao {
    */
   public boolean isExistsEmail(String email) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_USER_EMAIL)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_USER_EMAIL)) {
       ps.setString(1, email);
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next() && rs.getBoolean("exists");
@@ -478,7 +480,7 @@ public class UserDao {
    */
   public boolean isExistsLecturer(int id) throws DaoException {
     try (Connection connection = pool.getConnection();
-        PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_LECTURER_WITH_ID)) {
+         PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_LECTURER_WITH_ID)) {
       ps.setInt(1, id);
       try (ResultSet rs = ps.executeQuery()) {
         return rs.next() && rs.getBoolean("exists");
@@ -490,26 +492,26 @@ public class UserDao {
 
   private User parseUserFromResultSet(ResultSet rs) throws SQLException {
     String base64Image =
-        Optional.ofNullable(rs.getBytes("photo"))
-            .map(t -> Base64.getEncoder().encodeToString(t))
-            .orElse(null);
+      Optional.ofNullable(rs.getBytes("photo"))
+        .map(t -> Base64.getEncoder().encodeToString(t))
+        .orElse(null);
     Instant registrationExpDate =
-        Optional.ofNullable(rs.getTimestamp("registration_expire_date"))
-            .map(Timestamp::toInstant)
-            .orElse(null);
+      Optional.ofNullable(rs.getTimestamp("registration_expire_date"))
+        .map(Timestamp::toInstant)
+        .orElse(null);
     return new User.Builder()
-        .setId(rs.getInt("id"))
-        .setEmail(rs.getString("email"))
-        .setPassword(rs.getString("password"))
-        .setFirstName(rs.getString("firstname"))
-        .setLastName(rs.getString("lastname"))
-        .setRole(Role.valueOf(rs.getString("role")))
-        .setOrganization(rs.getString("organization"))
-        .setAge(rs.getInt("age"))
-        .setInterests(rs.getString("interests"))
-        .setRegistrationCode(rs.getString("registration_code"))
-        .setRegistrationExpDate(registrationExpDate)
-        .setBase64Image(base64Image)
-        .build();
+      .setId(rs.getInt("id"))
+      .setEmail(rs.getString("email"))
+      .setPassword(rs.getString("password"))
+      .setFirstName(rs.getString("firstname"))
+      .setLastName(rs.getString("lastname"))
+      .setRole(Role.valueOf(rs.getString("role")))
+      .setOrganization(rs.getString("organization"))
+      .setAge(rs.getInt("age"))
+      .setInterests(rs.getString("interests"))
+      .setRegistrationCode(rs.getString("registration_code"))
+      .setRegistrationExpDate(registrationExpDate)
+      .setBase64Image(base64Image)
+      .build();
   }
 }

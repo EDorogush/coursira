@@ -17,7 +17,10 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.units.qual.C;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CourseService {
   private static final Logger logger = LogManager.getLogger();
   private static final String RESOURCE_BUNDLE_ERROR_MESSAGE = "errorMessages";
@@ -75,7 +78,7 @@ public class CourseService {
         default:
           Locale.setDefault(principal.getSession().getLanguage().getLocale());
           ResourceBundle bundle =
-              ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+            ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
           throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
       }
     } catch (DaoException e) {
@@ -96,7 +99,7 @@ public class CourseService {
    * @throws ClientServiceException if values of offset or limit incorrect.
    */
   public List<Course> viewCourses(Principal principal, int limit, int offset)
-      throws ServiceException, ClientServiceException {
+    throws ServiceException, ClientServiceException {
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     ValidationHelper.checkLimit(limit, currentLocale);
     ValidationHelper.checkOffSet(offset, currentLocale);
@@ -122,7 +125,7 @@ public class CourseService {
    * @throws AccessDeniedException when principal's role is Anonymous.
    */
   public List<Course> viewCoursesPersonal(Principal principal, int limit, int offset)
-      throws ServiceException, ClientServiceException, AccessDeniedException {
+    throws ServiceException, ClientServiceException, AccessDeniedException {
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     ValidationHelper.checkLimit(limit, currentLocale);
     ValidationHelper.checkOffSet(offset, currentLocale);
@@ -135,12 +138,12 @@ public class CourseService {
           break;
         case LECTURER:
           courses =
-              courseDao.selectAllCoursesByLecturerId(principal.getUser().getId(), limit, offset);
+            courseDao.selectAllCoursesByLecturerId(principal.getUser().getId(), limit, offset);
           logger.debug("selectAllCoursesByLecturerId  {} records", courses.size());
           break;
         default:
           ResourceBundle bundle =
-              ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
+            ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, Locale.getDefault());
           throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
       }
     } catch (DaoException e) {
@@ -162,8 +165,8 @@ public class CourseService {
    *     exist.
    */
   public List<Course> viewCoursesByLectureId(
-      Principal principal, int lecturerId, int limit, int offset)
-      throws ServiceException, ClientServiceException {
+    Principal principal, int lecturerId, int limit, int offset)
+    throws ServiceException, ClientServiceException {
     Locale locale = principal.getSession().getLanguage().getLocale();
     ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, locale);
     final List<Course> courses;
@@ -195,7 +198,7 @@ public class CourseService {
    * @throws ServiceException if attempt to get data failed.
    */
   public Course viewCourseDetails(Principal principal, int courseId, int limit, int offset)
-      throws ClientServiceException, ServiceException {
+    throws ClientServiceException, ServiceException {
     final Course course;
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
@@ -203,21 +206,21 @@ public class CourseService {
       ValidationHelper.checkLimit(limit, currentLocale);
       ValidationHelper.checkOffSet(offset, currentLocale);
       course =
-          courseDao
-              .selectCourseById(courseId, limit, offset)
-              .orElseThrow(
-                  () ->
-                      new ClientServiceException(
-                          String.format(bundle.getString("WRONG_COURSE_ID") + " %d", courseId)));
+        courseDao
+          .selectCourseById(courseId, limit, offset)
+          .orElseThrow(
+            () ->
+              new ClientServiceException(
+                String.format(bundle.getString("WRONG_COURSE_ID") + " %d", courseId)));
       logger.debug("course is ready = {}",course.isReady());
       if (!course.isReady() && principal.getUser().getRole() != Role.LECTURER) {
         throw new ClientServiceException(
-            String.format(bundle.getString("WRONG_COURSE_ID") + " %d", courseId));
+          String.format(bundle.getString("WRONG_COURSE_ID") + " %d", courseId));
       }
       if (!course.isReady()
-          && !courseDao.isExistsCourseInLecturerUpdateList(courseId, principal.getUser().getId())) {
+        && !courseDao.isExistsCourseInLecturerUpdateList(courseId, principal.getUser().getId())) {
         throw new ClientServiceException(
-            String.format(bundle.getString("WRONG_COURSE_ID") + " %d", courseId));
+          String.format(bundle.getString("WRONG_COURSE_ID") + " %d", courseId));
       }
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -238,7 +241,7 @@ public class CourseService {
    * @throws AccessDeniedException when principal's role is Anonymous.
    */
   public List<Lecture> viewSchedule(Principal principal, int limit, int offset)
-      throws ServiceException, ClientServiceException, AccessDeniedException {
+    throws ServiceException, ClientServiceException, AccessDeniedException {
     logger.debug("view schedule");
     Locale currentLocale = principal.getSession().getLanguage().getLocale();
     ValidationHelper.checkLimit(limit, currentLocale);
@@ -248,16 +251,16 @@ public class CourseService {
       switch (principal.getUser().getRole()) {
         case LECTURER:
           schedule =
-              courseDao.selectScheduleByLecturerId(principal.getUser().getId(), limit, offset);
+            courseDao.selectScheduleByLecturerId(principal.getUser().getId(), limit, offset);
           break;
         case STUDENT:
           schedule =
-              studentDao.selectScheduleByStudentId(principal.getUser().getId(), limit, offset);
+            studentDao.selectScheduleByStudentId(principal.getUser().getId(), limit, offset);
           break;
         default:
           ResourceBundle bundle =
-              ResourceBundle.getBundle(
-                  RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+            ResourceBundle.getBundle(
+              RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
           throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
       }
     } catch (DaoException e) {
@@ -267,7 +270,7 @@ public class CourseService {
   }
 
   public boolean isStudentScheduleCross(Principal principal, int courseId)
-      throws ClientServiceException, ServiceException {
+    throws ClientServiceException, ServiceException {
     if (principal.getUser().getRole() != Role.STUDENT) {
       // no exception thrown. just denied
       return false;
@@ -279,12 +282,12 @@ public class CourseService {
         throw new ClientServiceException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_COURSE_ID));
       }
       List<Lecture> scheduleStudent =
-          studentDao.selectScheduleByStudentId(principal.getUser().getId(), Integer.MAX_VALUE, 0);
+        studentDao.selectScheduleByStudentId(principal.getUser().getId(), Integer.MAX_VALUE, 0);
       List<Lecture> scheduleCourse =
-          courseDao
-              .selectCourseById(courseId, Integer.MAX_VALUE, 0)
-              .orElseThrow(() -> new ServiceException("No Such course in db!"))
-              .getLectures();
+        courseDao
+          .selectCourseById(courseId, Integer.MAX_VALUE, 0)
+          .orElseThrow(() -> new ServiceException("No Such course in db!"))
+          .getLectures();
       scheduleStudent.addAll(scheduleCourse);
       try {
         return ValidationHelper.checkScheduleHaveCrossing(scheduleStudent, locale);
@@ -308,7 +311,7 @@ public class CourseService {
    * @throws AccessDeniedException then principal role is not STUDENT.
    */
   public void joinToCourse(Principal principal, int courseId)
-      throws ClientServiceException, ServiceException, AccessDeniedException {
+    throws ClientServiceException, ServiceException, AccessDeniedException {
     Locale locale = principal.getSession().getLanguage().getLocale();
     ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, locale);
     if (principal.getUser().getRole() != Role.STUDENT) {
@@ -320,12 +323,12 @@ public class CourseService {
       }
       // check if schedule have crossing
       List<Lecture> scheduleStudent =
-          studentDao.selectScheduleByStudentId(principal.getUser().getId(), Integer.MAX_VALUE, 0);
+        studentDao.selectScheduleByStudentId(principal.getUser().getId(), Integer.MAX_VALUE, 0);
       List<Lecture> scheduleCourse =
-          courseDao
-              .selectCourseById(courseId, Integer.MAX_VALUE, 0)
-              .orElseThrow(() -> new ServiceException("No Such course in db!"))
-              .getLectures();
+        courseDao
+          .selectCourseById(courseId, Integer.MAX_VALUE, 0)
+          .orElseThrow(() -> new ServiceException("No Such course in db!"))
+          .getLectures();
       scheduleStudent.addAll(scheduleCourse);
 
       ValidationHelper.checkScheduleHaveCrossing(scheduleStudent, locale);
@@ -340,29 +343,29 @@ public class CourseService {
   }
 
   public boolean leaveCourse(Principal principal, int courseId)
-      throws ClientServiceException, ServiceException, AccessDeniedException {
+    throws ClientServiceException, ServiceException, AccessDeniedException {
     if (principal.getUser().getRole() != Role.STUDENT) {
       ResourceBundle bundle =
-          ResourceBundle.getBundle(
-              RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+        ResourceBundle.getBundle(
+          RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
       throw new AccessDeniedException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_ACCESS_DENIED));
     }
     try {
       if (!courseDao.isExistCourseReady(courseId)) {
         ResourceBundle bundle =
-            ResourceBundle.getBundle(
-                RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+          ResourceBundle.getBundle(
+            RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
         throw new ClientServiceException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_COURSE_ID));
       }
       int updateRows =
-          studentDao.updateOnRemoveCourseFromStudentSchedule(principal.getUser().getId(), courseId);
+        studentDao.updateOnRemoveCourseFromStudentSchedule(principal.getUser().getId(), courseId);
       logger.debug("updateRows = {}", updateRows);
       if (updateRows > 1) {
         ResourceBundle bundle =
-            ResourceBundle.getBundle(
-                RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+          ResourceBundle.getBundle(
+            RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
         throw new ServiceException(
-            String.format(bundle.getString("UNEXPECTED_RESULT") + " %d ", updateRows));
+          String.format(bundle.getString("UNEXPECTED_RESULT") + " %d ", updateRows));
       }
       return updateRows == 1;
 
@@ -372,7 +375,7 @@ public class CourseService {
   }
 
   public boolean isInUserListCourse(Principal principal, int courseId)
-      throws ClientServiceException, ServiceException {
+    throws ClientServiceException, ServiceException {
     final boolean isInPersonalList;
     try {
 //      if (!courseDao.isExistCourseReady(courseId)) {
@@ -382,25 +385,22 @@ public class CourseService {
 //        throw new ClientServiceException(bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_COURSE_ID));
 //      }
       switch (principal.getUser().getRole()) {
-        case STUDENT:
-          {
-            isInPersonalList =
-                studentDao.isExistsCourseInStudentList(courseId, principal.getUser().getId());
-            logger.debug("in Student List: {}", isInPersonalList);
-            break;
-          }
-        case LECTURER:
-          {
-            isInPersonalList =
-                courseDao.isExistsCourseInLecturerUpdateList(courseId, principal.getUser().getId());
-            logger.debug("in Lecturer List: {}", isInPersonalList);
-            break;
-          }
-        default:
-          {
-            // Role.ANONYMOUS
-            isInPersonalList = false;
-          }
+        case STUDENT: {
+          isInPersonalList =
+            studentDao.isExistsCourseInStudentList(courseId, principal.getUser().getId());
+          logger.debug("in Student List: {}", isInPersonalList);
+          break;
+        }
+        case LECTURER: {
+          isInPersonalList =
+            courseDao.isExistsCourseInLecturerUpdateList(courseId, principal.getUser().getId());
+          logger.debug("in Lecturer List: {}", isInPersonalList);
+          break;
+        }
+        default: {
+          // Role.ANONYMOUS
+          isInPersonalList = false;
+        }
       }
     } catch (DaoException e) {
       throw new ServiceException(e);

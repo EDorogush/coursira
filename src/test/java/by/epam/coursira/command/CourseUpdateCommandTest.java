@@ -113,65 +113,65 @@ class CourseUpdateCommandTest {
     postgresContainer.stop();
   }
 
-//  @Test
-//  void testExecuteUpdateCourseSucceed() throws CommandException, ClientCommandException, DaoException, ServiceException {
-//    String afterUpdateTitle = "new title";
-//    String afterUpdateDescription = "new description";
-//    int afterUpdateCapacity = 2;
-//
-//    Map<String, String[]> queryParams = Map.of("updateCourseData", new String[]{"true"},
-//      "title", new String[]{afterUpdateTitle},
-//      "capacity", new String[]{String.valueOf(afterUpdateCapacity)},
-//      "description", new String[]{afterUpdateDescription});
-//    when(mockRequest.getMethod()).thenReturn("POST");
-//    when(mockRequest.getServletPath()).thenReturn("/courses/5/update");
-//    when(mockRequest.getParameterMap()).thenReturn(queryParams);
-//    command.execute(courseOwner, mockRequest);
-//    Course afterUpdateCourse =
-//      courseDao
-//        .selectCourseById(courseId, 10, 0)
-//        .orElseThrow(() -> new ServiceException("No Such course in db!"));
-//    assertTrue(
-//      afterUpdateCourse.getCapacity() == afterUpdateCapacity
-//        && afterUpdateCourse.getTitle().equals(afterUpdateTitle)
-//        && afterUpdateCourse.getDescription().equals(afterUpdateDescription));
-//  }
-//
-//  @Test
-//  void testExecuteInviteLecturerAttemptToAddYourselfFails() throws CommandException, ClientCommandException {
-//    int lecturerId = 9;
-//    String expectedErrorMessage = "You can't add yourself";
-//
-//    Map<String, String[]> queryParams = Map.of("inviteLecturer", new String[]{"true"},
-//      "lecturerId", new String[]{String.valueOf(lecturerId)});
-//
-//    when(mockRequest.getMethod()).thenReturn("POST");
-//    when(mockRequest.getParameterMap()).thenReturn(queryParams);
-//
-//    CommandResult commandResult = command.execute(courseOwner, mockRequest);
-//    String actualErrorMessage = ((CourseUpdateModel) commandResult.getJspModel()).getErrorCourseDataMessage();
-//    assertEquals(expectedErrorMessage, actualErrorMessage);
-//  }
-//
-//  @Test
-//  void testExecuteInviteLecturerSucceed() throws CommandException, ClientCommandException, DaoException, ClientServiceException {
-//    //given
-//    int expectedLecturerNumber = 2;
-//    int lecturerId = 7;
-//    Map<String, String[]> queryParams = Map.of("inviteLecturer", new String[]{"true"},
-//      "lecturerId", new String[]{String.valueOf(lecturerId)});
-//    //when
-//    when(mockRequest.getMethod()).thenReturn("POST");
-//    when(mockRequest.getParameterMap()).thenReturn(queryParams);
-//    command.execute(courseOwner, mockRequest);
-//    //then
-//    Course afterInvitationCourse = courseDao.selectCourseById(courseId, 100, 0).orElseThrow(
-//      () ->
-//        new ClientServiceException("WRONG_COURSE_ID" + courseId));
-//
-//    int actualLecturerNumber = afterInvitationCourse.getLecturers().size();
-//    assertEquals(expectedLecturerNumber, actualLecturerNumber);
-//  }
+  @Test
+  void testExecuteUpdateCourseSucceed() throws CommandException, ClientCommandException, DaoException, ServiceException {
+    String afterUpdateTitle = "new title";
+    String afterUpdateDescription = "new description";
+    int afterUpdateCapacity = 2;
+
+    Map<String, String[]> queryParams = Map.of("updateCourseData", new String[]{"true"},
+      "title", new String[]{afterUpdateTitle},
+      "capacity", new String[]{String.valueOf(afterUpdateCapacity)},
+      "description", new String[]{afterUpdateDescription});
+    when(mockRequest.getMethod()).thenReturn("POST");
+    when(mockRequest.getServletPath()).thenReturn("/courses/5/update");
+    when(mockRequest.getParameterMap()).thenReturn(queryParams);
+    command.execute(courseOwner, mockRequest);
+    Course afterUpdateCourse =
+      courseDao
+        .selectCourseById(courseId, 10, 0)
+        .orElseThrow(() -> new ServiceException("No Such course in db!"));
+    assertTrue(
+      afterUpdateCourse.getCapacity() == afterUpdateCapacity
+        && afterUpdateCourse.getTitle().equals(afterUpdateTitle)
+        && afterUpdateCourse.getDescription().equals(afterUpdateDescription));
+  }
+
+  @Test
+  void testExecuteInviteLecturerAttemptToAddYourselfFails() throws CommandException, ClientCommandException {
+    int lecturerId = 9;
+    String expectedErrorMessage = "You can't add yourself";
+
+    Map<String, String[]> queryParams = Map.of("inviteLecturer", new String[]{"true"},
+      "lecturerId", new String[]{String.valueOf(lecturerId)});
+
+    when(mockRequest.getMethod()).thenReturn("POST");
+    when(mockRequest.getParameterMap()).thenReturn(queryParams);
+
+    CommandResult commandResult = command.execute(courseOwner, mockRequest);
+    String actualErrorMessage = ((CourseUpdateModel) commandResult.getJspModel()).getErrorCourseDataMessage();
+    assertEquals(expectedErrorMessage, actualErrorMessage);
+  }
+
+  @Test
+  void testExecuteInviteLecturerSucceed() throws CommandException, ClientCommandException, DaoException, ClientServiceException {
+    //given
+    int expectedLecturerNumber = 2;
+    int lecturerId = 7;
+    Map<String, String[]> queryParams = Map.of("inviteLecturer", new String[]{"true"},
+      "lecturerId", new String[]{String.valueOf(lecturerId)});
+    //when
+    when(mockRequest.getMethod()).thenReturn("POST");
+    when(mockRequest.getParameterMap()).thenReturn(queryParams);
+    command.execute(courseOwner, mockRequest);
+    //then
+    Course afterInvitationCourse = courseDao.selectCourseById(courseId, 100, 0).orElseThrow(
+      () ->
+        new ClientServiceException("WRONG_COURSE_ID" + courseId));
+
+    int actualLecturerNumber = afterInvitationCourse.getLecturers().size();
+    assertEquals(expectedLecturerNumber, actualLecturerNumber);
+  }
 
 }
 

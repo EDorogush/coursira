@@ -13,12 +13,14 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 /**
  * Class is intended to process client's requests to resource corresponding to "/login" pattern.
  * When POST request executed, request parameters must contain "login" and "password" values.
  * Otherwise {@link ClientCommandException} will be thrown.
  */
+@Component
 public class LoginCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
   /**

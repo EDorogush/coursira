@@ -117,44 +117,44 @@ public class CourseModificationServiceTest {
     postgresContainer.stop();
   }
 
-//  @Test
-//  public void testUpdateCourseSucceed()
-//    throws ClientServiceException, ServiceException, AccessDeniedException, DaoException {
-//    String afterUpdateTitle = "new title";
-//    String afterUpdateDescription = "new description";
-//    int afterUpdateCapacity = 2;
-//
-//    service.updateCourse(
-//      courseOwner, courseId, afterUpdateTitle, afterUpdateDescription, afterUpdateCapacity);
-//    Course afterUpdateCourse =
-//      courseDao
-//        .selectCourseById(courseId, 10, 0)
-//        .orElseThrow(() -> new ServiceException("No Such course in db!"));
-//    assertTrue(
-//      afterUpdateCourse.getCapacity() == afterUpdateCapacity
-//        && afterUpdateCourse.getTitle().equals(afterUpdateTitle)
-//        && afterUpdateCourse.getDescription().equals(afterUpdateDescription));
-//  }
-//
-//  @Test
-//  public void testUpdateCourseFailsWithAccessDeniedException() {
-//    String afterUpdateTitle = "new title";
-//    String afterUpdateDescription = "new description";
-//    int afterUpdateCapacity = 2;
-//
-//    assertThrows(AccessDeniedException.class, () -> service.updateCourse(
-//      notCourseOwner, courseId, afterUpdateTitle, afterUpdateDescription, afterUpdateCapacity));
-//  }
-//
-//  @Test
-//  public void testActivateCourseThrowsAccessDeniedException() {
-//    assertThrows(AccessDeniedException.class, () -> service.activateCourse(notCourseOwner, courseId));
-//  }
-//
-//  @Test
-//  public void testActivateCourseThrowsExceptionWhenLecturerHasNoLectures() throws ClientServiceException, ServiceException, AccessDeniedException {
-//    assertThrows(ClientServiceException.class, () -> service.activateCourse(courseOwner, courseId));
-//  }
+  @Test
+  public void testUpdateCourseSucceed()
+    throws ClientServiceException, ServiceException, AccessDeniedException, DaoException {
+    String afterUpdateTitle = "new title";
+    String afterUpdateDescription = "new description";
+    int afterUpdateCapacity = 2;
+
+    service.updateCourse(
+      courseOwner, courseId, afterUpdateTitle, afterUpdateDescription, afterUpdateCapacity);
+    Course afterUpdateCourse =
+      courseDao
+        .selectCourseById(courseId, 10, 0)
+        .orElseThrow(() -> new ServiceException("No Such course in db!"));
+    assertTrue(
+      afterUpdateCourse.getCapacity() == afterUpdateCapacity
+        && afterUpdateCourse.getTitle().equals(afterUpdateTitle)
+        && afterUpdateCourse.getDescription().equals(afterUpdateDescription));
+  }
+
+  @Test
+  public void testUpdateCourseFailsWithAccessDeniedException() {
+    String afterUpdateTitle = "new title";
+    String afterUpdateDescription = "new description";
+    int afterUpdateCapacity = 2;
+
+    assertThrows(AccessDeniedException.class, () -> service.updateCourse(
+      notCourseOwner, courseId, afterUpdateTitle, afterUpdateDescription, afterUpdateCapacity));
+  }
+
+  @Test
+  public void testActivateCourseThrowsAccessDeniedException() {
+    assertThrows(AccessDeniedException.class, () -> service.activateCourse(notCourseOwner, courseId));
+  }
+
+  @Test
+  public void testActivateCourseThrowsExceptionWhenLecturerHasNoLectures() throws ClientServiceException, ServiceException, AccessDeniedException {
+    assertThrows(ClientServiceException.class, () -> service.activateCourse(courseOwner, courseId));
+  }
 
 }
 

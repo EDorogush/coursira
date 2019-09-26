@@ -9,13 +9,17 @@ import by.epam.coursira.exception.ServiceException;
 import by.epam.coursira.model.RegistrationCompletedModel;
 import by.epam.coursira.service.PrincipalService;
 import by.epam.coursira.servlet.CoursiraJspPath;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
+
 /**
  * Class is intended to process client's requests to resource corresponding to "/registration". This
  * is registration finish page and only GET method of request is possible. Request with POST method
@@ -24,6 +28,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @see RegistrationCommand
  */
+@Component
 public class RegistrationConfirmCommand implements Command {
   private static final Logger logger = LogManager.getLogger();
   /**
@@ -45,7 +50,7 @@ public class RegistrationConfirmCommand implements Command {
 
   @Override
   public CommandResult execute(Principal principal, HttpServletRequest request)
-      throws ClientCommandException, PageNotFoundException, CommandException {
+    throws ClientCommandException, PageNotFoundException, CommandException {
     logger.debug("In RegistrationConfirmCommand");
     switch (request.getMethod()) {
       case "GET":
@@ -64,12 +69,12 @@ public class RegistrationConfirmCommand implements Command {
    *
    * @param principal current Principal.
    * @return {@link CommandResult} object filled by path to desired JSP file and filled model for
-   *     JSP page.
+   * JSP page.
    * @throws CommandException when server trouble occurs.
    */
   private CommandResult getRegistrationConfirm(
-      Principal principal, Map<String, String[]> queryParams)
-      throws ClientCommandException, CommandException {
+    Principal principal, Map<String, String[]> queryParams)
+    throws ClientCommandException, CommandException {
     Optional<String> code = CommandUtils.parseOptionalString(queryParams, "code");
     boolean emailKey = CommandUtils.parseOptionalBoolean(queryParams, "email").orElse(false);
     if (code.isEmpty() && !emailKey) {
@@ -80,7 +85,7 @@ public class RegistrationConfirmCommand implements Command {
       throw new ClientCommandException("Only one of parameters expected to present");
     }
     ResourceBundle bundle =
-        ResourceBundle.getBundle("errorMessages", principal.getSession().getLanguage().getLocale());
+      ResourceBundle.getBundle("errorMessages", principal.getSession().getLanguage().getLocale());
     RegistrationCompletedModel model = new RegistrationCompletedModel();
     model.setPrincipal(principal);
 

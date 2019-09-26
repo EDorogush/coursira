@@ -23,7 +23,10 @@ import javax.validation.constraints.NotNull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PrincipalService {
   private static final Logger logger = LogManager.getLogger();
   private static final int DEFAULT_PRINCIPAL_USER_ID = 0;
@@ -32,14 +35,14 @@ public class PrincipalService {
   private static final Duration REGISTRATION_LINK_VALID_DURATION = Duration.ofHours(1);
   private static final String RESOURCE_BUNDLE_ERROR_MESSAGE = "errorMessages";
   private static final String RESOURCE_BUNDLE_MESSAGE_WRONG_LOGIN_AND_PASSWORD =
-      "WRONG_LOGIN_AND_PASSWORD";
+    "WRONG_LOGIN_AND_PASSWORD";
   private static final String REGISTRATION_CONFIRM_SUBJECT = "Registration Confirm";
   private static final String REGISTRATION_MESSAGE_PATTERN =
-      "Dear %s, \n"
-          + "Thank you for registering to CoursIra.\n"
-          + "Follow link placed below to confirm your registration.\n"
-          + "Attention: Current link is active for %d hours. If you don't use it, your registration will be canceled:\n"
-          + " %s";
+    "Dear %s, \n"
+      + "Thank you for registering to CoursIra.\n"
+      + "Follow link placed below to confirm your registration.\n"
+      + "Attention: Current link is active for %d hours. If you don't use it, your registration will be canceled:\n"
+      + " %s";
   private final Duration sessionLoginDuration;
   private final Duration sessionAnonymousDuration;
   private final UserDao userDao;
@@ -47,11 +50,11 @@ public class PrincipalService {
   private final MailSender mailSender;
 
   public PrincipalService(
-      UserDao dao,
-      Duration sessionLoginDuration,
-      Duration sessionAnonymousDuration,
-      HashMethod hashMethod,
-      MailSender mailSender) {
+    UserDao dao,
+    @Value("#{T(java.time.Duration).ofHours(servletContext.getInitParameter('sessionLoginDurationHours'))}") Duration sessionLoginDuration,
+    @Value("#{T(java.time.Duration).ofHours(servletContext.getInitParameter('sessionAnonymousDurationHours'))}") Duration sessionAnonymousDuration,
+    HashMethod hashMethod,
+    MailSender mailSender) {
     this.userDao = dao;
     this.hashMethod = hashMethod;
     this.mailSender = mailSender;
@@ -78,7 +81,7 @@ public class PrincipalService {
       // check if session record was found in db
       if (principalOptional.isPresent()) {
         logger.debug(
-            "Session record was found in db: {}.", principalOptional.get().getUser().toString());
+          "Session record was found in db: {}.", principalOptional.get().getUser().toString());
         // session record exists so check if session is not expired
         Session session = principalOptional.get().getSession();
         if (session.getExpDate().isBefore(Instant.now())) {
@@ -88,26 +91,26 @@ public class PrincipalService {
           userDao.updateSession(session);
           logger.debug("Session expired. Session record was linked to ANONYMOUS user");
           principal =
-              userDao
-                  .selectPrincipalBySessionId(sessionId)
-                  .orElseThrow(() -> new ServiceException("Can't read principal from db"));
+            userDao
+              .selectPrincipalBySessionId(sessionId)
+              .orElseThrow(() -> new ServiceException("Can't read principal from db"));
         } else {
           principal = principalOptional.get();
         }
       } else {
         logger.debug("session {} record wasn't found in db", sessionId);
         User user =
-            userDao
-                .selectUserById(DEFAULT_PRINCIPAL_USER_ID)
-                .orElseThrow(() -> new ServiceException("Can't read default user"));
+          userDao
+            .selectUserById(DEFAULT_PRINCIPAL_USER_ID)
+            .orElseThrow(() -> new ServiceException("Can't read default user"));
         Session session =
-            new Session.Builder()
-                .setId(sessionId)
-                .setExpDate(Instant.now().plus(sessionAnonymousDuration))
-                .setZoneOffSet(DEFAULT_PRINCIPAL_ZONE_OFFSET)
-                .setLanguage(DEFAULT_PRINCIPAL_LANGUAGE)
-                .setUserId(DEFAULT_PRINCIPAL_USER_ID)
-                .build();
+          new Session.Builder()
+            .setId(sessionId)
+            .setExpDate(Instant.now().plus(sessionAnonymousDuration))
+            .setZoneOffSet(DEFAULT_PRINCIPAL_ZONE_OFFSET)
+            .setLanguage(DEFAULT_PRINCIPAL_LANGUAGE)
+            .setUserId(DEFAULT_PRINCIPAL_USER_ID)
+            .build();
         principal = new Principal(session, user);
         userDao.insertSession(session);
         logger.debug("session record inserted to db");
@@ -133,8 +136,8 @@ public class PrincipalService {
    * @throws ServiceException when method fails
    */
   public Principal verifyPrincipleByPass(
-      @NotNull Principal previous, @NotNull String email, @NotNull String password)
-      throws ServiceException, ClientServiceException {
+    @NotNull Principal previous, @NotNull String email, @NotNull String password)
+    throws ServiceException, ClientServiceException {
     final Principal principal;
     Locale locale = previous.getSession().getLanguage().getLocale();
     ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, locale);
@@ -149,26 +152,26 @@ public class PrincipalService {
     // sessions table
     try {
       User user =
-          userDao
-              .selectUserByEmail(email)
-              .orElseThrow(
-                  () ->
-                      new ClientServiceException(
-                          bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LOGIN_AND_PASSWORD)));
+        userDao
+          .selectUserByEmail(email)
+          .orElseThrow(
+            () ->
+              new ClientServiceException(
+                bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LOGIN_AND_PASSWORD)));
       logger.debug("user {} was found in db", user.toString());
       if (user.getRegistrationExpDate() != null) {
         if (user.getRegistrationExpDate().isBefore(Instant.now())) {
           logger.debug("registration time expired. user will be deleted.");
           userDao.deleteUser(user.getId());
           throw new ClientServiceException(
-              bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LOGIN_AND_PASSWORD));
+            bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LOGIN_AND_PASSWORD));
         } else throw new ClientServiceException(bundle.getString("DOESNT_FINISH_REGISTRATION"));
       }
 
       if (!hashMethod.verify(password, user.getPassword())) {
         logger.debug("Password didn't fit the db record.");
         throw new ClientServiceException(
-            bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LOGIN_AND_PASSWORD));
+          bundle.getString(RESOURCE_BUNDLE_MESSAGE_WRONG_LOGIN_AND_PASSWORD));
       }
       // login and pass checked. increase session time.
       logger.debug("Password checked.");
@@ -200,9 +203,9 @@ public class PrincipalService {
     try {
       userDao.updateSession(session);
       User user =
-          userDao
-              .selectUserById(DEFAULT_PRINCIPAL_USER_ID)
-              .orElseThrow(() -> new ServiceException("Can't read default user"));
+        userDao
+          .selectUserById(DEFAULT_PRINCIPAL_USER_ID)
+          .orElseThrow(() -> new ServiceException("Can't read default user"));
       return new Principal(session, user);
     } catch (DaoException e) {
       throw new ServiceException(e);
@@ -230,15 +233,15 @@ public class PrincipalService {
    * @throws ServiceException when attempt to create user record fails
    */
   public void registerUser(
-      Principal previous,
-      String urlToGoFromEmail,
-      String email,
-      String passwordFirst,
-      String passwordSecond,
-      String firstName,
-      String lastName,
-      Role role)
-      throws ClientServiceException, ServiceException {
+    Principal previous,
+    String urlToGoFromEmail,
+    String email,
+    String passwordFirst,
+    String passwordSecond,
+    String firstName,
+    String lastName,
+    Role role)
+    throws ClientServiceException, ServiceException {
 
     Locale currentLocale = previous.getSession().getLanguage().getLocale();
     ResourceBundle bundle = ResourceBundle.getBundle(RESOURCE_BUNDLE_ERROR_MESSAGE, currentLocale);
@@ -268,25 +271,25 @@ public class PrincipalService {
       final String registrationCode = UUID.randomUUID().toString();
       final Instant registrationExpDate = Instant.now().plus(REGISTRATION_LINK_VALID_DURATION);
       User user =
-          new User.Builder()
-              .setEmail(email)
-              .setPassword(BCrypt.hashpw(passwordFirst, BCrypt.gensalt()))
-              .setFirstName(firstName.trim())
-              .setLastName(lastName)
-              .setRole(role)
-              .setRegistrationCode(registrationCode)
-              .setRegistrationExpDate(registrationExpDate)
-              .build();
+        new User.Builder()
+          .setEmail(email)
+          .setPassword(BCrypt.hashpw(passwordFirst, BCrypt.gensalt()))
+          .setFirstName(firstName.trim())
+          .setLastName(lastName)
+          .setRole(role)
+          .setRegistrationCode(registrationCode)
+          .setRegistrationExpDate(registrationExpDate)
+          .build();
       int userId = userDao.insertUser(user);
       logger.debug("User record was added to db with userId {}", userId);
       try {
         String registrationLink = urlToGoFromEmail + "?code=" + registrationCode;
         String registrationMessage =
-            String.format(
-                REGISTRATION_MESSAGE_PATTERN,
-                user.getFirstName() + user.getLastName(),
-                REGISTRATION_LINK_VALID_DURATION.toHours(),
-                registrationLink);
+          String.format(
+            REGISTRATION_MESSAGE_PATTERN,
+            user.getFirstName() + user.getLastName(),
+            REGISTRATION_LINK_VALID_DURATION.toHours(),
+            registrationLink);
         mailSender.sendMail(email, REGISTRATION_CONFIRM_SUBJECT, registrationMessage);
       } catch (MessagingException e) {
         logger.debug(e);
@@ -310,19 +313,19 @@ public class PrincipalService {
    * @throws ClientServiceException when registration time expired
    */
   public void activateRegistration(Principal principal, String code)
-      throws ServiceException, ClientServiceException {
+    throws ServiceException, ClientServiceException {
     ResourceBundle bundle =
-        ResourceBundle.getBundle(
-            RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
+      ResourceBundle.getBundle(
+        RESOURCE_BUNDLE_ERROR_MESSAGE, principal.getSession().getLanguage().getLocale());
     if (!principal.getUser().getRole().equals(Role.ANONYMOUS)) {
       logout(principal);
     }
     try {
       User user =
-          userDao
-              .selectUserByCode(code)
-              .orElseThrow(
-                  () -> new ClientServiceException(bundle.getString("WRONG_REGISTRATION_CODE")));
+        userDao
+          .selectUserByCode(code)
+          .orElseThrow(
+            () -> new ClientServiceException(bundle.getString("WRONG_REGISTRATION_CODE")));
       // check date
       if (user.getRegistrationExpDate().isBefore(Instant.now())) {
         logger.debug("registration time expired.");

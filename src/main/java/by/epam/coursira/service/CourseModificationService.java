@@ -23,8 +23,10 @@ import java.util.stream.Collectors;
 import javax.mail.MessagingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 /** Class is intended for procedures are related to study course modification */
+@Component
 public class CourseModificationService {
   private static final Logger logger = LogManager.getLogger();
   private final CourseDao courseDao;

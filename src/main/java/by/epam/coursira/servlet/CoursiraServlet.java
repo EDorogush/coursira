@@ -33,10 +33,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.io.FileSystemResource;
 
 
 @WebServlet(
@@ -58,6 +62,11 @@ public class CoursiraServlet extends HttpServlet {
 
   @Override
   public void init() throws ServletException {
+    try {
+      Class.forName("org.postgresql.Driver");
+    } catch (ClassNotFoundException e) {
+      throw new ServletException(e);
+    }
     //https://stackoverflow.com/questions/496711/adding-a-pre-constructed-bean-to-a-spring-application-context
     //create parent BeanFactory
     DefaultListableBeanFactory parentBeanFactory = new DefaultListableBeanFactory();
@@ -69,25 +78,16 @@ public class CoursiraServlet extends HttpServlet {
     parentContext.refresh(); //as suggested "itzgeoff", to overcome a warning about events
     // create your "child" ApplicationContext that contains the beans from "beans.xml"
     //note that we are passing previously made parent ApplicationContext as parent
-    ApplicationContext springContext = new ClassPathXmlApplicationContext(
-      new String[]{"/spring.xml"}, parentContext);
 
+    ApplicationContext springContext = new ClassPathXmlApplicationContext(
+      new String[]{"/springconfig.xml"}, parentContext);
     ServletContext context = springContext.getBean(ServletContext.class);
 
     // initParams
     final int cleanerInitialDelay =
       Integer.parseInt(context.getInitParameter("cleanerInitialDelay"));
     final int cleanerProcedureDelay = Integer.parseInt(context.getInitParameter("cleanerDelay"));
-    //connectionPool = springContext.getBean(ConnectionPoolImpl.class);
-//    try {
-//      Class.forName("org.postgresql.Driver");
-//      //connectionPool = new ConnectionPoolImpl(dbPoolSize, url);
-//      connectionPool = springContext.getBean(ConnectionPoolImpl.class);
-//      logger.info("pool constructed");
-//    } catch (PoolConnectionException | ClassNotFoundException e) {
-//      throw new ServletException(e);
-//    }
-//
+
     principalService = springContext.getBean(PrincipalService.class);
     commandList = springContext.getBean("commandList", List.class);
     logger.info("commandList constructed ");

@@ -14,11 +14,13 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 /**
  * Class is intended to process client's requests to resource corresponding to
  * "/courses/([^/?]+)/subscriptions(\\?.*)?" pattern.
  */
+@Component
 public class CourseIdSubscriptionCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
   private static final Pattern resourcePattern =

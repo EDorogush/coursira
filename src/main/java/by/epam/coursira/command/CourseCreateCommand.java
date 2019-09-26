@@ -17,11 +17,13 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 /**
  * Class is intended to process client's requests to resource corresponding to "/courses/newCourse"
  * pattern. POST request requires parameters "title", "description", "capacity".
  */
+@Component
 public class CourseCreateCommand implements Command {
   public static final Logger logger = LogManager.getLogger();
   /**

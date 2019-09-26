@@ -21,15 +21,20 @@ import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 /**
  * This is DAO class providing CRUD operations for database containing data about next application
  * entities : {@link Course}, {@link Lecture}.
  */
+
+@Component
 public class CourseDao {
 
   private static final Logger logger = LogManager.getLogger();
@@ -259,6 +264,7 @@ public class CourseDao {
       + "FROM course_lecturers cl\n"
       + "JOIN courses c ON cl.course_id = c.course_id\n"
       + "WHERE lecturer_id = ? AND c.ready;";
+
 
   private final DataSource pool;
   private final JdbcTemplate jdbcTemplate;
