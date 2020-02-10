@@ -82,9 +82,6 @@ dependencies {
 // https://mvnrepository.com/artifact/org.springframework/spring-jdbc
   compile group: 'org.springframework', name: 'spring-jdbc', version: '5.1.9.RELEASE'
 
-// https://mvnrepository.com/artifact/com.mchange/c3p0
-  compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.4'
-
   // https://mvnrepository.com/artifact/com.zaxxer/HikariCP
   compile group: 'com.zaxxer', name: 'HikariCP', version: '3.4.0'
 
